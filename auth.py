@@ -23,6 +23,23 @@ MOTS_DE_PASSE_PLACEHOLDER = {"ChangezMoi123!", "ChangezMoiAussi123!"}
 CLE_COOKIE_PLACEHOLDER = "REMPLACER_PAR_UNE_CLE_SECRETE_ALEATOIRE"
 
 
+def _en_dict_modifiable(objet):
+    """Convertit RECURSIVEMENT un objet st.secrets (en lecture seule a tous
+    les niveaux - meme les sous-tables comme chaque compte utilisateur) en
+    dict/list Python standards et modifiables. Necessaire car
+    streamlit_authenticator ecrit dans les identifiants en place (ex: il
+    remplace le mot de passe en clair par sa version hachee au premier
+    lancement) : une conversion en surface seulement (dict(...) sur le
+    premier niveau) laisse les sous-objets encore verrouilles, d'ou un
+    `TypeError: Secrets does not support item assignment` observe en
+    deploiement reel."""
+    if hasattr(objet, "items"):
+        return {cle: _en_dict_modifiable(valeur) for cle, valeur in objet.items()}
+    if isinstance(objet, (list, tuple)):
+        return [_en_dict_modifiable(v) for v in objet]
+    return objet
+
+
 def charger_config() -> dict:
     """Charge la configuration d'authentification depuis st.secrets["auth"]
     (prioritaire, utilise sur Streamlit Cloud) ou depuis auth_config.yaml
@@ -32,9 +49,10 @@ def charger_config() -> dict:
     except Exception:
         secrets_auth = None
     if secrets_auth:
+        secrets_auth = _en_dict_modifiable(secrets_auth)
         return {
-            "credentials": {"usernames": dict(secrets_auth["usernames"])},
-            "cookie": dict(secrets_auth.get("cookie", {})),
+            "credentials": {"usernames": secrets_auth["usernames"]},
+            "cookie": secrets_auth.get("cookie", {}),
         }
 
     with open(CONFIG_PATH, encoding="utf-8") as f:

@@ -6,6 +6,7 @@ etre hashes et valides (sans dependre du runtime Streamlit).
 
 from pathlib import Path
 
+import pytest
 import streamlit_authenticator as stauth
 import yaml
 
@@ -81,6 +82,40 @@ def test_auth_avertissement_config_par_defaut_detecte_les_placeholders():
     # pas seulement dans les tests).
     assert avertissement is not None
     assert "défaut" in avertissement.lower() or "defaut" in avertissement.lower()
+
+
+class _FauxSecretsReadOnly(dict):
+    """Simule st.secrets sur Streamlit Cloud : lecture seule a TOUS les
+    niveaux (y compris les sous-tables, ex: chaque compte utilisateur), pas
+    seulement le dict racine - reproduit le vrai `TypeError: Secrets does
+    not support item assignment` observe en deploiement reel quand la
+    conversion n'etait faite qu'en surface."""
+    def __setitem__(self, k, v):
+        raise TypeError("Secrets does not support item assignment.")
+
+
+def test_auth_en_dict_modifiable_convertit_recursivement_les_secrets():
+    faux_secrets = _FauxSecretsReadOnly({
+        "usernames": _FauxSecretsReadOnly({
+            "admin": _FauxSecretsReadOnly({
+                "name": "Administrateur OPO", "password": "motdepasseclair", "role": "correction",
+            }),
+        }),
+        "cookie": _FauxSecretsReadOnly({"name": "opo_auth_cookie", "key": "unecle", "expiry_days": 7}),
+    })
+    # Preuve que l'objet simule bien le vrai comportement bloquant :
+    with pytest.raises(TypeError):
+        faux_secrets["usernames"]["admin"]["password"] = "x"
+
+    converti = auth._en_dict_modifiable(faux_secrets)
+    # streamlit_authenticator ecrit le mot de passe hache directement dans le
+    # sous-dict de l'utilisateur (auto_hash) : ça doit maintenant fonctionner
+    # sans lever de TypeError, a n'importe quel niveau d'imbrication.
+    converti["usernames"]["admin"]["password"] = "HASHE"
+    assert converti["usernames"]["admin"]["password"] == "HASHE"
+    assert isinstance(converti["usernames"]["admin"], dict) and not isinstance(
+        converti["usernames"]["admin"], _FauxSecretsReadOnly
+    )
 
 
 def test_auth_avertissement_config_par_defaut_silencieux_si_tout_est_change():
