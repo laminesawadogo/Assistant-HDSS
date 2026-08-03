@@ -119,7 +119,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-81 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+83 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
@@ -191,6 +191,14 @@ séquentiels peuvent avoir lieu sur une même question sans mot-clé reconnu :
 c'est la principale source de latence restante, dépendante de la vitesse du
 fournisseur LLM choisi (Groq est nettement plus rapide qu'Anthropic sur ce
 point).
+
+## Combien de tables/feuilles sont chargées ?
+
+Une question sur la session en cours elle-même (« combien de tables sont
+chargées ? », « quelles feuilles sont disponibles ? », « liste des tables »)
+est reconnue et répond directement, sans passer par le dictionnaire (qui ne
+sait rien de ce qui est chargé à l'instant) : nombre de tables, nom de
+chacune, nombre de lignes/colonnes.
 
 ## Relations entre tables et fusion
 

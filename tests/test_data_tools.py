@@ -92,6 +92,24 @@ def test_rapport_relations_avec_une_seule_table():
     assert "au moins deux tables" in texte
 
 
+# --- Resume "meta" des tables chargees (combien, lesquelles) ----------------
+
+def test_resume_tables_chargees_liste_toutes_les_tables():
+    tables = {
+        "Tindividual": pd.DataFrame({"individid": [1, 2], "sex": [1, 2]}),
+        "Tsocialgp": pd.DataFrame({"socialgpid": [1]}),
+    }
+    texte = dt.resume_tables_chargees(tables)
+    assert "2 table(s) chargée(s)" in texte
+    assert "Tindividual" in texte and "2 lignes" in texte
+    assert "Tsocialgp" in texte and "1 ligne," in texte
+
+
+def test_resume_tables_chargees_aucune_table():
+    texte = dt.resume_tables_chargees({})
+    assert "Aucune table" in texte
+
+
 def test_fusionner_tables_sur_cle_detectee_automatiquement():
     tables = {
         "Tindividual": pd.DataFrame({"individid": [1, 2], "sex": [1, 2]}),

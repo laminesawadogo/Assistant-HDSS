@@ -390,12 +390,27 @@ def formater_rapport_coherence(rapport: dict, nom_table: str) -> str:
     return "\n".join(lignes)
 
 
+MOTS_LISTE_TABLES = [
+    "combien de table", "combien de feuille", "quelles tables", "quelles sont les tables",
+    "liste des tables", "tables chargees", "tables chargées", "tables disponibles",
+    "nombre de tables", "nombre de feuilles", "quelles feuilles", "liste des feuilles",
+]
+
+
 def route_question(question: str) -> dict:
     """Determine si la question porte sur une table deposee (indicateur,
     echantillon, coherence), sur une relation/fusion entre plusieurs tables
-    chargees, ou sur le dictionnaire (RAG)."""
+    chargees, sur la liste des tables/feuilles elles-memes, ou sur le
+    dictionnaire (RAG)."""
     q = question.lower()
     tables = st.session_state.get("tables", {})
+
+    # Question "meta" sur la session en cours (combien de tables/feuilles
+    # sont chargees, lesquelles) : ne concerne pas le contenu d'une table ni
+    # le dictionnaire, donc a verifier en tout premier, avant toute
+    # resolution de table.
+    if any(m in q for m in MOTS_LISTE_TABLES):
+        return {"content": dt.resume_tables_chargees(tables)}
 
     # Questions de relation ou de fusion entre plusieurs tables chargees
     # (fichiers separes ou feuilles d'un meme classeur Excel : traitees de

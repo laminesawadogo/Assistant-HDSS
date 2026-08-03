@@ -222,6 +222,31 @@ def resoudre_table_ciblee(
     return None, None
 
 
+def resume_tables_chargees(tables: dict) -> str:
+    """Decrit les tables actuellement chargees (nom, nombre de lignes et de
+    colonnes) - reponse a une question "meta" sur la session en cours (ex:
+    "combien de tables/feuilles sont chargees ?", "quelles tables sont
+    disponibles ?"), qui ne porte pas sur le contenu d'une table mais sur ce
+    qui est effectivement charge a l'instant. Ce n'est pas une question
+    documentaire (le dictionnaire ne sait rien de la session en cours), donc
+    elle doit etre traitee ici plutot que par le RAG."""
+    if not tables:
+        return "Aucune table n'est chargée pour l'instant."
+
+    lignes = [f"**{len(tables)} table(s) chargée(s)** :"]
+    for nom, df in tables.items():
+        apercu_colonnes = ", ".join(f"`{c}`" for c in df.columns[:8])
+        if len(df.columns) > 8:
+            apercu_colonnes += ", ..."
+        n_lignes = len(df)
+        n_colonnes = len(df.columns)
+        lignes.append(
+            f"- **{nom}** : {n_lignes} ligne{'s' if n_lignes != 1 else ''}, "
+            f"{n_colonnes} colonne{'s' if n_colonnes != 1 else ''} ({apercu_colonnes})"
+        )
+    return "\n".join(lignes)
+
+
 def detecter_tables_mentionnees(question: str, tables: dict) -> list[str]:
     """Renvoie les noms des tables chargees explicitement mentionnees dans la
     question (peu importe qu'elles viennent de fichiers separes ou de
