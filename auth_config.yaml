@@ -1,15 +1,37 @@
 # Comptes de l'equipe OPO autorises a utiliser l'assistant.
 #
-# IMPORTANT - A FAIRE AVANT TOUT DEPLOIEMENT :
-#   1. Remplacer les comptes d'exemple ci-dessous par les vrais comptes de l'equipe.
-#   2. Changer les mots de passe (ils sont hashes automatiquement au premier lancement).
-#   3. Remplacer la valeur de "key" sous cookie par une chaine aleatoire secrete a vous
-#      (ex: python -c "import secrets; print(secrets.token_hex(32))").
-#   4. Ne jamais partager ce fichier ni le committer dans un depot public
-#      (l'ajouter a .gitignore si vous utilisez Git).
+# ⚠️ CE FICHIER EST ACTUELLEMENT SUIVI PAR GIT (donc visible dans l'historique
+# du depot, y compris s'il est public sur GitHub) : NE JAMAIS y mettre de
+# vrais mots de passe ni la vraie cle de cookie tant qu'il reste suivi.
+#
+# Pour un vrai deploiement (Streamlit Community Cloud), utilisez plutot le
+# gestionnaire de secrets de la plateforme (Settings -> Secrets de l'appli),
+# au format TOML suivant (lu en priorite par auth.py, ce fichier ne sert
+# alors que de repli pour le developpement local) :
+#
+#   [auth.usernames.admin]
+#   name = "Administrateur OPO"
+#   email = "admin@opo.example.org"
+#   password = "un_vrai_mot_de_passe"
+#   role = "correction"
+#
+#   [auth.cookie]
+#   name = "opo_auth_cookie"
+#   key = "une_cle_aleatoire_secrete"      # ex: python -c "import secrets; print(secrets.token_hex(32))"
+#   expiry_days = 7
+#
+# Si vous preferez quand meme passer par ce fichier local (dev uniquement) :
+#   1. Retirez-le du suivi Git : git rm --cached auth_config.yaml, puis
+#      ajoutez "auth_config.yaml" a .gitignore, avant d'y mettre de vraies
+#      valeurs.
+#   2. Remplacez les comptes d'exemple ci-dessous par les vrais comptes.
+#   3. Changez les mots de passe (hashes automatiquement au premier lancement).
+#   4. Remplacez la valeur de "key" sous cookie par une chaine aleatoire secrete.
 #
 # role : "correction" (acces complet, y compris revue des incoherences a valider)
-#        ou "consultation" (indicateurs, echantillons, syntaxes uniquement).
+#        ou "consultation" (indicateurs, echantillons, syntaxes uniquement —
+#        role enregistre mais pas encore utilise pour restreindre l'interface :
+#        toute personne connectee voit actuellement les memes fonctionnalites).
 
 credentials:
   usernames:

@@ -47,19 +47,27 @@ dictionnaire mais sans réponse rédigée par un LLM, et propose alors une
 saisie manuelle temporaire dans la barre latérale — utile pour tester la
 pertinence de la recherche documentaire avant de brancher un modèle.
 
-## Comptes / authentification (actuellement désactivés)
+## Comptes / authentification
 
-Pour une phase de test avec l'équipe via un lien partagé, l'écran de connexion
-est désactivé : quiconque a le lien accède directement à l'assistant, sans
-identifiant ni mot de passe. La restriction d'accès repose alors sur la
-diffusion du lien lui-même (ne le partager qu'à l'équipe) et, en cas de
-déploiement sur Streamlit Community Cloud, sur son option d'app privée (accès
-limité à une liste d'emails autorisés — voir section Déploiement).
+Un écran de connexion (`auth.py`, `streamlit-authenticator`) bloque
+maintenant tout accès à l'application (tables, chat, documents) tant qu'un
+compte valide n'a pas été utilisé — il n'est plus possible d'accéder aux
+données simplement en ayant le lien de l'appli. Les comptes et leur rôle
+(`correction` : accès complet ; `consultation` : rôle enregistré mais pas
+encore utilisé pour restreindre l'interface) sont définis dans
+`auth_config.yaml`.
 
-Le mécanisme de comptes individuels (`streamlit-authenticator`,
-`auth_config.yaml`, rôles `correction` / `consultation`) reste dans le projet
-et testé (`tests/test_auth.py`), prêt à être réactivé dans `app.py` si l'usage
-évolue vers un besoin de comptes nominatifs et de rôles différenciés.
+**⚠️ Avant tout déploiement avec de vraies données**, les identifiants
+doivent être configurés via le gestionnaire de secrets de Streamlit Cloud
+(Settings → Secrets de l'appli), au format documenté en tête de
+`auth_config.yaml` — jamais dans ce fichier tel quel s'il reste suivi par
+Git (voir le rappel dans le fichier). Tant que la configuration par défaut
+(mots de passe/clé de cookie d'exemple) est détectée, un avertissement
+s'affiche directement dans l'application pour que ça ne passe pas inaperçu.
+
+Le fichier temporaire créé lors du dépôt d'une table (le temps de la lire
+avec pandas) est maintenant systématiquement supprimé du disque du serveur
+juste après son chargement, y compris en cas d'erreur de lecture.
 
 ## Ajouter un document de référence (fiche, manuel, PDF, Word...)
 
@@ -119,13 +127,20 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-92 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+169 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
-CSV/Excel/Stata, résolution de la table ciblée), `rag.py` (récupération
-documentaire, garde-fous index/clé manquants, classification d'intention) et
-`auth_config.yaml` (structure des comptes, hash/vérification des mots de passe).
+CSV/Excel/Stata, résolution de la table ciblée, tableaux croisés, corrélation,
+rapport par agent enquêteur, catalogue de contrôles de cohérence avancés et
+leurs contrôles croisés entre tables, module Performances de terrain —
+agrégation par agent, jointure contrôleur, prévision d'objectif, rapport
+Word, recherche par identifiant), `rag.py` (récupération documentaire,
+garde-fous index/clé manquants, classification d'intention), `auth_config.yaml`
+(structure des comptes, hash/vérification des mots de passe), et `app.py` via
+des tests bout-en-bout (`tests/test_app.py`, avec
+`streamlit.testing.v1.AppTest`) qui simulent de vraies conversations
+multi-tours dans l'interface.
 
 ## Structure
 
@@ -203,9 +218,15 @@ de tables, nom de chacune, nombre de lignes/colonnes. Plutôt que d'énumérer
 indéfiniment de nouvelles formulations exactes (approche fragile), la
 détection combine deux familles de mots : un mot générique désignant les
 tables (« table(s) », « feuille(s) », « classeur(s) ») et un mot lié à
-l'import/au dénombrement (« combien », « importation », « envoyé », « reçu »,
-« déposé »...) — les deux réunis dans la même question déclenchent la vraie
-liste, quelle que soit la tournure de phrase. Les formulations encore plus
+l'import/au dépôt (« importation », « envoyé », « reçu », « déposé »...) — les
+deux réunis dans la même question déclenchent la vraie liste, quelle que soit
+la tournure de phrase. Les mots trop génériques comme « combien » ou « liste »
+sont volontairement exclus de cette combinaison (ils apparaissent aussi dans
+d'innombrables questions de contenu classiques, ex. « combien d'individus
+dans la table X » — les garder aurait fait basculer ces questions vers la
+liste des tables au lieu de calculer la vraie réponse) ; ils restent gérés
+uniquement via des formulations exactes sans ambiguïté (« combien de
+table(s) », « liste des tables/feuilles »). Les formulations encore plus
 inhabituelles passent en dernier recours par le même classifieur LLM que pour
 une répartition/un échantillon/une cohérence (action `LISTE_TABLES`), pour
 éviter que le modèle ne réponde à partir d'un historique qui ne mentionne
@@ -218,12 +239,25 @@ Dès que deux tables ou plus sont chargées (fichiers séparés, ou plusieurs
 feuilles d'un même classeur Excel — traitées de façon identique), l'assistant
 peut :
 
+**Noms informels reconnus.** Pas besoin de citer le nom technique exact
+d'une table pour la désigner : le préfixe technique commun (`FNew`, `F_New`)
+et le singulier/pluriel sont automatiquement tolérés. « la table education »
+ou « presence » sont reconnus pour les tables réellement chargées
+`FNewEducation` et `FNewPresences`, sans avoir à écrire le nom complet.
+
 - **Décrire une relation** : « quelle est la relation entre Tindividual et
   TMembership ? » ou, sans préciser de nom, « quelles tables sont reliées
   entre elles ? » — il compare les vraies colonnes chargées (pas seulement la
   documentation du dictionnaire) et indique les colonnes en commun,
   candidates comme clé de jointure.
-- **Fusionner deux tables** : « fusionne Tindividual et TMembership » —
+- **Plus besoin de toujours nommer les deux tables.** Si une seule table est
+citée et qu'il n'y en a que deux au total chargées, l'autre est évidente :
+l'assistant complète tout seul, sans redemander. S'il y a plus de deux tables
+et que la question reste ambiguë, la relance liste les **vraies** tables
+actuellement chargées (jamais un exemple générique) — et si une seule est déjà
+identifiée, ne redemande que l'autre plutôt que de tout redemander.
+
+**Fusionner deux tables** : « fusionne Tindividual et TMembership » —
   effectue une vraie jointure (`pandas.merge`) sur la première colonne
   commune détectée, affiche un aperçu, **enregistre le résultat comme
   nouvelle table** (`fusion_Tindividual_TMembership`) interrogeable
@@ -253,6 +287,146 @@ suivi qui ne renomme pas la table ("et les doublons ?" après avoir parlé
 d'une table précise) reste rattachée au bon contexte : la résolution de
 table regarde d'abord la question en cours, puis les derniers échanges de la
 conversation, avant de retomber sur la table par défaut de l'interface.
+
+**Relance de calcul.** Si une réponse précédente a hésité ou n'a pas calculé
+directement (rare, mais peut arriver si la question initiale n'a pas été bien
+comprise), une relance courte qui ne répète pas le mot-clé initial ("il faut
+analyser directement", "calcule-le vraiment", "sois précis"...) est reconnue
+si le tour précédent portait déjà sur une différence/fusion/relation : le
+vrai calcul déterministe est relancé plutôt que de laisser la question filer
+vers une réponse générique du modèle de langage.
+
+## Analyses statistiques (univariée, bivariée, multivariée) et code associé
+
+Chaque analyse sur une table — répartition, échantillon, doublons, cohérence,
+tableau croisé, corrélation — est **toujours calculée directement à partir
+des vraies données chargées**, jamais rédigée ou devinée par le modèle de
+langage, et **systématiquement accompagnée de la syntaxe R et Stata
+équivalente** pour reproduire ou approfondir le calcul en dehors du chat.
+
+- **Univariée** : « répartition de sex », « échantillon de 100 », « doublons »,
+  « cohérence » — comme avant, avec en plus le code R/Stata à la fin de
+  chaque réponse.
+- **Bivariée** : « tableau croisé entre sex et education_level » — vrai
+  `pandas.crosstab` (effectifs + marges), avec `table()`/`tab` en R/Stata.
+- **Multivariée** : « corrélation entre individid, sex et age » (variables
+  numériques → matrice de corrélation) ou « analyse multivariée de sex,
+  education_level et field_wrkr » (3 colonnes catégorielles ou plus →
+  effectifs croisés sur toutes les combinaisons observées).
+- **Contrôle qualité des agents enquêteurs** : « performance des agents
+  enquêteurs », « erreurs par agent » — détecte automatiquement la colonne
+  d'agent de terrain (ex. `field_wrkr`) et donne, par agent : nombre de
+  fiches saisies, fiches impliquées dans un doublon d'identifiant, dates
+  invraisemblables détectées, taux moyen de valeurs manquantes — pour
+  repérer une charge de travail inhabituelle ou un agent avec plus
+  d'erreurs que les autres.
+
+**Lire partout, pas une seule table par défaut.** Si aucune table n'est
+nommée dans la question et qu'une colonne mentionnée existe dans plusieurs
+tables à la fois (ex. `individid` présent dans 20 tables), l'analyse est
+calculée pour **chacune** des tables concernées plutôt que de silencieusement
+n'en garder qu'une ou retomber sur la table par défaut de l'interface.
+
+**Reconnaissance insensible aux accents et aux accords grammaticaux.** Une
+question est reconnue qu'elle soit tapée avec ou sans accents
+(« cohérence »/« coherence », « répartition »/« repartition »), et les mots-clés
+plus ambigus (« relation », « corrélation »...) sont reconnus par mot entier
+pour ne jamais se confondre entre eux (« corrélation » ne déclenche jamais à
+tort une question de relation entre tables, par exemple).
+
+## Audit de cohérence avancé (catalogue de contrôles métier de l'observatoire)
+
+Au-delà du contrôle de cohérence générique (doublons + dates invraisemblables),
+une question comme « audit complet de cohérence », « audit de cohérence
+avancé » ou « toutes les incohérences » déclenche un **catalogue de contrôles
+spécifiques au type d'enquête de l'OPO**, appliqué automatiquement à toutes les
+tables chargées (ou à une seule si elle est nommée, ex. « audit complet de
+FNewIndividual »). Chaque contrôle est **auto-détecté par le nom des colonnes
+réellement présentes** (même principe que la détection des colonnes
+d'identifiant ou d'agent) : rien n'est deviné ni supposé sur des colonnes
+absentes, et la liste des contrôles non applicables à une table (colonnes non
+reconnues) est affichée explicitement pour rester transparent sur ce qui a
+vraiment été vérifié.
+
+Contrôles par table :
+
+- identifiants de longueur inhabituelle (par rapport à la longueur la plus
+  fréquente de la colonne) ;
+- auto-référence (un identifiant égal à son propre « ID2 », ex.
+  `individid == individid2`) ;
+- parents identiques (`fatherid == motherid`) ;
+- jeune enfant (moins de 5 ans) sans `motherid` renseigné, et séparément sans
+  `motherid` ni `fatherid` ;
+- valeur sentinelle de non-réponse codée (poids = 9999, taille = 99) ;
+- coordonnées GPS manquantes ou hors du territoire burkinabè ;
+- format de téléphone invalide (segments qui ne font pas 8 chiffres) ;
+- dates d'arrivée/départ incohérentes (départ antérieur ou égal à l'arrivée) ;
+- résidence multiple pour un même individu (plusieurs ménages/localisations
+  distincts) ;
+- naissance postérieure au décès, enregistrement antérieur à la naissance ;
+- âge hors de la tranche attendue selon le type de fiche détecté par le nom de
+  la table (12-49 ans pour une fiche génésique/grossesse, 12-40 ans pour une
+  fiche d'histoire matrimoniale, 5-34 ans pour l'éducation, 15-120 ans pour
+  l'emploi).
+
+Contrôles croisés entre tables (population « éligible » de la fiche présence —
+a dormi dans le ménage, sans date de départ enregistrée) :
+
+- éligibilité présence ↔ éducation/emploi/histoire génésique
+  complémentaire/pauvreté/santé (qui est éligible sans avoir la fiche, et qui a
+  la fiche sans être éligible) ;
+- décédé mais toujours présent dans la fiche présence ;
+- a dormi dans le ménage mais apparaît aussi en migration OUT ;
+- grossesse sans issue de grossesse enregistrée.
+
+**Non couvert pour l'instant, explicitement signalé comme tel dans le
+rapport** : les contrôles les plus spécifiques au questionnaire (codes de
+réponse détaillés d'une question de santé précise, par exemple), qui
+nécessitent de connaître le nom exact d'une colonne de code de réponse propre
+à l'observatoire et n'ont pas pu être vérifiés depuis cette session — à
+compléter dès que ces colonnes précises sont confirmées.
+
+## Performances de terrain (ménages/UCH, objectif, rapport Word)
+
+Distinct du contrôle qualité par agent (ci-dessus, qui mesure les erreurs) :
+une question comme « bilan de terrain », « avancement de la collecte » ou
+« ménages visités par agent » déclenche un **rapport de volume d'activité de
+terrain**, agrégé automatiquement sur **toutes les tables chargées** qui
+comportent une colonne d'agent détectable (fiche présence, naissance, décès,
+grossesse — et toute autre table avec un agent, classée en « Autres fiches »
+pour ne rien perdre) :
+
+- nombre de ménages/UCH visités (fiches + ménages **distincts**, via la
+  colonne `menageid`/`locationid` détectée) ;
+- naissances, décès, grossesses enregistrés par agent ;
+- **exclusion configurable** d'agents non-terrain directement depuis la
+  question (« ... en excluant les agents 12, 45 et 67 ») — aucune liste n'est
+  codée en dur, l'observatoire reste seul décisionnaire de qui exclure ;
+- **jointure agent ↔ contrôleur** automatique si une table « équipe »
+  (colonnes agent + contrôleur/superviseur détectées) est chargée ;
+- **performance par jour** (`n_fiches` par date et par agent) à partir de la
+  première table pertinente (fiche présence en priorité) ;
+- **prévision vers un objectif configurable** (17000 ménages par défaut,
+  ajustable dans la question : « ... objectif 20000 ») : cumul actuel, reste à
+  faire, rythme journalier moyen, date de fin projetée au rythme actuel ;
+- **courbe de progression** (cumul de fiches par jour) affichée directement
+  sous la réponse ;
+- **rapport Word téléchargeable** (bouton dédié) reprenant le tableau par
+  agent et la projection vers l'objectif, pour un partage hors chat.
+
+**Historique des actualisations** : « historique des actualisations » liste,
+pour la session en cours, chaque table (re)chargée avec son horodatage et son
+nombre de lignes.
+
+**Recherche instantanée par identifiant** : « recherche l'individu 1024 »
+retrouve en un seul coup toutes les lignes correspondantes dans **toutes**
+les tables chargées comportant une colonne d'identifiant, sans avoir à nommer
+chaque table une par une.
+
+_Non couvert pour l'instant_ : la simulation par hypothèse de rythme est
+disponible comme fonction (`data_tools.simulation_rythme`) mais pas encore
+reliée à une formulation en langage naturel dans le chat — à ajouter si
+l'équipe confirme la formulation qu'elle utiliserait.
 
 ## Lire une image (photo, scan)
 

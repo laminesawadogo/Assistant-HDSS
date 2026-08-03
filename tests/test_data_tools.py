@@ -38,12 +38,57 @@ def test_load_table_lit_un_fichier_stata(tmp_path):
     assert "nom" not in df.columns  # colonne nominative retiree comme pour csv/xlsx
 
 
+# --- Recherche large sur toutes les tables (colonne ambigue) ----------------
+
+def test_tables_avec_colonne_renvoie_toutes_les_correspondances():
+    tables = {
+        "FNewEducation": pd.DataFrame({"individid": [1], "sex": [1]}),
+        "FNewEmploi": pd.DataFrame({"individid": [1], "sex": [2]}),
+        "FNewSante": pd.DataFrame({"individid": [1], "autre_col": ["x"]}),
+    }
+    trouvees = dt.tables_avec_colonne("répartition de sex", tables)
+    assert set(trouvees) == {"FNewEducation", "FNewEmploi"}
+
+
+def test_tables_avec_colonne_vide_si_aucune_correspondance():
+    tables = {"FNewSante": pd.DataFrame({"autre_col": ["x"]})}
+    assert dt.tables_avec_colonne("répartition de sex", tables) == []
+
+
 # --- Relations et fusion entre tables chargees -------------------------------
 
 def test_detecter_tables_mentionnees():
     tables = {"Tindividual": pd.DataFrame({"individid": [1]}), "Tsocialgp": pd.DataFrame({"socialgpid": [1]})}
     assert dt.detecter_tables_mentionnees("relation entre Tindividual et Tsocialgp", tables) == ["Tindividual", "Tsocialgp"]
     assert dt.detecter_tables_mentionnees("question sans nom de table", tables) == []
+
+
+def test_detecter_tables_mentionnees_reconnait_les_noms_informels():
+    # L'equipe omet naturellement le prefixe technique "FNew" et parfois le
+    # pluriel : "education"/"presence" doivent quand meme etre reconnus comme
+    # FNewEducation/FNewPresences, sinon les questions de difference/fusion
+    # echouent des que les vrais noms de tables de l'observatoire sont utilises.
+    tables = {
+        "FNewEducation": pd.DataFrame({"individid": [1, 2]}),
+        "FNewPresences": pd.DataFrame({"individid": [1]}),
+    }
+    trouvees = dt.detecter_tables_mentionnees(
+        "combien d'individus sont dans la table education et pas dans la table presence", tables
+    )
+    assert set(trouvees) == {"FNewEducation", "FNewPresences"}
+
+
+def test_alias_table_ignore_prefixe_technique_et_pluriel():
+    assert "education" in dt.alias_table("FNewEducation")
+    assert "presence" in dt.alias_table("FNewPresences")
+    assert "presences" in dt.alias_table("FNewPresences")
+
+
+def test_alias_table_exclut_les_fragments_trop_courts():
+    # Un alias de moins de 4 caracteres serait trop generique (faux positifs
+    # sur un mot sans rapport) : il est exclu plutot que renvoye tel quel.
+    for alias in dt.alias_table("FNewIN"):
+        assert len(alias) >= 4
 
 
 def test_detecter_cles_communes_trouve_la_colonne_partagee():
@@ -192,6 +237,107 @@ def test_syntaxe_difference_contient_r_et_stata():
     texte = dt.syntaxe_difference("Presence", "Education", "individid")
     assert "anti_join(Presence, Education" in texte
     assert "keep if _merge == 1" in texte
+
+
+# --- Syntaxe R/Stata pour repartition/echantillon/doublons/coherence --------
+
+def test_syntaxe_repartition_contient_r_et_stata():
+    texte = dt.syntaxe_repartition("Tindividual", "sex")
+    assert "table(Tindividual$sex)" in texte
+    assert "tab sex" in texte
+
+
+def test_syntaxe_echantillon_contient_r_et_stata():
+    texte = dt.syntaxe_echantillon("Tindividual", 100, seed=20260729)
+    assert "set.seed(20260729)" in texte
+    assert "sample 100, count" in texte
+
+
+def test_syntaxe_doublons_contient_r_et_stata():
+    texte = dt.syntaxe_doublons("Tindividual", "individid")
+    assert "duplicated(Tindividual$individid)" in texte
+    assert "duplicates tag individid" in texte
+
+
+def test_syntaxe_coherence_contient_r_et_stata():
+    texte = dt.syntaxe_coherence("Tindividual", ["individid"], ["birth_date"])
+    assert "duplicated(use_table$individid)" in texte
+    assert "duplicates report individid" in texte
+    assert "birth_date" in texte
+
+
+def test_syntaxe_coherence_sans_colonnes_detectees():
+    texte = dt.syntaxe_coherence("Tindividual", [], [])
+    assert "Aucune colonne d'identifiant ou de date detectee" in texte
+
+
+# --- Analyse bivariee / multivariee / correlation ---------------------------
+
+def test_tableau_croise_calcule_les_effectifs_avec_marges():
+    df = pd.DataFrame({"sex": [1, 2, 1, 2], "niveau": ["a", "b", "a", "a"]})
+    tab = dt.tableau_croise(df, "sex", "niveau")
+    assert tab.loc[1, "a"] == 2
+    assert tab.loc["Total", "Total"] == 4
+
+
+def test_tableau_croise_leve_erreur_si_colonne_absente():
+    df = pd.DataFrame({"sex": [1, 2]})
+    with pytest.raises(ValueError):
+        dt.tableau_croise(df, "sex", "colonne_inexistante")
+
+
+def test_colonnes_numeriques_detecte_les_bonnes_colonnes():
+    df = pd.DataFrame({"individid": [1, 2], "sex": [1, 2], "niveau": ["a", "b"]})
+    assert set(dt.colonnes_numeriques(df)) == {"individid", "sex"}
+
+
+def test_matrice_correlation_leve_erreur_si_moins_de_deux_colonnes_numeriques():
+    df = pd.DataFrame({"individid": [1, 2, 3], "niveau": ["a", "b", "c"]})
+    with pytest.raises(ValueError):
+        dt.matrice_correlation(df)
+
+
+def test_matrice_correlation_calcule_correctement():
+    df = pd.DataFrame({"x": [1, 2, 3, 4], "y": [1, 2, 3, 4]})
+    mat = dt.matrice_correlation(df, ["x", "y"])
+    assert mat.loc["x", "y"] == 1.0
+
+
+def test_tableau_multivarie_groupe_sur_plusieurs_colonnes():
+    df = pd.DataFrame({"sex": [1, 1, 2], "niveau": ["a", "a", "b"], "agent": ["X", "X", "Y"]})
+    tab = dt.tableau_multivarie(df, ["sex", "niveau", "agent"])
+    assert tab["effectif"].sum() == 3
+    assert len(tab) == 2  # deux combinaisons distinctes observees
+
+
+# --- Controle qualite des agents enqueteurs ---------------------------------
+
+def test_detect_agent_columns_reconnait_field_wrkr():
+    df = pd.DataFrame({"individid": [1], "field_wrkr": ["A"]})
+    assert "field_wrkr" in dt.detect_agent_columns(df)
+
+
+def test_rapport_agents_compte_fiches_et_doublons_par_agent():
+    df = pd.DataFrame({
+        "individid": [1, 2, 3, 3],  # 3 est en doublon
+        "field_wrkr": ["A", "A", "B", "B"],
+    })
+    rapport = dt.rapport_agents(df)
+    ligne_b = rapport[rapport["agent"] == "B"].iloc[0]
+    assert ligne_b["n_fiches"] == 2
+    assert ligne_b["doublons_id"] == 2  # les deux lignes de individid=3
+
+
+def test_rapport_agents_leve_erreur_sans_colonne_agent():
+    df = pd.DataFrame({"individid": [1, 2]})
+    with pytest.raises(ValueError):
+        dt.rapport_agents(df)
+
+
+def test_syntaxe_rapport_agents_contient_r_et_stata():
+    texte = dt.syntaxe_rapport_agents("FNewIndividual", "field_wrkr")
+    assert "dplyr::count(FNewIndividual, field_wrkr" in texte
+    assert "bysort field_wrkr" in texte
 
 
 # --- Classeurs Excel multi-feuilles -----------------------------------------
@@ -372,6 +518,15 @@ def test_resoudre_table_ciblee_par_nom_mentionne():
     assert nom == "Tsocialgp"
 
 
+def test_resoudre_table_ciblee_par_nom_informel_sans_prefixe():
+    tables = {
+        "FNewEducation": pd.DataFrame({"individid": [1, 2]}),
+        "FNewPresences": pd.DataFrame({"individid": [1]}),
+    }
+    nom, df = dt.resoudre_table_ciblee("échantillon de la table education", tables)
+    assert nom == "FNewEducation"
+
+
 def test_resoudre_table_ciblee_retombe_sur_le_defaut():
     tables = {
         "Tindividual": pd.DataFrame({"individid": [1]}),
@@ -453,3 +608,235 @@ def test_resoudre_table_ciblee_priorite_au_nom_explicite_meme_avec_historique():
         "doublons de Tindividual", tables, nom_par_defaut=None, historique=historique
     )
     assert nom == "Tindividual"
+
+
+# --- Catalogue de controles de coherence avances ----------------------------
+
+def test_controle_id_longueur_signale_les_ids_de_taille_differente():
+    df = pd.DataFrame({"individid": ["1", "22", "3", "4"]})
+    resultat = dt.controle_id_longueur(df)
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_id_longueur_none_sans_colonne_id():
+    df = pd.DataFrame({"sex": [1, 2]})
+    assert dt.controle_id_longueur(df) is None
+
+
+def test_controle_auto_reference_detecte_individid_egal_individid2():
+    df = pd.DataFrame({"individid": [1, 2, 3], "individid2": [1, 3, 3]})
+    resultat = dt.controle_auto_reference(df)
+    assert resultat["n_anomalies"] == 2
+
+
+def test_controle_parents_identiques():
+    df = pd.DataFrame({"fatherid": [10, 20], "motherid": [10, 21]})
+    resultat = dt.controle_parents_identiques(df)
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_parent_manquant_jeune_enfant():
+    df = pd.DataFrame({
+        "birth_date": ["2024-01-01", "1990-01-01", "2023-06-01"],
+        "motherid": [10, 21, None],
+        "fatherid": [10, 20, None],
+    })
+    resultat = dt.controle_parent_manquant_jeune_enfant(df, seuil_age=5.0)
+    assert resultat["n_anomalies"] == 1  # seule la ligne 2 (< 5 ans, aucun parent)
+
+
+def test_controle_sentinelle_poids_et_taille():
+    df = pd.DataFrame({"poids": [3200, 9999], "taille": [50, 99]})
+    assert dt.controle_sentinelle(df, dt.WEIGHT_LIKE, 9999)["n_anomalies"] == 1
+    assert dt.controle_sentinelle(df, dt.HEIGHT_LIKE, 99)["n_anomalies"] == 1
+
+
+def test_controle_gps_hors_zone_detecte_coordonnees_invalides():
+    df = pd.DataFrame({"lat": [12.3, 40.0, None], "lon": [-1.5, 2.0, 0.5]})
+    resultat = dt.controle_gps_hors_zone(df)
+    assert resultat["n_anomalies"] == 2  # ligne hors BF + ligne avec coordonnee manquante
+
+
+def test_controle_telephone_format_detecte_numero_invalide():
+    df = pd.DataFrame({"NumTelephone": ["70123456", "701234", "70123456/70654321"]})
+    resultat = dt.controle_telephone_format(df)
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_dates_arrivee_depart_detecte_incoherence():
+    df = pd.DataFrame({
+        "arrive_date": ["2024-01-01", "2024-01-01", "2024-05-01"],
+        "depart_date": ["2024-01-01", "2023-12-01", None],
+    })
+    resultat = dt.controle_dates_arrivee_depart(df)
+    assert resultat["n_anomalies"] == 2
+
+
+def test_controle_residence_multiple_detecte_individu_dans_plusieurs_menages():
+    df = pd.DataFrame({"individid": [1, 1, 2, 3], "locationid": [10, 20, 10, 10]})
+    resultat = dt.controle_residence_multiple(df)
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_tranche_age_detecte_hors_plage():
+    df = pd.DataFrame({"birth_date": ["2020-01-01", "2000-01-01", "1990-01-01"]})
+    resultat = dt.controle_tranche_age(df, 5, 34)
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_eligibilite_croisee_presence_education():
+    presence = pd.DataFrame({
+        "individid": [1, 2, 3, 4, 5],
+        "sleep_lastnight": [1, 1, 0, 1, 1],
+        "depart_date": [None, None, None, "2024-01-01", None],
+    })
+    education = pd.DataFrame({"individid": [1, 4, 6]})
+    tables = {"FNewPresences": presence, "FNewEducation": education}
+    resultat = dt.controle_eligibilite_croisee(tables, "FNewPresences", "FNewEducation")
+    assert resultat["n_eligibles_sans_fiche"] == 2
+    assert resultat["n_fiche_sans_eligibilite"] == 2
+    assert set(resultat["eligibles_sans_fiche"]) == {2, 5}
+    assert set(resultat["fiche_sans_eligibilite"]) == {4, 6}
+
+
+def test_controle_deces_present_detecte_le_chevauchement():
+    deces = pd.DataFrame({"individid": [3, 999]})
+    presence = pd.DataFrame({"individid": [1, 2, 3, 4, 5]})
+    tables = {"FNewDeath": deces, "FNewPresences": presence}
+    resultat = dt.controle_deces_present(tables, "FNewDeath", "FNewPresences")
+    assert resultat["n_anomalies"] == 1
+
+
+def test_rapport_coherence_avancee_couvre_toutes_les_tables_et_croises():
+    presence = pd.DataFrame({
+        "individid": [1, 2, 3, 4, 5],
+        "sleep_lastnight": [1, 1, 0, 1, 1],
+        "depart_date": [None, None, None, "2024-01-01", None],
+    })
+    education = pd.DataFrame({"individid": [1, 4, 6]})
+    deces = pd.DataFrame({"individid": [3, 999]})
+    tables = {"FNewPresences": presence, "FNewEducation": education, "FNewDeath": deces}
+
+    rapport = dt.rapport_coherence_avancee(tables)
+    assert set(rapport["par_table"].keys()) == {"FNewPresences", "FNewEducation", "FNewDeath"}
+    libelles_croises = [c[0] for c in rapport["croises"]]
+    assert any("ligibilit" in l for l in libelles_croises)
+    assert any("écédé" in l for l in libelles_croises)
+
+
+def test_rapport_coherence_avancee_sur_une_seule_table():
+    tables = {
+        "FNewIndividual": pd.DataFrame({"individid": ["1", "2"], "fatherid": [1, 2], "motherid": [1, 3]}),
+        "FNewAutre": pd.DataFrame({"x": [1]}),
+    }
+    rapport = dt.rapport_coherence_avancee(tables, nom_table="FNewIndividual")
+    assert list(rapport["par_table"].keys()) == ["FNewIndividual"]
+
+
+# --- Module "Performances" : volume d'activite de terrain par agent ---------
+
+@pytest.fixture
+def tables_performance_terrain():
+    presence = pd.DataFrame({
+        "individid": [1, 2, 3, 4, 5, 6, 7, 8],
+        "menageid": [10, 10, 11, 12, 12, 13, 14, 14],
+        "field_wrkr": ["A1", "A1", "A1", "A2", "A2", "A2", "A3", "A3"],
+        "visit_date": [
+            "01/01/2026", "01/01/2026", "02/01/2026",
+            "01/01/2026", "02/01/2026", "02/01/2026",
+            "03/01/2026", "03/01/2026",
+        ],
+    })
+    naissance = pd.DataFrame({"individid": [1, 2, 3], "field_wrkr": ["A1", "A2", "A1"]})
+    deces = pd.DataFrame({"individid": [9], "field_wrkr": ["A2"]})
+    equipe = pd.DataFrame({"field_wrkr": ["A1", "A2", "A3"], "controleur": ["C1", "C1", "C2"]})
+    return {
+        "FNewPresences": presence, "FNewBirth": naissance,
+        "FNewDeath": deces, "Equipe": equipe,
+    }
+
+
+def test_rapport_performance_agents_agrege_toutes_les_tables(tables_performance_terrain):
+    rapport = dt.rapport_performance_agents(tables_performance_terrain)
+    assert set(rapport["agent"]) == {"A1", "A2", "A3"}
+    ligne_a1 = rapport[rapport["agent"] == "A1"].iloc[0]
+    assert ligne_a1["Ménages/UCH visités"] == 3
+    assert ligne_a1["Ménages/UCH distincts"] == 2
+    assert ligne_a1["Naissances enregistrées"] == 2
+    assert ligne_a1["total_fiches"] == 5  # menages/UCH visites (3) + naissances (2), pas les distincts
+
+
+def test_rapport_performance_agents_exclut_les_agents_demandes(tables_performance_terrain):
+    rapport = dt.rapport_performance_agents(tables_performance_terrain, exclure=["a3"])
+    assert set(rapport["agent"]) == {"A1", "A2"}
+
+
+def test_rapport_performance_agents_ignore_la_table_equipe(tables_performance_terrain):
+    # La table "Equipe" (avec une colonne controleur) ne doit jamais etre
+    # comptee comme une fiche d'activite de terrain.
+    rapport = dt.rapport_performance_agents(tables_performance_terrain)
+    assert not any(c.startswith("Autres fiches") for c in rapport.columns)
+
+
+def test_rapport_performance_par_jour(tables_performance_terrain):
+    par_jour = dt.rapport_performance_par_jour(tables_performance_terrain)
+    assert list(par_jour.columns) == ["date", "agent", "n_fiches"]
+    total = par_jour["n_fiches"].sum()
+    assert total == 8  # les 8 lignes de la fiche presence
+
+
+def test_fusion_agent_controleur_ajoute_la_colonne(tables_performance_terrain):
+    rapport = dt.rapport_performance_agents(tables_performance_terrain)
+    fusionne, nom_equipe = dt.fusion_agent_controleur(rapport, tables_performance_terrain)
+    assert nom_equipe == "Equipe"
+    assert "controleur" in fusionne.columns
+    assert fusionne.set_index("agent")["controleur"]["A3"] == "C2"
+
+
+def test_fusion_agent_controleur_sans_table_equipe():
+    rapport = pd.DataFrame({"agent": ["A1"], "total_fiches": [5]})
+    fusionne, nom_equipe = dt.fusion_agent_controleur(rapport, {"Autre": pd.DataFrame({"x": [1]})})
+    assert nom_equipe is None
+    assert "controleur" not in fusionne.columns
+
+
+def test_prevision_objectif_calcule_la_date_de_fin(tables_performance_terrain):
+    par_jour = dt.rapport_performance_par_jour(tables_performance_terrain)
+    prevision = dt.prevision_objectif(par_jour, objectif=20)
+    assert prevision["cumul_actuel"] == 8
+    assert prevision["reste_a_faire"] == 12
+    assert prevision["date_fin_projetee"] is not None
+
+
+def test_prevision_objectif_none_sans_donnees():
+    assert dt.prevision_objectif(pd.DataFrame(), objectif=100) is None
+
+
+def test_simulation_rythme():
+    resultat = dt.simulation_rythme(reste_a_faire=100, jours_disponibles=10)
+    assert resultat["rythme_journalier_necessaire"] == 10.0
+
+
+def test_simulation_rythme_leve_erreur_si_zero_jour():
+    with pytest.raises(ValueError):
+        dt.simulation_rythme(reste_a_faire=100, jours_disponibles=0)
+
+
+def test_rechercher_identifiant_trouve_dans_plusieurs_tables(tables_performance_terrain):
+    resultats = dt.rechercher_identifiant("3", tables_performance_terrain)
+    assert "FNewPresences" in resultats
+    assert "FNewBirth" in resultats
+    assert "FNewDeath" not in resultats
+
+
+def test_rechercher_identifiant_introuvable(tables_performance_terrain):
+    assert dt.rechercher_identifiant("999999", tables_performance_terrain) == {}
+
+
+def test_generer_rapport_performance_docx_produit_des_bytes(tables_performance_terrain):
+    rapport = dt.rapport_performance_agents(tables_performance_terrain)
+    par_jour = dt.rapport_performance_par_jour(tables_performance_terrain)
+    prevision = dt.prevision_objectif(par_jour, objectif=20)
+    contenu = dt.generer_rapport_performance_docx(rapport, prevision, objectif=20)
+    assert isinstance(contenu, bytes)
+    assert len(contenu) > 0

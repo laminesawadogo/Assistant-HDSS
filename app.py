@@ -8,14 +8,48 @@ import os
 import re
 import tempfile
 import traceback
+import unicodedata
+from datetime import datetime
 from pathlib import Path
 
 import streamlit as st
 from dotenv import load_dotenv
 
+import auth
 import data_tools as dt
 import ingest
 import rag
+
+
+def sans_accents(texte: str) -> str:
+    """Retire les accents d'un texte, pour que la reconnaissance de mots-cles
+    ne depende jamais de la presence ou non d'un accent (ex: "cohérence" tape
+    par l'equipe ne matchait jamais le mot-cle "coheren" en ASCII pur - meme
+    principe pour "repartition"/"répartition", "echantillon"/"échantillon"...).
+    Applique a la question ET aux mots-cles au moment de la comparaison, pour
+    que n'importe quelle orthographe (avec ou sans accent) soit reconnue."""
+    return "".join(c for c in unicodedata.normalize("NFD", texte) if unicodedata.category(c) != "Mn")
+
+
+def contient_mot_cle(q_normalise: str, mots: list[str], entiers: bool = False) -> bool:
+    """Vérifie si un des mots-cles (accentues ou non) apparait dans une
+    question deja normalisee (minuscules + sans accents via `sans_accents`).
+
+    `entiers=True` exige une correspondance de MOT ENTIER (frontieres de mot)
+    plutot qu'une simple sous-chaine - necessaire pour des mots courts qui
+    risqueraient sinon de matcher a tort a l'interieur d'un autre mot plus
+    long (ex: "relation" ne doit pas matcher dans "corrélation", "lien" ne
+    doit pas matcher dans "italien"). Par defaut (False), une simple
+    sous-chaine suffit - utile pour reconnaitre plusieurs formes d'un meme
+    radical en une seule entree (ex: "envoy" pour envoyer/envoyé/envoie)."""
+    for m in mots:
+        motif = sans_accents(m.lower())
+        if entiers:
+            if re.search(r"\b" + re.escape(motif) + r"\b", q_normalise):
+                return True
+        elif motif in q_normalise:
+            return True
+    return False
 
 # Charge la cle du modele (GROQ_API_KEY / ANTHROPIC_API_KEY) depuis un fichier
 # .env place a cote de ce fichier, pour que la cle soit configuree une seule
@@ -38,6 +72,13 @@ for _cle in ("ANTHROPIC_API_KEY", "GROQ_API_KEY"):
             os.environ[_cle] = _valeur
 
 st.set_page_config(page_title="Assistant OPO", page_icon="📊", layout="wide")
+
+# Ecran de connexion : bloque tout le reste de la page (st.stop() dans
+# auth.verifier_acces) tant que l'utilisateur n'est pas authentifie. Doit
+# rester le tout premier element d'interface apres set_page_config, pour
+# qu'aucune donnee (tables, chat, documents) ne soit accessible sans compte
+# valide - voir auth_config.yaml pour la gestion des comptes.
+identite_utilisateur = auth.verifier_acces()
 
 # --- Préparation silencieuse de l'index ---------------------------------------
 # L'index de recherche doit exister avant de pouvoir répondre a une question
@@ -162,6 +203,8 @@ with st.sidebar:
         st.session_state["tables"] = {}
     if "fichiers_traites" not in st.session_state:
         st.session_state["fichiers_traites"] = set()  # (nom, taille) déjà chargés
+    if "historique_chargements" not in st.session_state:
+        st.session_state["historique_chargements"] = []  # trace chaque (re)chargement de table
 
     fichiers = st.file_uploader(
         "Déposer une ou plusieurs tables (CSV, Excel ou Stata)",
@@ -188,26 +231,44 @@ with st.sidebar:
                     suffix = ".csv"
                 # tempfile.gettempdir() fonctionne sur Windows, macOS et Linux
                 # (un chemin code en dur type "/tmp/..." plante sous Windows).
+                # delete=False est necessaire pour pouvoir rouvrir le fichier
+                # par son chemin (pd.read_excel/read_stata...) une fois
+                # ferme ; le nettoyage est fait explicitement dans le bloc
+                # `finally` juste en dessous, pour ne jamais laisser une
+                # donnee deposee trainer sur le disque du serveur au-dela du
+                # temps de son chargement (securite des donnees importees).
                 tmp_path = tempfile.NamedTemporaryFile(delete=False, suffix=suffix).name
-                with open(tmp_path, "wb") as f:
-                    f.write(fichier.getbuffer())
+                try:
+                    with open(tmp_path, "wb") as f:
+                        f.write(fichier.getbuffer())
 
-                if dt.est_classeur_excel(fichier.name):
-                    # Un classeur Excel peut contenir plusieurs feuilles, chacune
-                    # une table distincte (ex: une feuille par table de
-                    # l'observatoire) : on les reconnait toutes, pas seulement
-                    # la premiere.
-                    feuilles = dt.charger_classeur(tmp_path)
-                    for nom_feuille, df_feuille in feuilles.items():
-                        nom_table = nom_feuille if nom_feuille not in st.session_state["tables"] else (
-                            f"{Path(fichier.name).stem}_{nom_feuille}"
-                        )
-                        st.session_state["tables"][nom_table] = df_feuille
-                else:
-                    nom_table = re.sub(r"\.(csv|xlsx|xls|dta)$", "", fichier.name, flags=re.IGNORECASE)
-                    st.session_state["tables"][nom_table] = dt.load_table(tmp_path)
+                    horodatage = datetime.now()
+                    if dt.est_classeur_excel(fichier.name):
+                        # Un classeur Excel peut contenir plusieurs feuilles, chacune
+                        # une table distincte (ex: une feuille par table de
+                        # l'observatoire) : on les reconnait toutes, pas seulement
+                        # la premiere.
+                        feuilles = dt.charger_classeur(tmp_path)
+                        for nom_feuille, df_feuille in feuilles.items():
+                            nom_table = nom_feuille if nom_feuille not in st.session_state["tables"] else (
+                                f"{Path(fichier.name).stem}_{nom_feuille}"
+                            )
+                            st.session_state["tables"][nom_table] = df_feuille
+                            st.session_state["historique_chargements"].append({
+                                "horodatage": horodatage, "fichier": fichier.name,
+                                "table": nom_table, "n_lignes": len(df_feuille),
+                            })
+                    else:
+                        nom_table = re.sub(r"\.(csv|xlsx|xls|dta)$", "", fichier.name, flags=re.IGNORECASE)
+                        st.session_state["tables"][nom_table] = dt.load_table(tmp_path)
+                        st.session_state["historique_chargements"].append({
+                            "horodatage": horodatage, "fichier": fichier.name,
+                            "table": nom_table, "n_lignes": len(st.session_state["tables"][nom_table]),
+                        })
 
-                st.session_state["fichiers_traites"].add(signature)
+                    st.session_state["fichiers_traites"].add(signature)
+                finally:
+                    Path(tmp_path).unlink(missing_ok=True)
             except Exception as e:
                 st.error(f"Impossible de lire {fichier.name} : {e}")
 
@@ -334,6 +395,17 @@ def afficher_boutons_export(exports: dict, label: str, cle: str):
                 st.caption(f"Export {fmt.upper()} indisponible : {exports.get(f'{fmt}_erreur', '')}")
 
 
+def afficher_bouton_docx(docx_bytes: bytes, label: str, cle: str):
+    """Bouton de telechargement dedie au rapport Word (performance de
+    terrain) - separe des exports csv/xlsx/dta puisqu'il ne s'agit pas d'un
+    export brut d'une table mais d'un rapport mis en forme."""
+    st.download_button(
+        "⬇️ Rapport Word (.docx)", data=docx_bytes, file_name=f"{label}.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        key=f"dl_docx_{cle}",
+    )
+
+
 for i, msg in enumerate(st.session_state["messages"]):
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
@@ -343,6 +415,11 @@ for i, msg in enumerate(st.session_state["messages"]):
                     st.markdown(f"- ({s['score']:.2f}) {s['text']}")
         if msg.get("exports") is not None:
             afficher_boutons_export(msg["exports"], msg.get("table_label", "export"), cle=f"hist_{i}")
+        if msg.get("docx_bytes") is not None:
+            afficher_bouton_docx(msg["docx_bytes"], msg.get("docx_label", "rapport"), cle=f"hist_{i}")
+        if msg.get("chart_data") is not None:
+            st.caption("Courbe de progression (cumul de fiches par jour)")
+            st.line_chart(msg["chart_data"])
 
 
 def historique_recent(max_tours: int = 6) -> list[dict]:
@@ -356,7 +433,16 @@ def historique_recent(max_tours: int = 6) -> list[dict]:
     return [{"role": m["role"], "contenu": m["content"]} for m in recents]
 
 
-MOTS_RELATION = ["relation", "reliee", "reliees", "relie", "relies", "lien", "liees", "en commun", "cle commune", "cles communes", "clé commune", "clés communes"]
+# Avec entiers=True (mot entier, voir contient_mot_cle), chaque accord
+# grammatical (singulier/pluriel) doit etre liste explicitement - c'est ce qui
+# evite qu'un mot comme "relation" ne matche a tort a l'interieur de
+# "corrélation" (voir MOTS_CORRELATION), mais ca veut dire que "relations"
+# (pluriel) ne matche plus via "relation" seul : il faut lister les deux.
+MOTS_RELATION = [
+    "relation", "relations", "reliee", "reliees", "relie", "relies",
+    "lien", "liens", "liees", "en commun", "cle commune", "cles communes",
+    "clé commune", "clés communes",
+]
 MOTS_FUSION = ["fusion", "fusionner", "fusionne", "jointure", "joindre", "joins", "merge", "merger"]
 MOTS_DIFFERENCE = [
     "mais pas dans", "et pas dans", "pas dans", "absent de", "absents de", "absente de", "absentes de",
@@ -364,6 +450,80 @@ MOTS_DIFFERENCE = [
     "n'apparaît pas dans",
 ]
 MOTS_VICE_VERSA = ["vice versa", "vice-versa", "et inversement", "et l'inverse", "et réciproquement", "et reciproquement"]
+
+# Une reponse generique/hesitante du LLM ("je n'ai pas d'environnement
+# d'execution...") peut pousser l'equipe a relancer avec une phrase courte qui
+# ne repete PAS le mot-cle d'action initial (ex: "il faut analyser
+# directement" apres une question de difference) : sans memoire de l'action
+# demandee, cette relance retombe elle aussi sur le LLM au lieu de declencher
+# le vrai calcul deterministe. On detecte ce type de relance et on va
+# rechercher, dans le dernier message utilisateur de l'historique, le mot-cle
+# d'action qui avait ete utilise pour la question initiale.
+MOTS_RELANCE_CALCUL = [
+    "directement", "vraiment", "réellement", "reellement", "un vrai", "une vraie",
+    "résultat exact", "resultat exact", "le vrai nombre", "le vrai chiffre",
+    "pas une estimation", "fais le calcul", "fais-le", "fais le", "exécute", "execute",
+    "sois précis", "sois precis", "pour de vrai", "concrètement", "concretement",
+    "analyse les données", "analyse les donnees", "calcule-le", "calcule le",
+]
+
+
+def action_deja_demandee_dans_historique(
+    historique: list[dict] | None, mots_action: list[str], entiers: bool = False
+) -> bool:
+    """Vérifie si un message RECENT de l'UTILISATEUR (pas de l'assistant, dont
+    les propres réponses répètent souvent des mots comme "directement") dans
+    l'historique contenait déjà un des mots-clés d'une action (difference,
+    fusion, relation) - pour qu'une relance courte qui ne repete pas ce
+    mot-cle ("il faut analyser directement") redeclenche bien le meme calcul
+    deterministe plutôt que de retomber sur une réponse générique du LLM."""
+    if not historique:
+        return False
+    for message in reversed(historique):
+        if message.get("role") != "user":
+            continue
+        contenu = sans_accents(str(message.get("contenu", "")).lower())
+        if contient_mot_cle(contenu, mots_action, entiers=entiers):
+            return True
+    return False
+
+
+def resoudre_paire_tables(tables_mentionnees: list[str], tables: dict) -> tuple[str, str] | None:
+    """Tente de resoudre automatiquement la paire de tables visee par une
+    question de difference/fusion, meme si une seule (ou aucune) n'est
+    explicitement nommee dans la question - pour ne pas obliger l'equipe a
+    toujours ecrire une phrase du type "combien sont dans X mais pas dans Y"
+    avec les deux noms explicites : si une seule autre table est chargee en
+    tout, la reponse est evidente et ne merite pas une question de relance."""
+    if len(tables_mentionnees) >= 2:
+        return tables_mentionnees[0], tables_mentionnees[1]
+    if len(tables_mentionnees) == 1 and len(tables) == 2:
+        autres = [n for n in tables if n != tables_mentionnees[0]]
+        if len(autres) == 1:
+            return tables_mentionnees[0], autres[0]
+    return None
+
+
+def message_precision_tables(verbe: str, tables: dict, tables_mentionnees: list[str]) -> str:
+    """Message de relance dynamique - utilise les VRAIES tables actuellement
+    chargees (jamais un exemple fige type "Presence"/"Education" qui pourrait
+    ne pas exister) - quand une question de difference/fusion ne permet pas
+    de determiner sans ambiguite les deux tables visees. Si une seule table
+    est deja identifiee, ne redemande que l'autre, parmi les tables reellement
+    chargees, plutot que de tout redemander depuis le debut."""
+    if not tables:
+        return "Aucune table n'est chargée pour l'instant : dépose d'abord les fichiers à comparer."
+    if len(tables_mentionnees) == 1:
+        seule = tables_mentionnees[0]
+        autres = [n for n in tables if n != seule]
+        return (
+            f"Tu veux {verbe} **{seule}** avec laquelle des autres tables chargées ? "
+            f"{', '.join(f'**{n}**' for n in autres)}."
+        )
+    return (
+        f"Précise les deux tables à {verbe}, parmi celles chargées : "
+        f"{', '.join(f'**{n}**' for n in tables)}."
+    )
 
 
 def formater_rapport_coherence(rapport: dict, nom_table: str) -> str:
@@ -396,10 +556,375 @@ def formater_rapport_coherence(rapport: dict, nom_table: str) -> str:
     return "\n".join(lignes)
 
 
+def formater_rapport_coherence_avancee(rapport: dict) -> str:
+    """Met en forme le catalogue de controles de coherence avances
+    (dt.rapport_coherence_avancee) : ce qui a ete verifie table par table, ce
+    qui a ete ignore faute de colonnes reconnues (transparence), et les
+    controles croises entre tables (eligibilite presence <-> education/
+    emploi/..., deces <-> presence, etc.)."""
+    if not rapport["par_table"] and not rapport["croises"]:
+        return (
+            "Aucun contrôle avancé n'a pu s'appliquer aux tables actuellement chargées "
+            "(colonnes attendues non reconnues automatiquement)."
+        )
+
+    lignes = ["**Audit de cohérence avancé** (catalogue de contrôles spécifiques à l'observatoire) :"]
+
+    for nom_table, details in rapport["par_table"].items():
+        lignes.append(f"\n**{nom_table}**")
+        for libelle, resultat in details["controles_ok"]:
+            n = resultat.get("n_anomalies", 0)
+            detail_txt = " ; ".join(resultat.get("detail", [])) if resultat.get("detail") else ""
+            if n > 0:
+                lignes.append(f"- ⚠️ {libelle} : **{n} cas**" + (f" ({detail_txt})" if detail_txt else ""))
+            else:
+                lignes.append(f"- ✅ {libelle} : aucune anomalie")
+        if details["controles_ignores"]:
+            lignes.append(
+                "- _Non applicable ici (colonnes non détectées) : "
+                + ", ".join(details["controles_ignores"]) + "._"
+            )
+
+    if rapport["croises"]:
+        lignes.append("\n**Contrôles croisés entre tables**")
+        for libelle, nom_a, nom_b, resultat in rapport["croises"]:
+            if "n_eligibles_sans_fiche" in resultat:
+                lignes.append(
+                    f"- {libelle} (**{nom_a}** ↔ **{nom_b}**) : "
+                    f"**{resultat['n_eligibles_sans_fiche']}** éligible(s) sans fiche, "
+                    f"**{resultat['n_fiche_sans_eligibilite']}** avec fiche sans être éligible."
+                )
+            else:
+                n = resultat.get("n_anomalies", 0)
+                symbole = "⚠️" if n > 0 else "✅"
+                lignes.append(f"- {symbole} {libelle} (**{nom_a}** ↔ **{nom_b}**) : **{n} cas**")
+
+    lignes.append(
+        "\n_Rappel : signalement basé sur une détection automatique des colonnes pertinentes par leur nom — "
+        "pas une correction automatique, la validation reste réservée aux personnes habilitées. Certains "
+        "contrôles très spécifiques au questionnaire (codes de réponse détaillés) ne sont pas encore couverts "
+        "s'ils n'ont pas pu être reconnus automatiquement._"
+    )
+    return "\n".join(lignes)
+
+
+# Les quatre fonctions ci-dessous centralisent le calcul ET la syntaxe R/Stata
+# equivalente pour chaque operation sur une table (repartition, echantillon,
+# doublons, coherence), pour que les DEUX chemins qui y menent (mots-cles
+# directs, et repli via classifier_intention) donnent exactement la meme
+# reponse complete - plutot que de dupliquer la logique a deux endroits et
+# risquer qu'elle diverge (l'un avec la syntaxe, l'autre sans).
+
+def reponse_repartition(df, nom_table: str, colonne: str) -> dict:
+    rep = dt.repartition(df, colonne)
+    contenu = (
+        f"Répartition de `{colonne}` dans **{nom_table}** :\n\n{rep.to_markdown()}"
+        f"\n\n{dt.syntaxe_repartition(nom_table, colonne)}"
+    )
+    return {"content": contenu, "table": rep.reset_index(), "table_label": f"repartition_{colonne}_{nom_table}"}
+
+
+def reponse_echantillon(df, nom_table: str, n: int) -> dict:
+    ech = dt.echantillon(df, n=n)
+    contenu = (
+        f"Échantillon reproductible de {len(ech)} lignes (graine fixée) issu de **{nom_table}** :\n\n"
+        f"{ech.to_markdown(index=False)}\n\n{dt.syntaxe_echantillon(nom_table, len(ech), seed=20260729)}"
+    )
+    return {"content": contenu, "table": ech, "table_label": f"echantillon_{nom_table}"}
+
+
+def reponse_doublons(df, nom_table: str) -> dict:
+    colonnes_id = dt.detect_id_columns(df)
+    if not colonnes_id:
+        return {"content": f"Aucune colonne d'identifiant détectée automatiquement dans **{nom_table}**."}
+    colonne = colonnes_id[0]
+    dups = dt.doublons(df, colonne)
+    if len(dups) == 0:
+        return {"content": f"Aucun doublon d'identifiant détecté dans **{nom_table}** (colonne `{colonne}`)."}
+    contenu = (
+        f"**{len(dups)} lignes en doublon** trouvées dans **{nom_table}** (colonne `{colonne}`) :\n\n"
+        f"{dups.to_markdown(index=False)}\n\n{dt.syntaxe_doublons(nom_table, colonne)}"
+    )
+    return {"content": contenu, "table": dups, "table_label": f"doublons_{nom_table}"}
+
+
+def reponse_coherence(df, nom_table: str) -> dict:
+    rapport = dt.rapport_coherence(df)
+    contenu = (
+        formater_rapport_coherence(rapport, nom_table)
+        + "\n\n"
+        + dt.syntaxe_coherence(
+            nom_table, rapport.get("colonnes_id_verifiees", []), rapport.get("colonnes_date_verifiees", [])
+        )
+    )
+    return {"content": contenu}
+
+
+def reponse_tableau_croise(df, nom_table: str, colonne1: str, colonne2: str) -> dict:
+    tab = dt.tableau_croise(df, colonne1, colonne2)
+    contenu = (
+        f"Tableau croisé (analyse bivariée) de `{colonne1}` et `{colonne2}` dans **{nom_table}** :\n\n"
+        f"{tab.to_markdown()}\n\n{dt.syntaxe_tableau_croise(nom_table, colonne1, colonne2)}"
+    )
+    return {
+        "content": contenu, "table": tab.reset_index(),
+        "table_label": f"croise_{colonne1}_{colonne2}_{nom_table}",
+    }
+
+
+def reponse_correlation(df, nom_table: str, colonnes: list[str] | None) -> dict:
+    mat = dt.matrice_correlation(df, colonnes)
+    cols_utilisees = list(mat.columns)
+    contenu = (
+        f"Matrice de corrélation (analyse multivariée) dans **{nom_table}** "
+        f"sur : {', '.join(f'`{c}`' for c in cols_utilisees)} :\n\n"
+        f"{mat.to_markdown()}\n\n{dt.syntaxe_correlation(nom_table, cols_utilisees)}"
+    )
+    return {"content": contenu, "table": mat.reset_index(), "table_label": f"correlation_{nom_table}"}
+
+
+def reponse_tableau_multivarie(df, nom_table: str, colonnes: list[str]) -> dict:
+    tab = dt.tableau_multivarie(df, colonnes)
+    contenu = (
+        f"Analyse multivariée (effectifs croisés) de {', '.join(f'`{c}`' for c in colonnes)} "
+        f"dans **{nom_table}** ({len(tab)} combinaisons observées) :\n\n"
+        f"{tab.head(30).to_markdown(index=False)}\n\n{dt.syntaxe_tableau_multivarie(nom_table, colonnes)}"
+    )
+    return {"content": contenu, "table": tab, "table_label": f"multivarie_{nom_table}"}
+
+
+def reponse_agents(df, nom_table: str) -> dict:
+    try:
+        rapport = dt.rapport_agents(df)
+    except ValueError as e:
+        return {"content": f"⚠️ {e}"}
+    colonne_agent = dt.detect_agent_columns(df)[0]
+    contenu = (
+        f"**Rapport de performance par agent enquêteur** dans **{nom_table}** "
+        f"(colonne `{colonne_agent}`, {len(rapport)} agent(s)) :\n\n"
+        f"{rapport.to_markdown(index=False)}\n\n"
+        "_Colonnes : `n_fiches` = nombre de fiches saisies, `doublons_id` = fiches de cet agent "
+        "impliquées dans un doublon d'identifiant, `dates_invraisemblables` = dates hors plage "
+        "détectées, `taux_valeurs_manquantes_moyen` = proportion moyenne de cellules vides sur les "
+        "fiches de cet agent._\n\n"
+        "_Rappel : ceci est un signalement, pas une évaluation individuelle définitive — la "
+        "validation reste réservée aux personnes habilitées._\n\n"
+        f"{dt.syntaxe_rapport_agents(nom_table, colonne_agent)}"
+    )
+    return {"content": contenu, "table": rapport, "table_label": f"agents_{nom_table}"}
+
+
+def extraire_objectif(q: str, defaut: int = 17000) -> int:
+    """Extrait un objectif numérique (ex: "objectif 20000 ménages") de la
+    question, sinon retombe sur la valeur par défaut communiquée par
+    l'observatoire (17000 ménages)."""
+    m = re.search(r"objectif\D{0,15}?([\d][\d\s.,]*)", q)
+    if not m:
+        return defaut
+    chiffres = re.sub(r"[^\d]", "", m.group(1))
+    return int(chiffres) if chiffres else defaut
+
+
+def extraire_agents_exclus(question: str) -> list[str] | None:
+    """Extrait une liste d'identifiants d'agent à exclure du rapport de
+    performance (ex: "en excluant les agents 12, 45 et 67"), sinon None
+    (aucune exclusion demandée dans cette question). Suppose que la liste
+    d'identifiants suit le mot "agent(s)" jusqu'à la fin de la question -
+    formulation la plus naturelle pour ce type de demande."""
+    q = question.lower()
+    if not re.search(r"exclu\w*|sans les agents?|hors agents?", q):
+        return None
+    m = re.search(r"agents?\s*[:\-]?\s*([\w][\w,\s]*)$", q)
+    if not m:
+        return None
+    agents = [a.strip() for a in re.split(r"[,;]| et ", m.group(1)) if a.strip()]
+    return agents or None
+
+
+def extraire_identifiant_recherche(question: str) -> str | None:
+    """Extrait l'identifiant à rechercher d'une question de recherche
+    instantanée ("recherche l'individu 1024") : priorité à une séquence de
+    chiffres, sinon le dernier mot alphanumérique de la question."""
+    m = re.search(r"\b(\d+)\b", question)
+    if m:
+        return m.group(1)
+    mots = re.findall(r"[A-Za-z0-9_\-]{3,}", question)
+    return mots[-1] if mots else None
+
+
+def reponse_performance_terrain(tables: dict, exclure: list[str] | None, objectif: int) -> dict:
+    rapport = dt.rapport_performance_agents(tables, exclure=exclure)
+    if rapport.empty:
+        return {
+            "content": (
+                "Aucune colonne d'agent enquêteur détectée automatiquement dans les tables "
+                "chargées : impossible de calculer un rapport de performance de terrain."
+            )
+        }
+    rapport, nom_equipe = dt.fusion_agent_controleur(rapport, tables)
+    par_jour = dt.rapport_performance_par_jour(tables)
+    prevision = dt.prevision_objectif(par_jour, objectif=objectif) if not par_jour.empty else None
+
+    morceaux = [
+        f"**Rapport de performance de terrain** ({len(rapport)} agent(s)"
+        + (f", exclusion de {len(exclure)} agent(s) non-terrain" if exclure else "")
+        + ") :\n\n" + rapport.to_markdown(index=False)
+    ]
+    if nom_equipe:
+        morceaux.append(f"_Contrôleur ajouté à partir de la table équipe **{nom_equipe}**._")
+    else:
+        morceaux.append(
+            "_Aucune table équipe (agent ↔ contrôleur) détectée parmi les tables chargées : "
+            "dépose-la pour faire apparaître la colonne `controleur`._"
+        )
+
+    if prevision:
+        morceaux.append(
+            f"**Avancement vers l'objectif ({prevision['objectif']})** : "
+            f"{prevision['cumul_actuel']} réalisé(s), {prevision['reste_a_faire']} restant(s), "
+            f"rythme moyen {prevision['rythme_journalier_moyen']}/jour "
+            f"({prevision['n_jours_observes']} jour(s) observé(s), "
+            f"{prevision['date_debut']} → {prevision['date_derniere_donnee']})."
+            + (
+                f" Au rythme actuel, objectif atteint vers le **{prevision['date_fin_projetee']}** "
+                f"(≈{prevision['jours_restants_estimes']} jour(s))."
+                if prevision.get("date_fin_projetee") else ""
+            )
+        )
+    else:
+        morceaux.append(
+            "_Aucune colonne de date détectée en plus de la colonne d'agent : la projection vers "
+            "l'objectif n'a pas pu être calculée._"
+        )
+
+    docx_bytes = dt.generer_rapport_performance_docx(rapport, prevision, objectif=objectif)
+
+    # Courbe de progression (cumul journalier) demandee par l'observatoire :
+    # affichee comme un vrai graphique (st.line_chart, natif Streamlit, pas
+    # besoin de matplotlib) en plus du texte, pas seulement decrite en mots.
+    chart_data = None
+    if not par_jour.empty:
+        cumul = par_jour.groupby("date")["n_fiches"].sum().sort_index().cumsum()
+        chart_data = cumul.rename("cumul_fiches").to_frame()
+
+    return {
+        "content": "\n\n".join(morceaux), "table": rapport, "table_label": "performance_terrain",
+        "docx_bytes": docx_bytes, "docx_label": "rapport_performance_terrain",
+        "chart_data": chart_data,
+    }
+
+
+def reponse_historique_actualisations() -> dict:
+    historique = st.session_state.get("historique_chargements", [])
+    if not historique:
+        return {"content": "Aucune table n'a encore été chargée durant cette session."}
+    lignes = ["**Historique des actualisations de cette session** :"]
+    for entree in reversed(historique):
+        lignes.append(
+            f"- {entree['horodatage'].strftime('%d/%m/%Y %H:%M:%S')} — **{entree['table']}** "
+            f"({entree['n_lignes']} ligne(s)), depuis `{entree['fichier']}`"
+        )
+    return {"content": "\n".join(lignes)}
+
+
+def reponse_recherche_identifiant(identifiant: str, tables: dict) -> dict:
+    resultats = dt.rechercher_identifiant(identifiant, tables)
+    if not resultats:
+        return {"content": f"Aucune fiche trouvée pour l'identifiant **{identifiant}** dans les tables chargées."}
+    morceaux = [f"**Recherche de l'identifiant `{identifiant}`** — trouvé dans {len(resultats)} table(s) :"]
+    for nom, df in resultats.items():
+        morceaux.append(f"\n**{nom}** ({len(df)} ligne(s)) :\n\n{df.head(10).to_markdown(index=False)}")
+    return {"content": "\n".join(morceaux)}
+
+
+# Analyse bivariee (tableau croise entre deux colonnes d'UNE MEME table) -
+# mots-cles volontairement distincts de MOTS_RELATION (qui sert aux relations
+# ENTRE TABLES) pour ne jamais confondre les deux echelles d'analyse.
+# Avec entiers=True (mot entier), chaque accord grammatical du francais
+# (masculin/feminin/singulier/pluriel : croisé/croisée/croisés/croisées) doit
+# etre liste explicitement - une simple sous-chaine ne suffit plus a couvrir
+# toutes les terminaisons une fois qu'on exige une frontiere de mot exacte.
+MOTS_BIVARIE = [
+    "tableau croise", "croisement", "table croisee",
+    "bivarie", "bivariee", "bivaries", "bivariees",
+    "croise", "croisee", "croises", "croisees",
+]
+
+# Analyse multivariee : deux formes distinctes selon le type de variables -
+# correlation pour des variables numeriques/quantitatives, groupement pour
+# des variables categorielles (3 colonnes ou plus).
+MOTS_CORRELATION = ["correlation", "correle", "correlee", "correles", "correlees"]
+MOTS_MULTIVARIE = [
+    "multivarie", "multivariee", "multivaries", "multivariees",
+    "multi-varie", "multi varie",
+]
+
+# Controle qualite des agents enqueteurs/du personnel de terrain : necessite
+# la combinaison d'un mot designant le personnel ET d'un mot lie a la
+# performance/qualite (meme principe que est_question_meta_tables), pour
+# eviter qu'une simple mention du mot "agent" ou "enqueteur" dans une
+# question documentaire ne declenche a tort un calcul sur une table.
+MOTS_AGENT_PERSONNE = ["agent", "agents", "enqueteur", "enqueteurs", "enqueteuse", "enqueteuses", "interviewer", "interviewers"]
+MOTS_AGENT_QUALITE = [
+    "performance", "erreur", "erreurs", "qualite", "anomalie", "anomalies",
+    "travail de terrain", "charge de travail", "controle",
+]
+
+
+def est_question_agents(q: str) -> bool:
+    """Detecte une question sur la performance/qualite du travail des agents
+    enqueteurs (et non une simple mention documentaire du mot "agent")."""
+    return contient_mot_cle(q, MOTS_AGENT_PERSONNE) and contient_mot_cle(q, MOTS_AGENT_QUALITE)
+
+
 MOTS_LISTE_TABLES = [
     "combien de table", "combien de feuille", "quelles tables", "quelles sont les tables",
     "liste des tables", "tables chargees", "tables chargées", "tables disponibles",
     "nombre de tables", "nombre de feuilles", "quelles feuilles", "liste des feuilles",
+]
+
+# Audit complet (catalogue de controles specifiques a l'observatoire, au-dela
+# des doublons/dates generiques) - opere sur TOUTES les tables chargees a la
+# fois, donc verifie avant toute resolution a une seule table.
+MOTS_COHERENCE_AVANCEE = [
+    "controle avance", "controles avances", "audit complet", "audit de coherence",
+    "toutes les incoherences", "catalogue de controles", "toutes les regles de coherence",
+    "controle qualite complet", "verification complete", "controles de coherence avances",
+]
+
+# Module "Performances" : volume d'activite de terrain par agent (menages/UCH
+# visites, naissances/deces/grossesses enregistres), distinct du controle
+# qualite (est_question_agents/MOTS_AGENT_QUALITE, qui mesure les
+# erreurs/doublons, pas le volume). Meme principe de DEUX familles de mots
+# combinees que est_question_agents/est_question_meta_tables, pour ne jamais
+# se confondre avec "performance des agents enquêteurs" (qualité, sans mot de
+# volume terrain) - opere sur TOUTES les tables chargees a la fois, comme
+# l'audit de coherence avance.
+MOTS_TERRAIN_VOLUME = ["menage", "menages", "ménage", "ménages", "uch", "terrain", "collecte", "collectes"]
+MOTS_TERRAIN_RAPPORT = [
+    "performance", "avancement", "suivi", "bilan", "tableau de bord",
+    "rapport", "objectif", "projection", "prevision", "prévision",
+]
+
+
+def est_question_performance_terrain(q: str) -> bool:
+    """Detecte une question sur le volume d'activite de terrain (menages/UCH
+    visites, avancement vers un objectif) - distincte du controle qualite des
+    agents (est_question_agents)."""
+    return contient_mot_cle(q, MOTS_TERRAIN_VOLUME) and contient_mot_cle(q, MOTS_TERRAIN_RAPPORT)
+
+MOTS_HISTORIQUE_ACTUALISATION = [
+    "historique des actualisations", "historique des mises a jour", "historique des mises à jour",
+    "quand les tables ont ete mises a jour", "quand les tables ont été mises à jour",
+    "derniere actualisation", "dernière actualisation", "historique des chargements",
+    "historique des imports",
+]
+
+MOTS_RECHERCHE_ID = [
+    "recherche l'identifiant", "recherche l'individu", "recherche identifiant",
+    "fiche complete de", "fiche complète de", "dossier complet de",
+    "historique complet de l'individu", "toutes les fiches de l'individu", "toutes les fiches de",
+    "recherche instantanee", "recherche instantanée",
 ]
 
 # Complement de MOTS_LISTE_TABLES : plutot que d'enumerer indefiniment de
@@ -413,9 +938,16 @@ MOTS_LISTE_TABLES = [
 # formulation ambigue - voir classifier_intention/LISTE_TABLES pour le filet
 # de securite quand meme cette detection ne suffit pas).
 MOTS_TABLE_GENERIQUE = ["table", "tables", "feuille", "feuilles", "classeur", "classeurs"]
+# "combien" et "liste" sont volontairement EXCLUS d'ici : ce sont des mots bien
+# trop courants dans une vraie question de contenu ("combien d'individus dans
+# la table X ?", "liste des colonnes de la table X") pour servir de signal
+# fiable une fois combines au simple mot "table" - ils restent geres seulement
+# via les formulations exactes et sans ambiguite de MOTS_LISTE_TABLES
+# ("combien de table(s)", "liste des tables/feuilles").
 MOTS_ACTION_META = [
-    "combien", "liste", "dispon", "import", "envoy", "reçu", "recu", "reçois", "recois",
-    "reçoit", "recoit", "fourni", "depos", "déposé", "deposee", "déposée", "deposees", "déposées",
+    "dispon", "importation", "importer", "importe", "importée", "importées", "importé", "importés",
+    "envoy", "reçu", "recu", "reçois", "recois", "reçoit", "recoit", "fourni",
+    "depos", "déposé", "deposee", "déposée", "deposees", "déposées",
 ]
 
 
@@ -423,7 +955,7 @@ def est_question_meta_tables(q: str) -> bool:
     """Detecte une question portant sur les tables actuellement chargees
     elles-memes (nombre, noms, confirmation qu'elles ont bien ete recues) -
     par opposition a une question sur le contenu d'une table precise."""
-    return any(m in q for m in MOTS_TABLE_GENERIQUE) and any(m in q for m in MOTS_ACTION_META)
+    return contient_mot_cle(q, MOTS_TABLE_GENERIQUE) and contient_mot_cle(q, MOTS_ACTION_META)
 
 
 def route_question(question: str) -> dict:
@@ -431,14 +963,14 @@ def route_question(question: str) -> dict:
     echantillon, coherence), sur une relation/fusion entre plusieurs tables
     chargees, sur la liste des tables/feuilles elles-memes, ou sur le
     dictionnaire (RAG)."""
-    q = question.lower()
+    q = sans_accents(question.lower())
     tables = st.session_state.get("tables", {})
 
     # Question "meta" sur la session en cours (combien de tables/feuilles
     # sont chargees, lesquelles) : ne concerne pas le contenu d'une table ni
     # le dictionnaire, donc a verifier en tout premier, avant toute
     # resolution de table.
-    if any(m in q for m in MOTS_LISTE_TABLES) or est_question_meta_tables(q):
+    if contient_mot_cle(q, MOTS_LISTE_TABLES) or est_question_meta_tables(q):
         return {"content": dt.resume_tables_chargees(tables)}
 
     # Questions de relation ou de fusion entre plusieurs tables chargees
@@ -457,19 +989,57 @@ def route_question(question: str) -> dict:
             if len(tables_mentionnees) >= 2:
                 break
 
+    # Audit complet (catalogue de controles specifiques a l'observatoire) -
+    # opere sur TOUTES les tables chargees a la fois (y compris les controles
+    # croises entre tables), donc verifie avant toute resolution a une seule
+    # table. Une table precise peut etre ciblee en la nommant dans la
+    # question (ex: "audit complet de FNewPresences").
+    if contient_mot_cle(q, MOTS_COHERENCE_AVANCEE):
+        nom_cible = tables_mentionnees[0] if tables_mentionnees else None
+        rapport_avance = dt.rapport_coherence_avancee(tables, nom_table=nom_cible)
+        return {"content": formater_rapport_coherence_avancee(rapport_avance)}
+
+    # Historique des actualisations de cette session : ne depend d'aucune
+    # table en particulier, verifie tot pour ne pas etre masque par la
+    # resolution a une seule table.
+    if contient_mot_cle(q, MOTS_HISTORIQUE_ACTUALISATION):
+        return reponse_historique_actualisations()
+
+    # Recherche instantanee d'un identifiant a travers TOUTES les tables
+    # chargees ("recherche l'individu 1024") - meme principe que l'audit
+    # complet : opere sur l'ensemble des tables, pas sur une seule resolue.
+    if contient_mot_cle(q, MOTS_RECHERCHE_ID):
+        identifiant = extraire_identifiant_recherche(question)
+        if identifiant is None:
+            return {"content": "Précise l'identifiant à rechercher (ex : « recherche l'individu 1024 »)."}
+        return reponse_recherche_identifiant(identifiant, tables)
+
+    # Performance de terrain par agent (menages/UCH visites, naissances/
+    # deces/grossesses enregistres) - agrege sur TOUTES les tables chargees,
+    # avec objectif et exclusion d'agents extraits directement de la question
+    # si presents (sinon objectif par defaut 17000 menages, aucune exclusion).
+    if est_question_performance_terrain(q):
+        objectif = extraire_objectif(q)
+        exclure = extraire_agents_exclus(q)
+        return reponse_performance_terrain(tables, exclure, objectif)
+
+    # Une relance courte ("il faut analyser directement") qui ne repete pas le
+    # mot-cle d'action initial : on regarde si le tour precedent de l'equipe
+    # demandait deja une difference/fusion/relation, pour redeclencher le bon
+    # calcul plutot que de laisser la question filer vers le LLM generique.
+    relance_calcul = contient_mot_cle(q, MOTS_RELANCE_CALCUL)
+
     # Difference d'ensembles ("qui est dans X mais pas dans Y", et
     # eventuellement "vice versa" pour les deux sens a la fois) - a verifier
     # AVANT la fusion generale, puisque ce sont deux operations distinctes.
-    if any(m in q for m in MOTS_DIFFERENCE):
-        if len(tables_mentionnees) < 2:
-            return {
-                "content": (
-                    "Précise les deux tables à comparer en les nommant explicitement, ex. : "
-                    f"« combien sont dans {list(tables.keys())[0] if tables else 'Presence'} mais pas dans "
-                    f"{list(tables.keys())[1] if len(tables) > 1 else 'Education'} »."
-                )
-            }
-        a, b = tables_mentionnees[0], tables_mentionnees[1]
+    difference_demandee = contient_mot_cle(q, MOTS_DIFFERENCE) or (
+        relance_calcul and action_deja_demandee_dans_historique(historique_recent(), MOTS_DIFFERENCE)
+    )
+    if difference_demandee:
+        paire = resoudre_paire_tables(tables_mentionnees, tables)
+        if paire is None:
+            return {"content": message_precision_tables("comparer", tables, tables_mentionnees)}
+        a, b = paire
         try:
             diff_ab = dt.difference_tables(a, b, tables)
         except ValueError as e:
@@ -486,7 +1056,10 @@ def route_question(question: str) -> dict:
         ]
         table_resultat, label_resultat = diff_ab, nom_resultat_ab
 
-        if any(m in q for m in MOTS_VICE_VERSA):
+        vice_versa_demande = contient_mot_cle(q, MOTS_VICE_VERSA) or (
+            relance_calcul and action_deja_demandee_dans_historique(historique_recent(), MOTS_VICE_VERSA)
+        )
+        if vice_versa_demande:
             diff_ba = dt.difference_tables(b, a, tables)
             nom_resultat_ba = f"difference_{b}_sans_{a}"
             st.session_state["tables"][nom_resultat_ba] = diff_ba
@@ -504,75 +1077,128 @@ def route_question(question: str) -> dict:
 
         return {"content": "\n\n".join(morceaux), "table": table_resultat, "table_label": label_resultat}
 
-    if any(m in q for m in MOTS_FUSION):
-        if len(tables_mentionnees) >= 2:
-            a, b = tables_mentionnees[0], tables_mentionnees[1]
-            try:
-                fusion = dt.fusionner_tables(a, b, tables)
-            except ValueError as e:
-                return {"content": f"⚠️ {e}"}
+    fusion_demandee = contient_mot_cle(q, MOTS_FUSION) or (
+        relance_calcul and action_deja_demandee_dans_historique(historique_recent(), MOTS_FUSION)
+    )
+    if fusion_demandee:
+        paire = resoudre_paire_tables(tables_mentionnees, tables)
+        if paire is None:
+            return {"content": message_precision_tables("fusionner", tables, tables_mentionnees)}
+        a, b = paire
+        try:
+            fusion = dt.fusionner_tables(a, b, tables)
+        except ValueError as e:
+            return {"content": f"⚠️ {e}"}
 
-            cle = dt.detecter_cle_jointure(a, b, tables)
-            nom_resultat = f"fusion_{a}_{b}"
-            st.session_state["tables"][nom_resultat] = fusion
+        cle = dt.detecter_cle_jointure(a, b, tables)
+        nom_resultat = f"fusion_{a}_{b}"
+        st.session_state["tables"][nom_resultat] = fusion
 
-            morceaux = [
-                f"Fusion de **{a}** et **{b}** ({len(fusion)} lignes obtenues, sur la clé `{cle}`). "
-                f"Résultat enregistré sous **{nom_resultat}** — interrogeable directement ensuite "
-                f"(indicateur, échantillon...).\n\n{fusion.head(20).to_markdown(index=False)}"
-            ]
-            if cle:
-                morceaux.append(dt.syntaxe_fusion(a, b, cle))
+        morceaux = [
+            f"Fusion de **{a}** et **{b}** ({len(fusion)} lignes obtenues, sur la clé `{cle}`). "
+            f"Résultat enregistré sous **{nom_resultat}** — interrogeable directement ensuite "
+            f"(indicateur, échantillon...).\n\n{fusion.head(20).to_markdown(index=False)}"
+        ]
+        if cle:
+            morceaux.append(dt.syntaxe_fusion(a, b, cle))
 
-            return {"content": "\n\n".join(morceaux), "table": fusion, "table_label": nom_resultat}
-        return {
-            "content": (
-                "Précise les deux tables à fusionner en les nommant explicitement, ex. : "
-                f"« fusionne {list(tables.keys())[0] if tables else 'Tindividual'} et "
-                f"{list(tables.keys())[1] if len(tables) > 1 else 'Tsocialgp'} »."
-            )
-        }
+        return {"content": "\n\n".join(morceaux), "table": fusion, "table_label": nom_resultat}
 
-    if any(m in q for m in MOTS_RELATION):
+    relation_demandee = contient_mot_cle(q, MOTS_RELATION, entiers=True) or (
+        relance_calcul and action_deja_demandee_dans_historique(historique_recent(), MOTS_RELATION, entiers=True)
+    )
+    if relation_demandee:
         if len(tables_mentionnees) >= 2:
             return {"content": dt.relation_entre_tables(tables_mentionnees[0], tables_mentionnees[1], tables)}
         return {"content": dt.rapport_relations(tables)}
 
+    # Si aucune table n'est nommee explicitement et qu'une colonne mentionnee
+    # existe dans PLUSIEURS tables a la fois (ex: `individid` present dans 20
+    # tables), on lit TOUTES les tables concernees plutot que d'en ignorer
+    # silencieusement certaines et de retomber sur un choix par defaut - "il
+    # faut tout lire, pas une seule base par defaut".
+    if not tables_mentionnees:
+        candidats_colonne = dt.tables_avec_colonne(question, tables)
+        if len(candidats_colonne) >= 2:
+            if contient_mot_cle(q, ["doublon"]):
+                morceaux = [reponse_doublons(tables[nom], nom)["content"] for nom in candidats_colonne]
+                return {"content": "\n\n---\n\n".join(morceaux)}
+            if contient_mot_cle(q, ["incoherence", "coherence", "anomalie"]):
+                morceaux = [reponse_coherence(tables[nom], nom)["content"] for nom in candidats_colonne]
+                return {"content": "\n\n---\n\n".join(morceaux)}
+            if contient_mot_cle(q, ["echantillon"]):
+                m_n = re.search(r"\d+", q)
+                n = int(m_n.group()) if m_n else 100
+                morceaux = [reponse_echantillon(tables[nom], nom, n)["content"] for nom in candidats_colonne]
+                return {"content": "\n\n---\n\n".join(morceaux)}
+            if contient_mot_cle(q, ["repartition", "indicateur"]):
+                col_trouvee = next(
+                    (c for nom in candidats_colonne for c in tables[nom].columns if sans_accents(str(c).lower()) in q),
+                    None,
+                )
+                if col_trouvee:
+                    morceaux = [
+                        reponse_repartition(tables[nom], nom, col_trouvee)["content"]
+                        for nom in candidats_colonne if col_trouvee in tables[nom].columns
+                    ]
+                    if morceaux:
+                        return {"content": "\n\n---\n\n".join(morceaux)}
+
     nom_table, df = dt.resoudre_table_ciblee(question, tables, table_active_nom, historique=historique_recent())
 
-    if df is not None and "doublon" in q:
-        dups = dt.doublons(df)
-        if len(dups) == 0:
-            return {"content": f"Aucun doublon d'identifiant détecté dans **{nom_table}**."}
+    if df is not None and est_question_agents(q):
+        return reponse_agents(df, nom_table)
+
+    if df is not None and contient_mot_cle(q, MOTS_BIVARIE, entiers=True):
+        colonnes_visees = [c for c in df.columns if sans_accents(str(c).lower()) in q]
+        if len(colonnes_visees) >= 2:
+            try:
+                return reponse_tableau_croise(df, nom_table, colonnes_visees[0], colonnes_visees[1])
+            except ValueError as e:
+                return {"content": f"⚠️ {e}"}
         return {
-            "content": f"**{len(dups)} lignes en doublon** trouvées dans **{nom_table}** :\n\n{dups.to_markdown(index=False)}",
-            "table": dups,
-            "table_label": f"doublons_{nom_table}",
+            "content": (
+                f"Précise les deux colonnes à croiser (table **{nom_table}**). "
+                f"Colonnes disponibles : {', '.join(df.columns)}"
+            )
         }
 
-    if df is not None and any(m in q for m in ["incoheren", "coheren", "anomalie"]):
-        rapport = dt.rapport_coherence(df)
-        return {"content": formater_rapport_coherence(rapport, nom_table)}
+    if df is not None and contient_mot_cle(q, MOTS_CORRELATION, entiers=True):
+        colonnes_visees = [c for c in df.columns if sans_accents(str(c).lower()) in q]
+        try:
+            return reponse_correlation(df, nom_table, colonnes_visees if len(colonnes_visees) >= 2 else None)
+        except ValueError as e:
+            return {"content": f"⚠️ {e}"}
 
-    if df is not None and any(m in q for m in ["echantillon", "échantillon"]):
+    if df is not None and contient_mot_cle(q, MOTS_MULTIVARIE, entiers=True):
+        colonnes_visees = [c for c in df.columns if sans_accents(str(c).lower()) in q]
+        if len(colonnes_visees) >= 3:
+            try:
+                return reponse_tableau_multivarie(df, nom_table, colonnes_visees)
+            except ValueError as e:
+                return {"content": f"⚠️ {e}"}
+        return {
+            "content": (
+                f"Précise au moins trois colonnes à croiser pour une analyse multivariée "
+                f"(table **{nom_table}**). Colonnes disponibles : {', '.join(df.columns)}"
+            )
+        }
+
+    if df is not None and contient_mot_cle(q, ["doublon"]):
+        return reponse_doublons(df, nom_table)
+
+    if df is not None and contient_mot_cle(q, ["incoherence", "coherence", "anomalie"]):
+        return reponse_coherence(df, nom_table)
+
+    if df is not None and contient_mot_cle(q, ["echantillon"]):
         m = re.search(r"\d+", q)
         n = int(m.group()) if m else 100
-        ech = dt.echantillon(df, n=n)
-        return {
-            "content": f"Échantillon reproductible de {len(ech)} lignes (graine fixée) issu de **{nom_table}** :\n\n{ech.to_markdown(index=False)}",
-            "table": ech,
-            "table_label": f"echantillon_{nom_table}",
-        }
+        return reponse_echantillon(df, nom_table, n)
 
-    if df is not None and any(m in q for m in ["repartition", "répartition", "indicateur"]):
-        col_trouvee = next((c for c in df.columns if c.lower() in q), None)
+    if df is not None and contient_mot_cle(q, ["repartition", "indicateur"]):
+        col_trouvee = next((c for c in df.columns if sans_accents(str(c).lower()) in q), None)
         if col_trouvee:
-            rep = dt.repartition(df, col_trouvee)
-            return {
-                "content": f"Répartition de `{col_trouvee}` dans **{nom_table}** :\n\n{rep.to_markdown()}",
-                "table": rep.reset_index(),
-                "table_label": f"repartition_{col_trouvee}_{nom_table}",
-            }
+            return reponse_repartition(df, nom_table, col_trouvee)
         return {
             "content": (
                 f"Précise sur quelle colonne calculer la répartition (table **{nom_table}**). "
@@ -589,31 +1215,13 @@ def route_question(question: str) -> dict:
         )
 
         if action == "REPARTITION" and parametre:
-            rep = dt.repartition(df, parametre)
-            return {
-                "content": f"Répartition de `{parametre}` dans **{nom_table}** :\n\n{rep.to_markdown()}",
-                "table": rep.reset_index(),
-                "table_label": f"repartition_{parametre}_{nom_table}",
-            }
+            return reponse_repartition(df, nom_table, parametre)
         if action == "ECHANTILLON":
-            ech = dt.echantillon(df, n=parametre or 100)
-            return {
-                "content": f"Échantillon reproductible de {len(ech)} lignes (graine fixée) issu de **{nom_table}** :\n\n{ech.to_markdown(index=False)}",
-                "table": ech,
-                "table_label": f"echantillon_{nom_table}",
-            }
+            return reponse_echantillon(df, nom_table, parametre or 100)
         if action == "DOUBLONS":
-            dups = dt.doublons(df)
-            if len(dups) == 0:
-                return {"content": f"Aucun doublon d'identifiant détecté dans **{nom_table}**."}
-            return {
-                "content": f"**{len(dups)} lignes en doublon** trouvées dans **{nom_table}** :\n\n{dups.to_markdown(index=False)}",
-                "table": dups,
-                "table_label": f"doublons_{nom_table}",
-            }
+            return reponse_doublons(df, nom_table)
         if action == "COHERENCE":
-            rapport = dt.rapport_coherence(df)
-            return {"content": formater_rapport_coherence(rapport, nom_table)}
+            return reponse_coherence(df, nom_table)
         if action == "LISTE_TABLES":
             # Question formulee de facon trop variee pour MOTS_LISTE_TABLES
             # (ex: "je parle des tables que je viens de vous envoyer") mais
@@ -669,6 +1277,14 @@ if question:
                     exports, reponse.get("table_label", "export"),
                     cle=f"new_{len(st.session_state['messages'])}",
                 )
+            if reponse.get("docx_bytes") is not None:
+                afficher_bouton_docx(
+                    reponse["docx_bytes"], reponse.get("docx_label", "rapport"),
+                    cle=f"new_{len(st.session_state['messages'])}",
+                )
+            if reponse.get("chart_data") is not None:
+                st.caption("Courbe de progression (cumul de fiches par jour)")
+                st.line_chart(reponse["chart_data"])
         except rag.IndexNotBuiltError:
             # Ne devrait normalement pas arriver (l'index est prepare au
             # demarrage), mais on tente une reconstruction automatique une
@@ -696,6 +1312,9 @@ if question:
             "sources": reponse.get("sources"),
             "exports": exports,
             "table_label": reponse.get("table_label"),
+            "docx_bytes": reponse.get("docx_bytes"),
+            "docx_label": reponse.get("docx_label"),
+            "chart_data": reponse.get("chart_data"),
         }
     )
 
