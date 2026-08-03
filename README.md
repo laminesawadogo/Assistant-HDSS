@@ -116,7 +116,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-60 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+65 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
@@ -131,7 +131,7 @@ documentaire, garde-fous index/clé manquants, classification d'intention) et
 - `prepare_corpus.py` — convertit les fichiers de `data/source_documents/` (`.doc`, `.docx`, `.pdf`, `.xlsx`, `.txt`, `.md`) en texte dans `data/docs/`.
 - `ingest.py` — construit l'index de recherche (TF-IDF, léger, sans téléchargement de modèle) ; appelle `prepare_corpus.py` en premier.
 - `rag.py` — recherche + construction du prompt + appel au LLM.
-- `data_tools.py` — analyse d'une table déposée : répartitions, échantillon reproductible, détection de doublons/dates invraisemblables (colonnes ID/date détectées automatiquement par leur nom/contenu). Les colonnes de type nom/prénom sont systématiquement retirées avant toute analyse.
+- `data_tools.py` — analyse d'une table déposée : répartitions, échantillon reproductible, détection de doublons/dates invraisemblables (colonnes ID/date détectées automatiquement par leur nom/contenu), résolution automatique de la table ciblée par une question (nom de table ou colonne mentionnée), reconnaissance de toutes les feuilles d'un classeur Excel comme autant de tables distinctes. Les colonnes de type nom/prénom sont systématiquement retirées avant toute analyse.
 - `app.py` — interface de chat (Streamlit).
 - `instructions_systeme.md` — rôle et garde-fous de l'assistant (ce qu'il fait, ce qu'il ne fait jamais).
 - `auth_config.yaml` — comptes de l'équipe (identifiants, mots de passe, rôles).

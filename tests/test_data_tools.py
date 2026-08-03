@@ -26,6 +26,39 @@ def table_exemple(tmp_path):
     return str(path)
 
 
+# --- Classeurs Excel multi-feuilles -----------------------------------------
+
+def test_est_classeur_excel():
+    assert dt.est_classeur_excel("table.xlsx") is True
+    assert dt.est_classeur_excel("table.xls") is True
+    assert dt.est_classeur_excel("table.csv") is False
+
+
+def test_charger_classeur_reconnait_chaque_feuille_comme_une_table(tmp_path):
+    path = tmp_path / "classeur.xlsx"
+    with pd.ExcelWriter(path, engine="openpyxl") as writer:
+        pd.DataFrame({"individid": [1, 2], "sex": [1, 2]}).to_excel(writer, sheet_name="Tindividual", index=False)
+        pd.DataFrame({"socialgpid": [1, 2], "nom": ["A", "B"]}).to_excel(writer, sheet_name="Tsocialgp", index=False)
+
+    feuilles = dt.charger_classeur(str(path))
+
+    assert set(feuilles.keys()) == {"Tindividual", "Tsocialgp"}
+    assert list(feuilles["Tindividual"].columns) == ["individid", "sex"]
+    # La colonne nominative doit etre retiree, meme feuille par feuille
+    assert "nom" not in feuilles["Tsocialgp"].columns
+
+
+def test_charger_classeur_ignore_les_feuilles_vides(tmp_path):
+    path = tmp_path / "classeur_avec_vide.xlsx"
+    with pd.ExcelWriter(path, engine="openpyxl") as writer:
+        pd.DataFrame({"individid": [1]}).to_excel(writer, sheet_name="Tindividual", index=False)
+        pd.DataFrame().to_excel(writer, sheet_name="FeuilleVide", index=False)
+
+    feuilles = dt.charger_classeur(str(path))
+    assert "FeuilleVide" not in feuilles
+    assert "Tindividual" in feuilles
+
+
 def test_strip_names_retire_les_colonnes_nominatives(table_exemple):
     df = dt.load_table(table_exemple)
     assert "nom" not in df.columns
@@ -166,3 +199,27 @@ def test_resoudre_table_ciblee_retombe_sur_le_defaut():
 def test_resoudre_table_ciblee_sans_table_disponible():
     nom, df = dt.resoudre_table_ciblee("répartition par sexe", {}, nom_par_defaut=None)
     assert nom is None and df is None
+
+
+def test_resoudre_table_ciblee_par_colonne_unique_sans_nommer_la_table():
+    # Aucune table n'est nommee dans la question, et aucune table n'est
+    # selectionnee comme "active" (nom_par_defaut=None) : la colonne "sex"
+    # n'appartenant qu'a Tindividual doit suffire a la retrouver, pour que
+    # toutes les tables chargees soient aussi faciles a interroger.
+    tables = {
+        "Tindividual": pd.DataFrame({"individid": [1], "sex": [1]}),
+        "Tsocialgp": pd.DataFrame({"socialgpid": [1], "chef_menage": [1]}),
+    }
+    nom, df = dt.resoudre_table_ciblee("répartition de sex", tables, nom_par_defaut=None)
+    assert nom == "Tindividual"
+
+
+def test_resoudre_table_ciblee_colonne_partagee_retombe_sur_le_defaut():
+    # "individid" est present dans les deux tables : impossible de trancher
+    # par la seule colonne, on retombe donc sur la table active par defaut.
+    tables = {
+        "Tindividual": pd.DataFrame({"individid": [1], "sex": [1]}),
+        "TMembership": pd.DataFrame({"individid": [1], "socialgpid": [1]}),
+    }
+    nom, df = dt.resoudre_table_ciblee("doublons sur individid", tables, nom_par_defaut="TMembership")
+    assert nom == "TMembership"

@@ -31,6 +31,29 @@ def load_table(path: str) -> pd.DataFrame:
     return strip_names(df)
 
 
+def est_classeur_excel(path: str) -> bool:
+    return str(path).lower().endswith((".xlsx", ".xls"))
+
+
+def charger_classeur(path: str) -> dict[str, pd.DataFrame]:
+    """Charge TOUTES les feuilles d'un classeur Excel comme autant de tables
+    distinctes (au lieu de ne lire que la premiere feuille), pour reconnaitre
+    directement un classeur qui contient plusieurs tables (ex: une feuille
+    par table de l'observatoire dans un seul fichier).
+
+    Renvoie un dict {nom_de_feuille: dataframe}, en ignorant les feuilles
+    vides et en retirant les colonnes nominatives de chaque feuille (memes
+    garde-fous que load_table)."""
+    classeur = pd.ExcelFile(path)
+    tables = {}
+    for nom_feuille in classeur.sheet_names:
+        df = classeur.parse(nom_feuille)
+        if df.empty or len(df.columns) == 0:
+            continue
+        tables[nom_feuille] = strip_names(df)
+    return tables
+
+
 def strip_names(df: pd.DataFrame) -> pd.DataFrame:
     """Retire toute colonne qui ressemble a un nom/prenom avant analyse."""
     to_drop = [c for c in df.columns if NAME_LIKE.search(str(c))]
@@ -116,17 +139,37 @@ def rapport_coherence(df: pd.DataFrame) -> dict:
 
 def resoudre_table_ciblee(question: str, tables: dict, nom_par_defaut: str | None = None):
     """Determine quelle table (parmi plusieurs deposees) est visee par une
-    question : si le nom d'une table est mentionne explicitement dans la
-    question, elle est prioritaire ; sinon on retombe sur la table active
-    par defaut (choisie par l'utilisateur dans l'interface).
+    question, pour que toutes les tables chargees soient aussi faciles a
+    interroger les unes que les autres (pas seulement la table "active") :
+
+    1. Si le nom d'une table est mentionne explicitement dans la question,
+       elle est prioritaire.
+    2. Sinon, si un nom de colonne mentionne dans la question n'appartient
+       qu'a une seule des tables chargees, cette table est retenue
+       automatiquement (ex: "repartition de sex" cible directement la table
+       qui contient la colonne "sex", sans avoir a la nommer ni a la
+       selectionner comme table active).
+    3. En dernier recours (question ambigue, ou colonne partagee par
+       plusieurs tables), on retombe sur la table active par defaut choisie
+       dans l'interface.
 
     Renvoie un tuple (nom_de_la_table, dataframe) ou (None, None) si aucune
     table n'est disponible.
     """
     q = question.lower()
+
     for nom in tables:
         if nom.lower() in q:
             return nom, tables[nom]
+
+    tables_correspondantes = []
+    for nom, df in tables.items():
+        if any(str(colonne).lower() in q for colonne in df.columns):
+            tables_correspondantes.append(nom)
+    if len(tables_correspondantes) == 1:
+        nom = tables_correspondantes[0]
+        return nom, tables[nom]
+
     if nom_par_defaut is not None and nom_par_defaut in tables:
         return nom_par_defaut, tables[nom_par_defaut]
     return None, None

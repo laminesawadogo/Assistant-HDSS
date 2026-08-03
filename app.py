@@ -152,7 +152,11 @@ with st.sidebar:
 
     st.divider()
     st.header("📁 Tables / bases de données")
-    st.caption("Fichiers CSV ou Excel (.xlsx, .xls) — un fichier = une table analysable (indicateurs, échantillons, doublons...).")
+    st.caption(
+        "Fichiers CSV ou Excel (.xlsx, .xls) — un fichier = une table analysable "
+        "(indicateurs, échantillons, doublons...). Un classeur Excel avec plusieurs feuilles "
+        "est reconnu automatiquement comme plusieurs tables, une par feuille."
+    )
 
     if "tables" not in st.session_state:
         st.session_state["tables"] = {}
@@ -181,8 +185,22 @@ with st.sidebar:
                 tmp_path = tempfile.NamedTemporaryFile(delete=False, suffix=suffix).name
                 with open(tmp_path, "wb") as f:
                     f.write(fichier.getbuffer())
-                nom_table = re.sub(r"\.(csv|xlsx|xls)$", "", fichier.name, flags=re.IGNORECASE)
-                st.session_state["tables"][nom_table] = dt.load_table(tmp_path)
+
+                if dt.est_classeur_excel(fichier.name):
+                    # Un classeur Excel peut contenir plusieurs feuilles, chacune
+                    # une table distincte (ex: une feuille par table de
+                    # l'observatoire) : on les reconnait toutes, pas seulement
+                    # la premiere.
+                    feuilles = dt.charger_classeur(tmp_path)
+                    for nom_feuille, df_feuille in feuilles.items():
+                        nom_table = nom_feuille if nom_feuille not in st.session_state["tables"] else (
+                            f"{Path(fichier.name).stem}_{nom_feuille}"
+                        )
+                        st.session_state["tables"][nom_table] = df_feuille
+                else:
+                    nom_table = re.sub(r"\.(csv|xlsx|xls)$", "", fichier.name, flags=re.IGNORECASE)
+                    st.session_state["tables"][nom_table] = dt.load_table(tmp_path)
+
                 st.session_state["fichiers_traites"].add(signature)
             except Exception as e:
                 st.error(f"Impossible de lire {fichier.name} : {e}")
@@ -190,11 +208,14 @@ with st.sidebar:
     tables = st.session_state["tables"]
     if tables:
         st.success(f"{len(tables)} table(s) chargée(s) : {', '.join(tables.keys())}")
-        table_active_nom = st.selectbox("Table active (utilisée par défaut)", list(tables.keys()))
+        table_active_nom = st.selectbox("Table par défaut (si la question est ambiguë)", list(tables.keys()))
         st.write("Colonnes :", list(tables[table_active_nom].columns))
         st.caption(
             "Les colonnes de type nom/prénom sont automatiquement retirées. "
-            "Mentionne le nom d'une table dans ta question pour cibler une autre table que celle active."
+            "Toutes les tables chargées sont interrogeables directement : mentionne une colonne "
+            "(ex. « répartition de sex ») ou le nom d'une table dans ta question, l'assistant devine "
+            "automatiquement laquelle cibler. La table ci-dessus ne sert que de repli si la question "
+            "est vraiment ambiguë (aucun nom de table ni colonne reconnaissable)."
         )
     else:
         table_active_nom = None
