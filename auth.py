@@ -61,16 +61,18 @@ def _avertissement_config_par_defaut(config: dict) -> str | None:
     return None
 
 
-@st.cache_resource(show_spinner=False)
 def _construire_authenticator(
     identifiants: dict, nom_cookie: str, cle_cookie: str, expiry_days: float
 ) -> stauth.Authenticate:
-    """Construit l'objet Authenticate UNE SEULE FOIS par processus serveur
-    (mis en cache via st.cache_resource) plutot qu'a chaque rerun Streamlit
-    (chaque question posee dans le chat, par exemple) : la premiere
-    construction enregistre le composant de gestion de cookies, ce qui a un
-    cout non negligeable (~1-2s) qu'il serait absurde de repayer a chaque
-    interaction."""
+    """Construit l'objet Authenticate. Reconstruit a chaque rerun Streamlit,
+    comme le prevoit la bibliotheque elle-meme (tous ses exemples officiels
+    suivent ce pattern) : NE PAS mettre en cache via st.cache_resource, le
+    composant de gestion de cookies qu'il cree en interne (CookieManager) se
+    comporte comme un widget Streamlit, et Streamlit interdit explicitement
+    les widgets a l'interieur d'une fonction mise en cache (CachedWidgetWarning)
+    - ca a ete teste en deploiement reel et ca casse la connexion (KeyError
+    sur st.session_state['logout'], l'initialisation interne de la
+    bibliotheque n'a pas pu se derouler normalement)."""
     return stauth.Authenticate(identifiants, nom_cookie, cle_cookie, expiry_days)
 
 
