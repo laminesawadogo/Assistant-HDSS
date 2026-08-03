@@ -2,8 +2,11 @@
 
 Agent qui répond aux questions sur le dictionnaire de données de l'Observatoire
 de Population de Ouagadougou (RAG), et calcule des indicateurs, échantillons
-et contrôles de cohérence sur une table déposée (CSV/Excel), quelles que
-soient les colonnes réellement présentes dans le fichier.
+et contrôles de cohérence sur une ou plusieurs tables déposées (CSV, Excel —
+y compris un classeur multi-feuilles — ou Stata), quelles que soient les
+colonnes réellement présentes dans le fichier. Quand plusieurs tables sont
+chargées, l'assistant détecte les colonnes qu'elles ont en commun et peut
+répondre à des questions de relation, ou les fusionner sur demande.
 
 ## Installation
 
@@ -116,7 +119,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-65 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+75 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
@@ -131,7 +134,7 @@ documentaire, garde-fous index/clé manquants, classification d'intention) et
 - `prepare_corpus.py` — convertit les fichiers de `data/source_documents/` (`.doc`, `.docx`, `.pdf`, `.xlsx`, `.txt`, `.md`) en texte dans `data/docs/`.
 - `ingest.py` — construit l'index de recherche (TF-IDF, léger, sans téléchargement de modèle) ; appelle `prepare_corpus.py` en premier.
 - `rag.py` — recherche + construction du prompt + appel au LLM.
-- `data_tools.py` — analyse d'une table déposée : répartitions, échantillon reproductible, détection de doublons/dates invraisemblables (colonnes ID/date détectées automatiquement par leur nom/contenu), résolution automatique de la table ciblée par une question (nom de table ou colonne mentionnée), reconnaissance de toutes les feuilles d'un classeur Excel comme autant de tables distinctes. Les colonnes de type nom/prénom sont systématiquement retirées avant toute analyse.
+- `data_tools.py` — analyse d'une ou plusieurs tables déposées (CSV, Excel — multi-feuilles compris — ou Stata) : répartitions, échantillon reproductible, détection de doublons/dates invraisemblables (colonnes ID/date détectées automatiquement par leur nom/contenu), résolution automatique de la table ciblée par une question (nom de table ou colonne mentionnée), détection des colonnes communes entre tables chargées (relations, candidates de jointure) et fusion sur demande. Les colonnes de type nom/prénom sont systématiquement retirées avant toute analyse.
 - `app.py` — interface de chat (Streamlit).
 - `instructions_systeme.md` — rôle et garde-fous de l'assistant (ce qu'il fait, ce qu'il ne fait jamais).
 - `auth_config.yaml` — comptes de l'équipe (identifiants, mots de passe, rôles).
@@ -188,6 +191,22 @@ séquentiels peuvent avoir lieu sur une même question sans mot-clé reconnu :
 c'est la principale source de latence restante, dépendante de la vitesse du
 fournisseur LLM choisi (Groq est nettement plus rapide qu'Anthropic sur ce
 point).
+
+## Relations entre tables et fusion
+
+Dès que deux tables ou plus sont chargées (fichiers séparés, ou plusieurs
+feuilles d'un même classeur Excel — traitées de façon identique), l'assistant
+peut :
+
+- **Décrire une relation** : « quelle est la relation entre Tindividual et
+  TMembership ? » ou, sans préciser de nom, « quelles tables sont reliées
+  entre elles ? » — il compare les vraies colonnes chargées (pas seulement la
+  documentation du dictionnaire) et indique les colonnes en commun,
+  candidates comme clé de jointure.
+- **Fusionner deux tables** : « fusionne Tindividual et TMembership » —
+  effectue une vraie jointure (`pandas.merge`) sur la première colonne
+  commune détectée, affiche un aperçu et propose les exports CSV/Excel/Stata
+  du résultat.
 
 ## Lire une image (photo, scan)
 

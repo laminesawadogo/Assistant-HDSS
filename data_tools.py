@@ -24,8 +24,11 @@ ID_LIKE = re.compile(r"(id|identif)", re.IGNORECASE)
 
 
 def load_table(path: str) -> pd.DataFrame:
-    if str(path).lower().endswith((".xlsx", ".xls")):
+    chemin = str(path).lower()
+    if chemin.endswith((".xlsx", ".xls")):
         df = pd.read_excel(path)
+    elif chemin.endswith(".dta"):
+        df = pd.read_stata(path)
     else:
         df = pd.read_csv(path)
     return strip_names(df)
@@ -173,6 +176,104 @@ def resoudre_table_ciblee(question: str, tables: dict, nom_par_defaut: str | Non
     if nom_par_defaut is not None and nom_par_defaut in tables:
         return nom_par_defaut, tables[nom_par_defaut]
     return None, None
+
+
+def detecter_tables_mentionnees(question: str, tables: dict) -> list[str]:
+    """Renvoie les noms des tables chargees explicitement mentionnees dans la
+    question (peu importe qu'elles viennent de fichiers separes ou de
+    plusieurs feuilles d'un meme classeur : les deux sont traitees de facon
+    identique une fois chargees dans `tables`)."""
+    q = question.lower()
+    return [nom for nom in tables if nom.lower() in q]
+
+
+def _colonnes_communes(df1: pd.DataFrame, df2: pd.DataFrame) -> list[str]:
+    """Colonnes presentes dans les deux tables (comparaison insensible a la
+    casse), dans l'ordre des colonnes de df1."""
+    colonnes_b = {str(c).lower() for c in df2.columns}
+    return [c for c in df1.columns if str(c).lower() in colonnes_b]
+
+
+def detecter_cles_communes(tables: dict) -> dict[tuple[str, str], list[str]]:
+    """Detecte, pour chaque paire de tables chargees, les colonnes presentes
+    dans les deux (candidates comme cle de jointure) - a partir des vraies
+    donnees chargees, pas seulement de la documentation du dictionnaire."""
+    noms = list(tables.keys())
+    resultat = {}
+    for i in range(len(noms)):
+        for j in range(i + 1, len(noms)):
+            a, b = noms[i], noms[j]
+            communes = _colonnes_communes(tables[a], tables[b])
+            if communes:
+                resultat[(a, b)] = communes
+    return resultat
+
+
+def relation_entre_tables(nom1: str, nom2: str, tables: dict) -> str:
+    """Decrit, a partir des vraies donnees chargees, comment deux tables sont
+    reliees (colonnes en commun, candidates comme cle de jointure)."""
+    manquantes = [n for n in (nom1, nom2) if n not in tables]
+    if manquantes:
+        return f"Table introuvable parmi celles chargées : {', '.join(manquantes)}."
+
+    communes = _colonnes_communes(tables[nom1], tables[nom2])
+    if not communes:
+        return (
+            f"Aucune colonne commune détectée entre **{nom1}** et **{nom2}** dans les données "
+            "chargées : impossible de déterminer un lien direct entre ces deux tables telles quelles."
+        )
+
+    lignes = [
+        f"**{nom1}** et **{nom2}** partagent {len(communes)} colonne(s) : "
+        + ", ".join(f"`{c}`" for c in communes) + "."
+    ]
+    lignes.append(
+        f"`{communes[0]}` est la candidate la plus probable comme clé de jointure "
+        f"(présente dans les deux tables). Demande « fusionne {nom1} et {nom2} » pour obtenir "
+        "une table combinée."
+    )
+    return "\n".join(lignes)
+
+
+def rapport_relations(tables: dict) -> str:
+    """Resume les relations detectees (colonnes communes) entre toutes les
+    paires de tables actuellement chargees (fichiers separes ou feuilles d'un
+    meme classeur Excel : traites de la meme facon)."""
+    if len(tables) < 2:
+        return "Il faut au moins deux tables chargées pour détecter une relation entre elles."
+
+    communes = detecter_cles_communes(tables)
+    if not communes:
+        return "Aucune colonne commune détectée entre les tables actuellement chargées."
+
+    lignes = ["Relations détectées entre les tables chargées (colonnes en commun) :"]
+    for (a, b), cols in communes.items():
+        lignes.append(f"- **{a}** ↔ **{b}** : " + ", ".join(f"`{c}`" for c in cols))
+    return "\n".join(lignes)
+
+
+def fusionner_tables(nom1: str, nom2: str, tables: dict, cle: str | None = None) -> pd.DataFrame:
+    """Fusionne (jointure) deux tables chargees sur une colonne commune.
+
+    Si `cle` n'est pas precisee, la premiere colonne commune detectee entre
+    les deux tables est utilisee automatiquement. Leve une ValueError si les
+    tables sont introuvables, si aucune colonne commune n'existe, ou si la
+    colonne demandee n'existe pas dans les deux tables."""
+    manquantes = [n for n in (nom1, nom2) if n not in tables]
+    if manquantes:
+        raise ValueError(f"Table introuvable parmi celles chargées : {', '.join(manquantes)}")
+
+    df1, df2 = tables[nom1], tables[nom2]
+
+    if cle is None:
+        communes = _colonnes_communes(df1, df2)
+        if not communes:
+            raise ValueError(f"Aucune colonne commune trouvée entre '{nom1}' et '{nom2}' pour fusionner.")
+        cle = communes[0]
+    elif cle not in df1.columns or cle not in df2.columns:
+        raise ValueError(f"La colonne '{cle}' n'existe pas dans les deux tables.")
+
+    return df1.merge(df2, on=cle, how="inner", suffixes=(f"_{nom1}", f"_{nom2}"))
 
 
 def _noms_compatibles_stata(df: pd.DataFrame) -> pd.DataFrame:

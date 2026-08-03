@@ -153,7 +153,7 @@ with st.sidebar:
     st.divider()
     st.header("📁 Tables / bases de données")
     st.caption(
-        "Fichiers CSV ou Excel (.xlsx, .xls) — un fichier = une table analysable "
+        "Fichiers CSV, Excel (.xlsx, .xls) ou Stata (.dta) — un fichier = une table analysable "
         "(indicateurs, échantillons, doublons...). Un classeur Excel avec plusieurs feuilles "
         "est reconnu automatiquement comme plusieurs tables, une par feuille."
     )
@@ -164,8 +164,8 @@ with st.sidebar:
         st.session_state["fichiers_traites"] = set()  # (nom, taille) déjà chargés
 
     fichiers = st.file_uploader(
-        "Déposer une ou plusieurs tables (CSV ou Excel)",
-        type=["csv", "xlsx", "xls"],
+        "Déposer une ou plusieurs tables (CSV, Excel ou Stata)",
+        type=["csv", "xlsx", "xls", "dta"],
         accept_multiple_files=True,
     )
 
@@ -179,7 +179,13 @@ with st.sidebar:
             if signature in st.session_state["fichiers_traites"]:
                 continue
             try:
-                suffix = ".xlsx" if fichier.name.lower().endswith((".xlsx", ".xls")) else ".csv"
+                nom_bas = fichier.name.lower()
+                if nom_bas.endswith((".xlsx", ".xls")):
+                    suffix = ".xlsx"
+                elif nom_bas.endswith(".dta"):
+                    suffix = ".dta"
+                else:
+                    suffix = ".csv"
                 # tempfile.gettempdir() fonctionne sur Windows, macOS et Linux
                 # (un chemin code en dur type "/tmp/..." plante sous Windows).
                 tmp_path = tempfile.NamedTemporaryFile(delete=False, suffix=suffix).name
@@ -198,7 +204,7 @@ with st.sidebar:
                         )
                         st.session_state["tables"][nom_table] = df_feuille
                 else:
-                    nom_table = re.sub(r"\.(csv|xlsx|xls)$", "", fichier.name, flags=re.IGNORECASE)
+                    nom_table = re.sub(r"\.(csv|xlsx|xls|dta)$", "", fichier.name, flags=re.IGNORECASE)
                     st.session_state["tables"][nom_table] = dt.load_table(tmp_path)
 
                 st.session_state["fichiers_traites"].add(signature)
@@ -350,11 +356,49 @@ def historique_recent(max_tours: int = 6) -> list[dict]:
     return [{"role": m["role"], "contenu": m["content"]} for m in recents]
 
 
+MOTS_RELATION = ["relation", "reliee", "reliees", "relie", "relies", "lien", "liees", "en commun", "cle commune", "cles communes", "clé commune", "clés communes"]
+MOTS_FUSION = ["fusion", "fusionner", "fusionne", "jointure", "joindre", "joins", "merge", "merger"]
+
+
 def route_question(question: str) -> dict:
     """Determine si la question porte sur une table deposee (indicateur,
-    echantillon, coherence) ou sur le dictionnaire (RAG)."""
+    echantillon, coherence), sur une relation/fusion entre plusieurs tables
+    chargees, ou sur le dictionnaire (RAG)."""
     q = question.lower()
     tables = st.session_state.get("tables", {})
+
+    # Questions de relation ou de fusion entre plusieurs tables chargees
+    # (fichiers separes ou feuilles d'un meme classeur Excel : traitees de
+    # facon identique une fois chargees) - a verifier AVANT la resolution
+    # a une seule table, puisque ces questions portent par nature sur au
+    # moins deux tables a la fois.
+    tables_mentionnees = dt.detecter_tables_mentionnees(question, tables)
+
+    if any(m in q for m in MOTS_FUSION):
+        if len(tables_mentionnees) >= 2:
+            a, b = tables_mentionnees[0], tables_mentionnees[1]
+            try:
+                fusion = dt.fusionner_tables(a, b, tables)
+                return {
+                    "content": f"Fusion de **{a}** et **{b}** ({len(fusion)} lignes obtenues) :\n\n{fusion.head(20).to_markdown(index=False)}",
+                    "table": fusion,
+                    "table_label": f"fusion_{a}_{b}",
+                }
+            except ValueError as e:
+                return {"content": f"⚠️ {e}"}
+        return {
+            "content": (
+                "Précise les deux tables à fusionner en les nommant explicitement, ex. : "
+                f"« fusionne {list(tables.keys())[0] if tables else 'Tindividual'} et "
+                f"{list(tables.keys())[1] if len(tables) > 1 else 'Tsocialgp'} »."
+            )
+        }
+
+    if any(m in q for m in MOTS_RELATION):
+        if len(tables_mentionnees) >= 2:
+            return {"content": dt.relation_entre_tables(tables_mentionnees[0], tables_mentionnees[1], tables)}
+        return {"content": dt.rapport_relations(tables)}
+
     nom_table, df = dt.resoudre_table_ciblee(question, tables, table_active_nom)
 
     if df is not None and "doublon" in q:

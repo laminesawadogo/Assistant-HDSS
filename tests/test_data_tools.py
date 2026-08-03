@@ -26,6 +26,94 @@ def table_exemple(tmp_path):
     return str(path)
 
 
+# --- Import Stata (.dta) -----------------------------------------------------
+
+def test_load_table_lit_un_fichier_stata(tmp_path):
+    path = tmp_path / "table_exemple.dta"
+    df_origine = pd.DataFrame({"individid": [1, 2, 3], "sex": [1, 2, 1], "nom": ["A", "B", "C"]})
+    df_origine.to_stata(path, write_index=False)
+
+    df = dt.load_table(str(path))
+    assert list(df["individid"]) == [1, 2, 3]
+    assert "nom" not in df.columns  # colonne nominative retiree comme pour csv/xlsx
+
+
+# --- Relations et fusion entre tables chargees -------------------------------
+
+def test_detecter_tables_mentionnees():
+    tables = {"Tindividual": pd.DataFrame({"individid": [1]}), "Tsocialgp": pd.DataFrame({"socialgpid": [1]})}
+    assert dt.detecter_tables_mentionnees("relation entre Tindividual et Tsocialgp", tables) == ["Tindividual", "Tsocialgp"]
+    assert dt.detecter_tables_mentionnees("question sans nom de table", tables) == []
+
+
+def test_detecter_cles_communes_trouve_la_colonne_partagee():
+    tables = {
+        "Tindividual": pd.DataFrame({"individid": [1, 2], "sex": [1, 2]}),
+        "TMembership": pd.DataFrame({"individid": [1, 2], "socialgpid": [10, 20]}),
+        "Tsocialgp": pd.DataFrame({"socialgpid": [10, 20], "chef_menage": [1, 2]}),
+    }
+    communes = dt.detecter_cles_communes(tables)
+    assert communes[("Tindividual", "TMembership")] == ["individid"]
+    assert communes[("TMembership", "Tsocialgp")] == ["socialgpid"]
+    assert ("Tindividual", "Tsocialgp") not in communes  # aucune colonne en commun
+
+
+def test_relation_entre_tables_decrit_la_colonne_commune():
+    tables = {
+        "Tindividual": pd.DataFrame({"individid": [1], "sex": [1]}),
+        "TMembership": pd.DataFrame({"individid": [1], "socialgpid": [10]}),
+    }
+    texte = dt.relation_entre_tables("Tindividual", "TMembership", tables)
+    assert "individid" in texte
+    assert "Tindividual" in texte and "TMembership" in texte
+
+
+def test_relation_entre_tables_sans_colonne_commune():
+    tables = {
+        "A": pd.DataFrame({"x": [1]}),
+        "B": pd.DataFrame({"y": [1]}),
+    }
+    texte = dt.relation_entre_tables("A", "B", tables)
+    assert "Aucune colonne commune" in texte
+
+
+def test_rapport_relations_resume_toutes_les_paires():
+    tables = {
+        "Tindividual": pd.DataFrame({"individid": [1], "sex": [1]}),
+        "TMembership": pd.DataFrame({"individid": [1], "socialgpid": [10]}),
+        "Tsocialgp": pd.DataFrame({"socialgpid": [10]}),
+    }
+    texte = dt.rapport_relations(tables)
+    assert "Tindividual" in texte and "TMembership" in texte and "Tsocialgp" in texte
+
+
+def test_rapport_relations_avec_une_seule_table():
+    texte = dt.rapport_relations({"Tindividual": pd.DataFrame({"individid": [1]})})
+    assert "au moins deux tables" in texte
+
+
+def test_fusionner_tables_sur_cle_detectee_automatiquement():
+    tables = {
+        "Tindividual": pd.DataFrame({"individid": [1, 2], "sex": [1, 2]}),
+        "TMembership": pd.DataFrame({"individid": [1, 2], "socialgpid": [10, 20]}),
+    }
+    fusion = dt.fusionner_tables("Tindividual", "TMembership", tables)
+    assert len(fusion) == 2
+    assert "sex" in fusion.columns and "socialgpid" in fusion.columns
+
+
+def test_fusionner_tables_leve_erreur_sans_colonne_commune():
+    tables = {"A": pd.DataFrame({"x": [1]}), "B": pd.DataFrame({"y": [1]})}
+    with pytest.raises(ValueError):
+        dt.fusionner_tables("A", "B", tables)
+
+
+def test_fusionner_tables_leve_erreur_si_table_introuvable():
+    tables = {"A": pd.DataFrame({"x": [1]})}
+    with pytest.raises(ValueError):
+        dt.fusionner_tables("A", "Inconnue", tables)
+
+
 # --- Classeurs Excel multi-feuilles -----------------------------------------
 
 def test_est_classeur_excel():
