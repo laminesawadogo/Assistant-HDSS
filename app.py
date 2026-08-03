@@ -358,6 +358,12 @@ def historique_recent(max_tours: int = 6) -> list[dict]:
 
 MOTS_RELATION = ["relation", "reliee", "reliees", "relie", "relies", "lien", "liees", "en commun", "cle commune", "cles communes", "clé commune", "clés communes"]
 MOTS_FUSION = ["fusion", "fusionner", "fusionne", "jointure", "joindre", "joins", "merge", "merger"]
+MOTS_DIFFERENCE = [
+    "mais pas dans", "et pas dans", "pas dans", "absent de", "absents de", "absente de", "absentes de",
+    "sauf", "n'est pas dans", "ne sont pas dans", "n'apparaissent pas dans", "n'apparait pas dans",
+    "n'apparaît pas dans",
+]
+MOTS_VICE_VERSA = ["vice versa", "vice-versa", "et inversement", "et l'inverse", "et réciproquement", "et reciproquement"]
 
 
 def formater_rapport_coherence(rapport: dict, nom_table: str) -> str:
@@ -428,18 +434,74 @@ def route_question(question: str) -> dict:
             if len(tables_mentionnees) >= 2:
                 break
 
+    # Difference d'ensembles ("qui est dans X mais pas dans Y", et
+    # eventuellement "vice versa" pour les deux sens a la fois) - a verifier
+    # AVANT la fusion generale, puisque ce sont deux operations distinctes.
+    if any(m in q for m in MOTS_DIFFERENCE):
+        if len(tables_mentionnees) < 2:
+            return {
+                "content": (
+                    "Précise les deux tables à comparer en les nommant explicitement, ex. : "
+                    f"« combien sont dans {list(tables.keys())[0] if tables else 'Presence'} mais pas dans "
+                    f"{list(tables.keys())[1] if len(tables) > 1 else 'Education'} »."
+                )
+            }
+        a, b = tables_mentionnees[0], tables_mentionnees[1]
+        try:
+            diff_ab = dt.difference_tables(a, b, tables)
+        except ValueError as e:
+            return {"content": f"⚠️ {e}"}
+
+        cle = dt.detecter_cle_jointure(a, b, tables)
+        nom_resultat_ab = f"difference_{a}_sans_{b}"
+        st.session_state["tables"][nom_resultat_ab] = diff_ab
+
+        morceaux = [
+            f"**{len(diff_ab)}** ligne(s) de **{a}** n'ont pas de correspondance dans **{b}** "
+            f"(sur la clé `{cle}`). Résultat enregistré sous **{nom_resultat_ab}** — tu peux directement "
+            f"demander un indicateur ou un échantillon dessus ensuite.\n\n{diff_ab.head(20).to_markdown(index=False)}"
+        ]
+        table_resultat, label_resultat = diff_ab, nom_resultat_ab
+
+        if any(m in q for m in MOTS_VICE_VERSA):
+            diff_ba = dt.difference_tables(b, a, tables)
+            nom_resultat_ba = f"difference_{b}_sans_{a}"
+            st.session_state["tables"][nom_resultat_ba] = diff_ba
+            morceaux.append(
+                f"Et inversement : **{len(diff_ba)}** ligne(s) de **{b}** n'ont pas de correspondance dans "
+                f"**{a}**. Résultat enregistré sous **{nom_resultat_ba}**.\n\n{diff_ba.head(20).to_markdown(index=False)}"
+            )
+            # En cas de "vice versa", le deuxieme resultat (b sans a) est celui
+            # propose en telechargement immediat (le premier reste consultable
+            # via son propre nom pour une question de suivi).
+            table_resultat, label_resultat = diff_ba, nom_resultat_ba
+
+        if cle:
+            morceaux.append(dt.syntaxe_difference(a, b, cle))
+
+        return {"content": "\n\n".join(morceaux), "table": table_resultat, "table_label": label_resultat}
+
     if any(m in q for m in MOTS_FUSION):
         if len(tables_mentionnees) >= 2:
             a, b = tables_mentionnees[0], tables_mentionnees[1]
             try:
                 fusion = dt.fusionner_tables(a, b, tables)
-                return {
-                    "content": f"Fusion de **{a}** et **{b}** ({len(fusion)} lignes obtenues) :\n\n{fusion.head(20).to_markdown(index=False)}",
-                    "table": fusion,
-                    "table_label": f"fusion_{a}_{b}",
-                }
             except ValueError as e:
                 return {"content": f"⚠️ {e}"}
+
+            cle = dt.detecter_cle_jointure(a, b, tables)
+            nom_resultat = f"fusion_{a}_{b}"
+            st.session_state["tables"][nom_resultat] = fusion
+
+            morceaux = [
+                f"Fusion de **{a}** et **{b}** ({len(fusion)} lignes obtenues, sur la clé `{cle}`). "
+                f"Résultat enregistré sous **{nom_resultat}** — interrogeable directement ensuite "
+                f"(indicateur, échantillon...).\n\n{fusion.head(20).to_markdown(index=False)}"
+            ]
+            if cle:
+                morceaux.append(dt.syntaxe_fusion(a, b, cle))
+
+            return {"content": "\n\n".join(morceaux), "table": fusion, "table_label": nom_resultat}
         return {
             "content": (
                 "Précise les deux tables à fusionner en les nommant explicitement, ex. : "

@@ -119,7 +119,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-83 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+91 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
@@ -213,8 +213,22 @@ peut :
   candidates comme clé de jointure.
 - **Fusionner deux tables** : « fusionne Tindividual et TMembership » —
   effectue une vraie jointure (`pandas.merge`) sur la première colonne
-  commune détectée, affiche un aperçu et propose les exports CSV/Excel/Stata
-  du résultat.
+  commune détectée, affiche un aperçu, **enregistre le résultat comme
+  nouvelle table** (`fusion_Tindividual_TMembership`) interrogeable
+  directement ensuite, et fournit la syntaxe R (`merge`) et Stata (`merge
+  1:1 ... using`) équivalente.
+- **Calculer une différence entre deux tables (anti-jointure)** : « combien
+  d'individus sont dans Presence et pas dans Education, et vice versa ? » —
+  calcule une vraie anti-jointure (`pandas.merge` avec indicateur) sur la clé
+  commune détectée, donne le nombre exact de lignes concernées dans chaque
+  sens (demande "vice versa"/"et inversement" pour obtenir les deux sens en
+  une fois), affiche un aperçu de **la liste** des lignes concernées,
+  **enregistre chaque résultat comme nouvelle table**
+  (`difference_Presence_sans_Education`, et
+  `difference_Education_sans_Presence` si les deux sens sont demandés) —
+  interrogeable ensuite pour un indicateur ou un échantillon (« à travers
+  cette base, donne-moi... »), et fournit la syntaxe R (`dplyr::anti_join`)
+  et Stata (`merge` + `keep if _merge == 1`) équivalente.
 
 Ces réponses (comme celles sur les doublons/incohérences/échantillons) sont
 toujours calculées directement à partir des vraies données chargées — jamais

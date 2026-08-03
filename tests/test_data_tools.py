@@ -132,6 +132,68 @@ def test_fusionner_tables_leve_erreur_si_table_introuvable():
         dt.fusionner_tables("A", "Inconnue", tables)
 
 
+# --- Difference d'ensembles (anti-jointure) ---------------------------------
+
+def test_difference_tables_trouve_les_lignes_sans_correspondance():
+    tables = {
+        "Presence": pd.DataFrame({"individid": [1, 2, 3, 4]}),
+        "Education": pd.DataFrame({"individid": [2, 3]}),
+    }
+    diff = dt.difference_tables("Presence", "Education", tables)
+    assert sorted(diff["individid"]) == [1, 4]
+    assert len(diff) == 2
+
+
+def test_difference_tables_est_non_symetrique():
+    tables = {
+        "Presence": pd.DataFrame({"individid": [1, 2, 3]}),
+        "Education": pd.DataFrame({"individid": [2, 3, 4, 5]}),
+    }
+    presence_sans_education = dt.difference_tables("Presence", "Education", tables)
+    education_sans_presence = dt.difference_tables("Education", "Presence", tables)
+    assert sorted(presence_sans_education["individid"]) == [1]
+    assert sorted(education_sans_presence["individid"]) == [4, 5]
+
+
+def test_difference_tables_leve_erreur_sans_colonne_commune():
+    tables = {"A": pd.DataFrame({"x": [1]}), "B": pd.DataFrame({"y": [1]})}
+    with pytest.raises(ValueError):
+        dt.difference_tables("A", "B", tables)
+
+
+def test_difference_tables_leve_erreur_si_table_introuvable():
+    tables = {"A": pd.DataFrame({"x": [1]})}
+    with pytest.raises(ValueError):
+        dt.difference_tables("A", "Inconnue", tables)
+
+
+# --- Detection de la cle de jointure et syntaxe R/Stata ----------------------
+
+def test_detecter_cle_jointure_renvoie_la_colonne_commune():
+    tables = {
+        "Tindividual": pd.DataFrame({"individid": [1], "sex": [1]}),
+        "TMembership": pd.DataFrame({"individid": [1], "socialgpid": [1]}),
+    }
+    assert dt.detecter_cle_jointure("Tindividual", "TMembership", tables) == "individid"
+
+
+def test_detecter_cle_jointure_none_si_aucune_commune():
+    tables = {"A": pd.DataFrame({"x": [1]}), "B": pd.DataFrame({"y": [1]})}
+    assert dt.detecter_cle_jointure("A", "B", tables) is None
+
+
+def test_syntaxe_fusion_contient_r_et_stata():
+    texte = dt.syntaxe_fusion("Tindividual", "TMembership", "individid")
+    assert "merge(Tindividual, TMembership" in texte
+    assert "merge 1:1 individid using TMembership" in texte
+
+
+def test_syntaxe_difference_contient_r_et_stata():
+    texte = dt.syntaxe_difference("Presence", "Education", "individid")
+    assert "anti_join(Presence, Education" in texte
+    assert "keep if _merge == 1" in texte
+
+
 # --- Classeurs Excel multi-feuilles -----------------------------------------
 
 def test_est_classeur_excel():

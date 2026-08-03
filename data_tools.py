@@ -345,6 +345,61 @@ def fusionner_tables(nom1: str, nom2: str, tables: dict, cle: str | None = None)
     return df1.merge(df2, on=cle, how="inner", suffixes=(f"_{nom1}", f"_{nom2}"))
 
 
+def detecter_cle_jointure(nom1: str, nom2: str, tables: dict) -> str | None:
+    """Renvoie la colonne commune utilisee (ou qui serait utilisee) comme cle
+    de jointure entre deux tables chargees, ou None si aucune ne convient -
+    utilise a la fois par le calcul reel (fusion/difference) et par la
+    generation de syntaxe R/Stata, pour rester coherent sur la cle choisie."""
+    if nom1 not in tables or nom2 not in tables:
+        return None
+    communes = _colonnes_communes(tables[nom1], tables[nom2])
+    return communes[0] if communes else None
+
+
+def difference_tables(nom1: str, nom2: str, tables: dict, cle: str | None = None) -> pd.DataFrame:
+    """Lignes de la table `nom1` dont la cle n'a AUCUNE correspondance dans la
+    table `nom2` (anti-jointure / difference d'ensembles) : repond a une
+    question du type "qui est present dans X mais pas dans Y" (ex: individus
+    enregistres sur une fiche mais absents d'une autre).
+
+    Si `cle` n'est pas precisee, la premiere colonne commune detectee entre
+    les deux tables est utilisee automatiquement (voir `detecter_cle_jointure`).
+    Leve une ValueError si les tables sont introuvables, si aucune colonne
+    commune n'existe, ou si la colonne demandee n'existe pas dans les deux
+    tables."""
+    manquantes = [n for n in (nom1, nom2) if n not in tables]
+    if manquantes:
+        raise ValueError(f"Table introuvable parmi celles chargées : {', '.join(manquantes)}")
+
+    df1, df2 = tables[nom1], tables[nom2]
+
+    if cle is None:
+        cle = detecter_cle_jointure(nom1, nom2, tables)
+        if cle is None:
+            raise ValueError(f"Aucune colonne commune trouvée entre '{nom1}' et '{nom2}' pour comparer.")
+    elif cle not in df1.columns or cle not in df2.columns:
+        raise ValueError(f"La colonne '{cle}' n'existe pas dans les deux tables.")
+
+    fusion = df1.merge(df2[[cle]].drop_duplicates(), on=cle, how="left", indicator=True)
+    return fusion[fusion["_merge"] == "left_only"].drop(columns="_merge")
+
+
+def syntaxe_fusion(nom1: str, nom2: str, cle: str) -> str:
+    """Syntaxe R et Stata equivalente a une fusion (jointure) entre deux
+    tables sur une cle commune, a fournir en complement du resultat direct."""
+    r = f'resultat <- merge({nom1}, {nom2}, by = "{cle}")'
+    stata = f"use {nom1}, clear\nmerge 1:1 {cle} using {nom2}"
+    return f"**Syntaxe équivalente :**\n```r\n{r}\n```\n```stata\n{stata}\n```"
+
+
+def syntaxe_difference(nom1: str, nom2: str, cle: str) -> str:
+    """Syntaxe R (dplyr::anti_join) et Stata equivalente a une difference
+    d'ensembles (lignes de nom1 sans correspondance dans nom2)."""
+    r = f'resultat <- dplyr::anti_join({nom1}, {nom2}, by = "{cle}")'
+    stata = f"use {nom1}, clear\nmerge 1:1 {cle} using {nom2}\nkeep if _merge == 1"
+    return f"**Syntaxe équivalente :**\n```r\n{r}\n```\n```stata\n{stata}\n```"
+
+
 def _noms_compatibles_stata(df: pd.DataFrame) -> pd.DataFrame:
     """Adapte les noms de colonnes aux contraintes Stata (<= 32 caracteres,
     commence par une lettre/underscore, uniquement lettres/chiffres/underscore),
