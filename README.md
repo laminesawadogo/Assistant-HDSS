@@ -119,7 +119,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-91 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+92 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
@@ -195,10 +195,16 @@ point).
 ## Combien de tables/feuilles sont chargées ?
 
 Une question sur la session en cours elle-même (« combien de tables sont
-chargées ? », « quelles feuilles sont disponibles ? », « liste des tables »)
-est reconnue et répond directement, sans passer par le dictionnaire (qui ne
-sait rien de ce qui est chargé à l'instant) : nombre de tables, nom de
-chacune, nombre de lignes/colonnes.
+chargées ? », « quelles feuilles sont disponibles ? », « liste des tables »,
+mais aussi une formulation plus libre comme « je parle des tables que je
+viens de vous envoyer ») est reconnue et répond directement, sans passer par
+le dictionnaire (qui ne sait rien de ce qui est chargé à l'instant) : nombre
+de tables, nom de chacune, nombre de lignes/colonnes. Les formulations les
+plus courantes sont reconnues instantanément par mots-clés ; les formulations
+plus inhabituelles passent par le même classifieur LLM que pour une
+répartition/un échantillon/une cohérence (action `LISTE_TABLES`), pour éviter
+que le modèle ne réponde à partir d'un historique qui ne mentionne parfois
+qu'une seule table à la fois et ne devine à tort qu'une seule est chargée.
 
 ## Relations entre tables et fusion
 

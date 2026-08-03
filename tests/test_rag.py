@@ -164,6 +164,19 @@ def test_classifier_intention_reponse_llm_invalide_renvoie_aucune(monkeypatch):
     assert param is None
 
 
+def test_classifier_intention_liste_tables(monkeypatch):
+    # Question formulee de facon trop variee pour matcher un mot-cle fige
+    # (voir MOTS_LISTE_TABLES dans app.py) : le classifieur LLM doit quand
+    # meme reconnaitre qu'il s'agit d'une question sur les tables chargees
+    # elles-memes, pas sur le contenu d'une table precise.
+    monkeypatch.setattr(rag, "call_llm", lambda prompt, groq_key=None, anthropic_key=None: "LISTE_TABLES")
+    action, param = rag.classifier_intention(
+        "je parle des tables que je viens de vous envoyer", ["sex", "individid"], groq_key="fake"
+    )
+    assert action == "LISTE_TABLES"
+    assert param is None
+
+
 # --- Reformulation de requete en cas de score de recherche trop faible -----
 
 def test_answer_reformule_la_requete_si_le_premier_score_est_faible(monkeypatch):

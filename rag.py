@@ -209,7 +209,7 @@ def analyser_image(
     return resp.content[0].text
 
 
-ACTIONS_CONNUES = {"REPARTITION", "ECHANTILLON", "DOUBLONS", "COHERENCE", "AUCUNE"}
+ACTIONS_CONNUES = {"REPARTITION", "ECHANTILLON", "DOUBLONS", "COHERENCE", "LISTE_TABLES", "AUCUNE"}
 
 
 def classifier_intention(
@@ -223,6 +223,7 @@ def classifier_intention(
       ("ECHANTILLON", n)
       ("DOUBLONS", None)
       ("COHERENCE", None)
+      ("LISTE_TABLES", None)  -> question sur le nombre/la liste des tables chargees
       ("AUCUNE", None)   -> la question ne concerne pas une action sur la table
 
     Si aucune cle LLM n'est configuree, ou si la reponse du modele est
@@ -239,10 +240,14 @@ def classifier_intention(
         "ECHANTILLON:<nombre_de_lignes>\n"
         "DOUBLONS\n"
         "COHERENCE\n"
+        "LISTE_TABLES\n"
         "AUCUNE\n\n"
         f"Colonnes disponibles dans la table : {', '.join(colonnes)}\n"
         f"Question : {question}\n\n"
         "Reponds uniquement avec l'une de ces lignes, sans aucune explication. "
+        "Utilise LISTE_TABLES des que la question porte sur les tables/fichiers/feuilles "
+        "actuellement charges eux-memes (combien il y en a, lesquels, si tu les as bien recus, "
+        "confirmation de ce qui a ete envoye...) plutot que sur le contenu d'une table precise. "
         "Si la question ne correspond a aucune de ces actions (par exemple une question "
         "sur la signification d'une variable), reponds AUCUNE."
     )
@@ -252,7 +257,10 @@ def classifier_intention(
     except Exception:
         return "AUCUNE", None
 
-    m = re.search(r"\b(REPARTITION|ECHANTILLON|DOUBLONS|COHERENCE|AUCUNE)\b\s*:?\s*([\w À-ÿ]*)", reponse, re.IGNORECASE)
+    m = re.search(
+        r"\b(REPARTITION|ECHANTILLON|DOUBLONS|COHERENCE|LISTE_TABLES|AUCUNE)\b\s*:?\s*([\w À-ÿ]*)",
+        reponse, re.IGNORECASE,
+    )
     if not m:
         return "AUCUNE", None
 
@@ -273,7 +281,7 @@ def classifier_intention(
         except (TypeError, ValueError):
             return "ECHANTILLON", 100
 
-    if action in ("DOUBLONS", "COHERENCE", "AUCUNE"):
+    if action in ("DOUBLONS", "COHERENCE", "LISTE_TABLES", "AUCUNE"):
         return action, None
 
     return "AUCUNE", None

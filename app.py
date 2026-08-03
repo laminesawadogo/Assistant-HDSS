@@ -400,6 +400,10 @@ MOTS_LISTE_TABLES = [
     "combien de table", "combien de feuille", "quelles tables", "quelles sont les tables",
     "liste des tables", "tables chargees", "tables chargées", "tables disponibles",
     "nombre de tables", "nombre de feuilles", "quelles feuilles", "liste des feuilles",
+    "tables que je viens de", "tables que je vous ai", "table que je viens de",
+    "table que je vous ai", "tables que je t'ai", "table que je t'ai",
+    "je viens de vous envoyer", "je viens de vous envoyé", "je viens de t'envoyer",
+    "je viens de charger", "je viens de déposer", "je viens de deposer",
 ]
 
 
@@ -591,6 +595,14 @@ def route_question(question: str) -> dict:
         if action == "COHERENCE":
             rapport = dt.rapport_coherence(df)
             return {"content": formater_rapport_coherence(rapport, nom_table)}
+        if action == "LISTE_TABLES":
+            # Question formulee de facon trop variee pour MOTS_LISTE_TABLES
+            # (ex: "je parle des tables que je viens de vous envoyer") mais
+            # qui porte bien sur l'ensemble des tables chargees, pas sur la
+            # seule table resolue par defaut : on repond avec la liste reelle
+            # et complete plutot que de laisser le LLM deviner a partir d'un
+            # historique qui ne mentionne jamais qu'une seule table a la fois.
+            return {"content": dt.resume_tables_chargees(tables)}
 
         # Le classifieur a conclu que ce n'est pas une action sur la table (ou
         # aucune clé LLM n'est configurée pour trancher) : on tente la piste
