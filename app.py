@@ -400,11 +400,30 @@ MOTS_LISTE_TABLES = [
     "combien de table", "combien de feuille", "quelles tables", "quelles sont les tables",
     "liste des tables", "tables chargees", "tables chargées", "tables disponibles",
     "nombre de tables", "nombre de feuilles", "quelles feuilles", "liste des feuilles",
-    "tables que je viens de", "tables que je vous ai", "table que je viens de",
-    "table que je vous ai", "tables que je t'ai", "table que je t'ai",
-    "je viens de vous envoyer", "je viens de vous envoyé", "je viens de t'envoyer",
-    "je viens de charger", "je viens de déposer", "je viens de deposer",
 ]
+
+# Complement de MOTS_LISTE_TABLES : plutot que d'enumerer indefiniment de
+# nouvelles formulations exactes (approche fragile - chaque nouvelle facon de
+# demander "combien de tables sont chargees" en langage libre passait a cote,
+# ex: "je parle de table au niveau de l'importation des tables"), on detecte
+# une question "meta" sur les tables elles-memes via DEUX familles de mots
+# combinees : un mot generique designant les tables ET un verbe/mot lie a
+# l'import/au chargement/au denombrement. Beaucoup plus robuste, et evite de
+# dependre uniquement du classifieur LLM (qui peut se tromper sur une
+# formulation ambigue - voir classifier_intention/LISTE_TABLES pour le filet
+# de securite quand meme cette detection ne suffit pas).
+MOTS_TABLE_GENERIQUE = ["table", "tables", "feuille", "feuilles", "classeur", "classeurs"]
+MOTS_ACTION_META = [
+    "combien", "liste", "dispon", "import", "envoy", "reçu", "recu", "reçois", "recois",
+    "reçoit", "recoit", "fourni", "depos", "déposé", "deposee", "déposée", "deposees", "déposées",
+]
+
+
+def est_question_meta_tables(q: str) -> bool:
+    """Detecte une question portant sur les tables actuellement chargees
+    elles-memes (nombre, noms, confirmation qu'elles ont bien ete recues) -
+    par opposition a une question sur le contenu d'une table precise."""
+    return any(m in q for m in MOTS_TABLE_GENERIQUE) and any(m in q for m in MOTS_ACTION_META)
 
 
 def route_question(question: str) -> dict:
@@ -419,7 +438,7 @@ def route_question(question: str) -> dict:
     # sont chargees, lesquelles) : ne concerne pas le contenu d'une table ni
     # le dictionnaire, donc a verifier en tout premier, avant toute
     # resolution de table.
-    if any(m in q for m in MOTS_LISTE_TABLES):
+    if any(m in q for m in MOTS_LISTE_TABLES) or est_question_meta_tables(q):
         return {"content": dt.resume_tables_chargees(tables)}
 
     # Questions de relation ou de fusion entre plusieurs tables chargees

@@ -199,12 +199,18 @@ chargées ? », « quelles feuilles sont disponibles ? », « liste des tables �
 mais aussi une formulation plus libre comme « je parle des tables que je
 viens de vous envoyer ») est reconnue et répond directement, sans passer par
 le dictionnaire (qui ne sait rien de ce qui est chargé à l'instant) : nombre
-de tables, nom de chacune, nombre de lignes/colonnes. Les formulations les
-plus courantes sont reconnues instantanément par mots-clés ; les formulations
-plus inhabituelles passent par le même classifieur LLM que pour une
-répartition/un échantillon/une cohérence (action `LISTE_TABLES`), pour éviter
-que le modèle ne réponde à partir d'un historique qui ne mentionne parfois
-qu'une seule table à la fois et ne devine à tort qu'une seule est chargée.
+de tables, nom de chacune, nombre de lignes/colonnes. Plutôt que d'énumérer
+indéfiniment de nouvelles formulations exactes (approche fragile), la
+détection combine deux familles de mots : un mot générique désignant les
+tables (« table(s) », « feuille(s) », « classeur(s) ») et un mot lié à
+l'import/au dénombrement (« combien », « importation », « envoyé », « reçu »,
+« déposé »...) — les deux réunis dans la même question déclenchent la vraie
+liste, quelle que soit la tournure de phrase. Les formulations encore plus
+inhabituelles passent en dernier recours par le même classifieur LLM que pour
+une répartition/un échantillon/une cohérence (action `LISTE_TABLES`), pour
+éviter que le modèle ne réponde à partir d'un historique qui ne mentionne
+parfois qu'une seule table à la fois et ne devine à tort qu'une seule est
+chargée.
 
 ## Relations entre tables et fusion
 
