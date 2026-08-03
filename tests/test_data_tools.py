@@ -328,3 +328,48 @@ def test_resoudre_table_ciblee_colonne_partagee_retombe_sur_le_defaut():
     }
     nom, df = dt.resoudre_table_ciblee("doublons sur individid", tables, nom_par_defaut="TMembership")
     assert nom == "TMembership"
+
+
+# --- Memoire conversationnelle (historique) ---------------------------------
+
+def test_tables_mentionnees_dans_historique_du_plus_recent_au_plus_ancien():
+    tables = {"Tindividual": pd.DataFrame({"individid": [1]}), "Tsocialgp": pd.DataFrame({"socialgpid": [1]})}
+    historique = [
+        {"role": "user", "contenu": "parle-moi de Tindividual"},
+        {"role": "assistant", "contenu": "Tindividual contient les individus."},
+        {"role": "user", "contenu": "et pour Tsocialgp ?"},
+    ]
+    assert dt.tables_mentionnees_dans_historique(historique, tables) == ["Tsocialgp", "Tindividual"]
+
+
+def test_tables_mentionnees_dans_historique_vide_sans_historique():
+    tables = {"Tindividual": pd.DataFrame({"individid": [1]})}
+    assert dt.tables_mentionnees_dans_historique(None, tables) == []
+    assert dt.tables_mentionnees_dans_historique([], tables) == []
+
+
+def test_resoudre_table_ciblee_utilise_lhistorique_avant_le_defaut():
+    # Question de suivi ("les doublons ?") qui ne nomme aucune table et dont
+    # aucune colonne n'est mentionnee : la table discutee juste avant dans la
+    # conversation doit l'emporter sur la table par defaut de l'interface.
+    tables = {
+        "Tindividual": pd.DataFrame({"individid": [1], "sex": [1]}),
+        "TMembership": pd.DataFrame({"individid": [1], "socialgpid": [1]}),
+    }
+    historique = [{"role": "user", "contenu": "montre-moi TMembership"}]
+    nom, df = dt.resoudre_table_ciblee(
+        "les doublons ?", tables, nom_par_defaut="Tindividual", historique=historique
+    )
+    assert nom == "TMembership"
+
+
+def test_resoudre_table_ciblee_priorite_au_nom_explicite_meme_avec_historique():
+    tables = {
+        "Tindividual": pd.DataFrame({"individid": [1]}),
+        "TMembership": pd.DataFrame({"individid": [1]}),
+    }
+    historique = [{"role": "user", "contenu": "montre-moi TMembership"}]
+    nom, df = dt.resoudre_table_ciblee(
+        "doublons de Tindividual", tables, nom_par_defaut=None, historique=historique
+    )
+    assert nom == "Tindividual"

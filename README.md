@@ -119,7 +119,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-75 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+81 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
@@ -207,6 +207,18 @@ peut :
   effectue une vraie jointure (`pandas.merge`) sur la première colonne
   commune détectée, affiche un aperçu et propose les exports CSV/Excel/Stata
   du résultat.
+
+Ces réponses (comme celles sur les doublons/incohérences/échantillons) sont
+toujours calculées directement à partir des vraies données chargées — jamais
+rédigées ou devinées par le LLM — pour rester précises. Le rapport de
+cohérence indique en plus explicitement quelles colonnes d'identifiant et de
+date ont été vérifiées, pas seulement les anomalies trouvées.
+
+**Mémoire de la conversation, y compris sur les tables.** Une question de
+suivi qui ne renomme pas la table ("et les doublons ?" après avoir parlé
+d'une table précise) reste rattachée au bon contexte : la résolution de
+table regarde d'abord la question en cours, puis les derniers échanges de la
+conversation, avant de retomber sur la table par défaut de l'interface.
 
 ## Lire une image (photo, scan)
 
