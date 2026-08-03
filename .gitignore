@@ -1,5 +1,6 @@
 # Secrets - ne jamais pousser sur GitHub
 .env
+auth_config.yaml
 
 # Fichiers Python courants
 __pycache__/

@@ -57,13 +57,18 @@ données simplement en ayant le lien de l'appli. Les comptes et leur rôle
 encore utilisé pour restreindre l'interface) sont définis dans
 `auth_config.yaml`.
 
-**⚠️ Avant tout déploiement avec de vraies données**, les identifiants
-doivent être configurés via le gestionnaire de secrets de Streamlit Cloud
-(Settings → Secrets de l'appli), au format documenté en tête de
-`auth_config.yaml` — jamais dans ce fichier tel quel s'il reste suivi par
-Git (voir le rappel dans le fichier). Tant que la configuration par défaut
-(mots de passe/clé de cookie d'exemple) est détectée, un avertissement
-s'affiche directement dans l'application pour que ça ne passe pas inaperçu.
+**Pour un vrai déploiement (recommandé)**, les identifiants sont configurés
+via le gestionnaire de secrets de Streamlit Cloud (Settings → Secrets de
+l'appli), au format TOML documenté en tête de `auth_config.yaml.exemple`.
+Tant que la configuration par défaut (mots de passe/clé de cookie d'exemple)
+est détectée, un avertissement s'affiche directement dans l'application pour
+que ça ne passe pas inaperçu.
+
+`auth_config.yaml` (comptes réels) n'est **pas** suivi par Git — seul
+`auth_config.yaml.exemple` (valeurs factices, même principe que
+`.env`/`.env.exemple`) est versionné. Pour un usage local : copie
+`auth_config.yaml.exemple` en `auth_config.yaml`, remplace les comptes et la
+clé de cookie par de vraies valeurs.
 
 Le fichier temporaire créé lors du dépôt d'une table (le temps de la lire
 avec pandas) est maintenant systématiquement supprimé du disque du serveur
@@ -152,7 +157,7 @@ multi-tours dans l'interface.
 - `data_tools.py` — analyse d'une ou plusieurs tables déposées (CSV, Excel — multi-feuilles compris — ou Stata) : répartitions, échantillon reproductible, détection de doublons/dates invraisemblables (colonnes ID/date détectées automatiquement par leur nom/contenu), résolution automatique de la table ciblée par une question (nom de table ou colonne mentionnée), détection des colonnes communes entre tables chargées (relations, candidates de jointure) et fusion sur demande. Les colonnes de type nom/prénom sont systématiquement retirées avant toute analyse.
 - `app.py` — interface de chat (Streamlit).
 - `instructions_systeme.md` — rôle et garde-fous de l'assistant (ce qu'il fait, ce qu'il ne fait jamais).
-- `auth_config.yaml` — comptes de l'équipe (identifiants, mots de passe, rôles).
+- `auth_config.yaml` — comptes réels de l'équipe (identifiants, mots de passe, rôles), non suivi par Git. `auth_config.yaml.exemple` est le modèle versionné (valeurs factices).
 - `.env` / `.env.exemple` — clé du modèle (Anthropic/Groq) chargée automatiquement au démarrage, jamais à ressaisir dans l'application.
 - `packages.txt` — dépendances système (LibreOffice, poppler-utils) installées automatiquement par Streamlit Community Cloud au déploiement.
 - `tests/` — suite de tests automatisés (pytest).

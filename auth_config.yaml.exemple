@@ -1,13 +1,17 @@
-# Comptes de l'equipe OPO autorises a utiliser l'assistant.
+# Modele de configuration d'authentification (comptes de l'equipe OPO).
 #
-# ⚠️ CE FICHIER EST ACTUELLEMENT SUIVI PAR GIT (donc visible dans l'historique
-# du depot, y compris s'il est public sur GitHub) : NE JAMAIS y mettre de
-# vrais mots de passe ni la vraie cle de cookie tant qu'il reste suivi.
+# Ce fichier .exemple est le seul suivi par Git (meme principe que
+# .env.exemple pour la cle du modele) : il ne contient que des valeurs
+# factices, jamais de vrais mots de passe. Pour un usage LOCAL uniquement :
+#   copie auth_config.yaml.exemple en auth_config.yaml (meme dossier),
+#   remplace les comptes/mots de passe ci-dessous par les vrais, puis
+#   change la cle sous "cookie". auth_config.yaml est deja dans .gitignore
+#   et ne sera jamais envoye sur GitHub.
 #
 # Pour un vrai deploiement (Streamlit Community Cloud), utilisez plutot le
 # gestionnaire de secrets de la plateforme (Settings -> Secrets de l'appli),
-# au format TOML suivant (lu en priorite par auth.py, ce fichier ne sert
-# alors que de repli pour le developpement local) :
+# lu en priorite par auth.py - ce fichier local ne sert alors que de repli
+# pour le developpement, au format TOML suivant :
 #
 #   [auth.usernames.admin]
 #   name = "Administrateur OPO"
@@ -19,14 +23,6 @@
 #   name = "opo_auth_cookie"
 #   key = "une_cle_aleatoire_secrete"      # ex: python -c "import secrets; print(secrets.token_hex(32))"
 #   expiry_days = 7
-#
-# Si vous preferez quand meme passer par ce fichier local (dev uniquement) :
-#   1. Retirez-le du suivi Git : git rm --cached auth_config.yaml, puis
-#      ajoutez "auth_config.yaml" a .gitignore, avant d'y mettre de vraies
-#      valeurs.
-#   2. Remplacez les comptes d'exemple ci-dessous par les vrais comptes.
-#   3. Changez les mots de passe (hashes automatiquement au premier lancement).
-#   4. Remplacez la valeur de "key" sous cookie par une chaine aleatoire secrete.
 #
 # role : "correction" (acces complet, y compris revue des incoherences a valider)
 #        ou "consultation" (indicateurs, echantillons, syntaxes uniquement —
