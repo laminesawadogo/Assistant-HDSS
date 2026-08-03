@@ -121,15 +121,30 @@ def rapport_coherence(df: pd.DataFrame) -> dict:
     """Rapport generique : doublons sur les colonnes d'ID detectees, dates
     invraisemblables sur les colonnes de date detectees. Aucune correction
     n'est appliquee : uniquement un signalement, a valider par une personne
-    habilitee."""
-    rapport = {"n_lignes": len(df), "colonnes": list(df.columns), "anomalies": {}}
+    habilitee.
 
-    for id_col in detect_id_columns(df):
+    Le rapport indique explicitement quelles colonnes ont ete examinees
+    (`colonnes_id_verifiees`, `colonnes_date_verifiees`), pour que la reponse
+    reste precise sur ce qui a ete effectivement controle - plutot qu'un
+    simple "aucune anomalie" qui pourrait laisser croire a un controle
+    exhaustif alors qu'aucune colonne pertinente n'aurait ete detectee."""
+    colonnes_id = detect_id_columns(df)
+    colonnes_date = detect_date_columns(df)
+
+    rapport = {
+        "n_lignes": len(df),
+        "colonnes": list(df.columns),
+        "colonnes_id_verifiees": colonnes_id,
+        "colonnes_date_verifiees": colonnes_date,
+        "anomalies": {},
+    }
+
+    for id_col in colonnes_id:
         dups = doublons(df, id_col)
         if len(dups) > 0:
             rapport["anomalies"][f"doublons::{id_col}"] = len(dups)
 
-    for date_col in detect_date_columns(df):
+    for date_col in colonnes_date:
         bad = dates_incoherentes(df, date_col)
         if len(bad) > 0:
             rapport["anomalies"][f"dates_invraisemblables::{date_col}"] = len(bad)
@@ -140,7 +155,30 @@ def rapport_coherence(df: pd.DataFrame) -> dict:
     return rapport
 
 
-def resoudre_table_ciblee(question: str, tables: dict, nom_par_defaut: str | None = None):
+def tables_mentionnees_dans_historique(historique: list[dict] | None, tables: dict) -> list[str]:
+    """Recherche, dans les derniers echanges de la conversation (du plus
+    recent au plus ancien), les noms de tables chargees qui ont deja ete
+    mentionnes - pour qu'une question de suivi qui ne renomme pas
+    explicitement la table ("et les doublons ?" apres avoir parle de
+    Tindividual) reste rattachee au bon contexte plutot que de retomber sur
+    un choix par defaut potentiellement different.
+
+    `historique` est une liste de {"role": ..., "contenu": ...} (voir
+    app.py:historique_recent), du plus ancien au plus recent."""
+    if not historique:
+        return []
+    trouvees: list[str] = []
+    for message in reversed(historique):
+        contenu = str(message.get("contenu", "")).lower()
+        for nom in tables:
+            if nom.lower() in contenu and nom not in trouvees:
+                trouvees.append(nom)
+    return trouvees
+
+
+def resoudre_table_ciblee(
+    question: str, tables: dict, nom_par_defaut: str | None = None, historique: list[dict] | None = None
+):
     """Determine quelle table (parmi plusieurs deposees) est visee par une
     question, pour que toutes les tables chargees soient aussi faciles a
     interroger les unes que les autres (pas seulement la table "active") :
@@ -152,9 +190,12 @@ def resoudre_table_ciblee(question: str, tables: dict, nom_par_defaut: str | Non
        automatiquement (ex: "repartition de sex" cible directement la table
        qui contient la colonne "sex", sans avoir a la nommer ni a la
        selectionner comme table active).
-    3. En dernier recours (question ambigue, ou colonne partagee par
-       plusieurs tables), on retombe sur la table active par defaut choisie
-       dans l'interface.
+    3. Sinon, si une table a ete mentionnee dans les echanges precedents de
+       la conversation, elle est retenue (memoire conversationnelle - une
+       question de suivi comme "et les doublons ?" reste rattachee au bon
+       contexte).
+    4. En dernier recours (aucun historique exploitable), on retombe sur la
+       table active par defaut choisie dans l'interface.
 
     Renvoie un tuple (nom_de_la_table, dataframe) ou (None, None) si aucune
     table n'est disponible.
@@ -171,6 +212,9 @@ def resoudre_table_ciblee(question: str, tables: dict, nom_par_defaut: str | Non
             tables_correspondantes.append(nom)
     if len(tables_correspondantes) == 1:
         nom = tables_correspondantes[0]
+        return nom, tables[nom]
+
+    for nom in tables_mentionnees_dans_historique(historique, tables):
         return nom, tables[nom]
 
     if nom_par_defaut is not None and nom_par_defaut in tables:

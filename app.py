@@ -360,6 +360,36 @@ MOTS_RELATION = ["relation", "reliee", "reliees", "relie", "relies", "lien", "li
 MOTS_FUSION = ["fusion", "fusionner", "fusionne", "jointure", "joindre", "joins", "merge", "merger"]
 
 
+def formater_rapport_coherence(rapport: dict, nom_table: str) -> str:
+    """Met en forme le rapport de cohérence en indiquant explicitement quelles
+    colonnes ont été vérifiées (précision : évite un "aucune anomalie" ambigu
+    qui pourrait laisser croire à un contrôle exhaustif si en réalité aucune
+    colonne d'ID ou de date n'a été détectée dans la table)."""
+    lignes = [f"**Rapport de cohérence** sur **{nom_table}** ({rapport['n_lignes']} lignes) :"]
+
+    id_verifiees = rapport.get("colonnes_id_verifiees", [])
+    date_verifiees = rapport.get("colonnes_date_verifiees", [])
+    lignes.append(
+        "_Colonnes vérifiées — identifiants : "
+        + (", ".join(f"`{c}`" for c in id_verifiees) if id_verifiees else "aucune détectée")
+        + " ; dates : "
+        + (", ".join(f"`{c}`" for c in date_verifiees) if date_verifiees else "aucune détectée")
+        + "._"
+    )
+
+    if rapport["anomalies"]:
+        for k, v in rapport["anomalies"].items():
+            lignes.append(f"- {k} : {v} cas")
+    else:
+        lignes.append("- Aucune anomalie détectée sur les colonnes vérifiées ci-dessus.")
+
+    lignes.append(
+        "\n_Rappel : ceci est un signalement, pas une correction automatique. "
+        "La validation reste réservée aux personnes habilitées._"
+    )
+    return "\n".join(lignes)
+
+
 def route_question(question: str) -> dict:
     """Determine si la question porte sur une table deposee (indicateur,
     echantillon, coherence), sur une relation/fusion entre plusieurs tables
@@ -373,6 +403,15 @@ def route_question(question: str) -> dict:
     # a une seule table, puisque ces questions portent par nature sur au
     # moins deux tables a la fois.
     tables_mentionnees = dt.detecter_tables_mentionnees(question, tables)
+    if len(tables_mentionnees) < 2:
+        # Complete avec les tables mentionnees dans les echanges precedents
+        # (memoire conversationnelle), sans dupliquer celles deja trouvees
+        # dans la question en cours.
+        for nom in dt.tables_mentionnees_dans_historique(historique_recent(), tables):
+            if nom not in tables_mentionnees:
+                tables_mentionnees.append(nom)
+            if len(tables_mentionnees) >= 2:
+                break
 
     if any(m in q for m in MOTS_FUSION):
         if len(tables_mentionnees) >= 2:
@@ -399,7 +438,7 @@ def route_question(question: str) -> dict:
             return {"content": dt.relation_entre_tables(tables_mentionnees[0], tables_mentionnees[1], tables)}
         return {"content": dt.rapport_relations(tables)}
 
-    nom_table, df = dt.resoudre_table_ciblee(question, tables, table_active_nom)
+    nom_table, df = dt.resoudre_table_ciblee(question, tables, table_active_nom, historique=historique_recent())
 
     if df is not None and "doublon" in q:
         dups = dt.doublons(df)
@@ -413,17 +452,7 @@ def route_question(question: str) -> dict:
 
     if df is not None and any(m in q for m in ["incoheren", "coheren", "anomalie"]):
         rapport = dt.rapport_coherence(df)
-        lignes = [f"**Rapport de cohérence** sur **{nom_table}** ({rapport['n_lignes']} lignes) :"]
-        if rapport["anomalies"]:
-            for k, v in rapport["anomalies"].items():
-                lignes.append(f"- {k} : {v} cas")
-        else:
-            lignes.append("- Aucune anomalie détectée sur les contrôles automatiques (doublons d'ID, dates invraisemblables).")
-        lignes.append(
-            "\n_Rappel : ceci est un signalement, pas une correction automatique. "
-            "La validation reste réservée aux personnes habilitées._"
-        )
-        return {"content": "\n".join(lignes)}
+        return {"content": formater_rapport_coherence(rapport, nom_table)}
 
     if df is not None and any(m in q for m in ["echantillon", "échantillon"]):
         m = re.search(r"\d+", q)
@@ -484,13 +513,7 @@ def route_question(question: str) -> dict:
             }
         if action == "COHERENCE":
             rapport = dt.rapport_coherence(df)
-            lignes = [f"**Rapport de cohérence** sur **{nom_table}** ({rapport['n_lignes']} lignes) :"]
-            if rapport["anomalies"]:
-                for k, v in rapport["anomalies"].items():
-                    lignes.append(f"- {k} : {v} cas")
-            else:
-                lignes.append("- Aucune anomalie détectée sur les contrôles automatiques.")
-            return {"content": "\n".join(lignes)}
+            return {"content": formater_rapport_coherence(rapport, nom_table)}
 
         # Le classifieur a conclu que ce n'est pas une action sur la table (ou
         # aucune clé LLM n'est configurée pour trancher) : on tente la piste

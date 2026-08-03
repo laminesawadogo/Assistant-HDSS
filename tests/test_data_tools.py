@@ -213,6 +213,23 @@ def test_rapport_coherence_signale_les_bonnes_anomalies(table_exemple):
     assert rapport["anomalies"]["dates_invraisemblables::birth_date"] == 2
 
 
+def test_rapport_coherence_indique_les_colonnes_verifiees(table_exemple):
+    # Precision : le rapport doit dire explicitement quelles colonnes ont ete
+    # examinees, pas seulement les anomalies trouvees (evite un "aucune
+    # anomalie" ambigu si aucune colonne pertinente n'avait ete detectee).
+    df = dt.load_table(table_exemple)
+    rapport = dt.rapport_coherence(df)
+    assert "individid" in rapport["colonnes_id_verifiees"]
+    assert "birth_date" in rapport["colonnes_date_verifiees"]
+
+
+def test_rapport_coherence_colonnes_verifiees_vides_si_aucune_detectee():
+    df = pd.DataFrame({"valeur": [1, 2, 3]})
+    rapport = dt.rapport_coherence(df)
+    assert rapport["colonnes_id_verifiees"] == []
+    assert rapport["colonnes_date_verifiees"] == []
+
+
 def test_rapport_coherence_sans_anomalie():
     df = pd.DataFrame({
         "individid": [1, 2, 3],
