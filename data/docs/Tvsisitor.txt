@@ -1,0 +1,34 @@
+Table: Tvsisitor
+
+Titre: Table Tvsisitor
+Description: Visitor characteristics
+
+Variable individid (table Tvsisitor) : Individual ID. Type: Identifiant.
+
+Variable locationid (table Tvsisitor) : Location (courtyard) ID. Type: Identifiant.
+
+Variable socialgpid (table Tvsisitor) : Household ID. Type: Identifiant.
+
+Variable birth_date (table Tvsisitor) : Date of birth. Type: Date.
+
+Variable ethnic_gp (table Tvsisitor) : Ethnic group. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Bobo | 2=Dioula | 3=Fulani | 4=Gourmantche | 5=Gourounsi | 6=Lobi | 7=Mossi | 8=Senoufo | 9=Touareg / Bella | 10=Others | 11=Don’t know or missing | 12=Bissa | 13=Samo.
+
+Variable Sex (table Tvsisitor) : Sex. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Male | 2=Female.
+
+Variable old_resident (table Tvsisitor) : Previously resident in the DSS areas. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don't know or missing.
+
+Variable father_alive (table Tvsisitor) : Father is alive. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don't know or missing.
+
+Variable mother_alive (table Tvsisitor) : Mother is alive. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don't know or missing.
+
+Variable fatherid (table Tvsisitor) : Father's ID if known. Type: Identifiant.
+
+Variable motherid (table Tvsisitor) : Mother's ID if known. Type: Identifiant.
+
+Variable rltn_head (table Tvsisitor) : Relation to household head. Type: Texte / Numérique.
+
+Variable marital_status (table Tvsisitor) : Marital status. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Never married | 2=Married | 3=divorced | 4=widowed | 99=Don't know or missing.
+
+Variable arrive_date (table Tvsisitor) : Date of the first arrival in the location (courtyard). Type: Date.
+
+Variable entry_date (table Tvsisitor) : Date of interview. Type: Date.

@@ -1,0 +1,48 @@
+Document: 21_QUESTIONNAIRE PAUVRETE SUBJECTIVE_R14
+
+Questionnaire pauvreté subjective
+
+(Questionnaire à administré chaque passage)
+
+Numéro du questionnaire : |__|__|__|__|
+
+M1. Au cours des 12 derniers mois, combien de fois, le cas échéant, est-ce que vous, ou un membre de votre famille, avez-dû faire face à un manque de [Lire à haute voix les options de réponse] : (Source Afro baromètre Round)
+
+M2. Compte tenu de votre niveau de vie et celui des ménages de votre localité, vous estimez- vous : (Source EMC- INSD 2014).
+
+1. Très pauvre						|___|
+
+2. Pauvre						|___|
+
+3. Ni pauvre ni riche					|___|
+
+4. Riche						|___|
+
+5. Très riche						|___|
+
+IDENTIFICATION MENAGE
+ID ZD......................................................………………..........|_____|_____|_____|_____|_____|_____|
+ID UCH....................……………………………....................…………...|_____|_____|_____|
+ID MENAGE............................................……………………………….. |_____|_____|_____|
+NOM ET PRENOMS DU CHEF DE MENAGE……………………………………………………
+
+IDENTIFICATION ENQUETEUR
+DATE DE L’ENQUETE ……/……./ 20…
+NOM DE L’ENQUETEUR.....................................................................................................…
+Heure et minute du début de l'entretien………………………………………
+Heure et minute dE LA FIN de l'entretien……………………………………….
+LANGUE UTILISEE LORS DE L'ENTRETIEN……………………………………………..
+STATUT DU QUESTIONNAIRE: 1. Complet   2. Incomplet
+SI STATUT  EST INCOMPLET, POURQUOI?   1…ABSENCE DES MEMBRES   2….REFUS
+
+ | Jamais  | Juste 1 ou 2 fois | Quelques fois | Plusieurs fois | Toujours  | Ne sait pas [Ne pas lire]
+
+Nourriture suffisante pour manger à sa faim ? |  |  |  |  |  |
+
+Eau potable pour les besoins domestiques ? |  |  |  |  |  |
+
+Médicaments ou de soins médicaux ? |  |  |  |  |  |
+
+Combustible pour la cuisson des repas ? |  |  |  |  |  |
+
+Revenus en espèces ? |  |  |  |  |  |

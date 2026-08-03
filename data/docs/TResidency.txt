@@ -1,0 +1,24 @@
+Table: TResidency
+
+Titre: Table TResidency
+Description: Table Residency
+
+Variable episodeid (table TResidency) : EPISODE OF RESIDENCE ID. Type: Identifiant.
+
+Variable locationid (table TResidency) : Location id. Type: Identifiant.
+
+Variable individid (table TResidency) : INDIVIDUAL ID. Type: Identifiant.
+
+Variable res_status (table TResidency) : Residence status. Type: Catégorielle (codes). Modalites/valeurs codees: Resident Visitor.
+
+Variable sobserveid (table TResidency) : Observation at the beginning of residence. Type: Identifiant.
+
+Variable sdate (table TResidency) : date at the beginning of residence. Type: Date.
+
+Variable eobserveid (table TResidency) : Observation at the end of residence. Type: Identifiant.
+
+Variable edate (table TResidency) : date at the end of residence. Type: Date.
+
+Variable eeventtype (table TResidency) : Reasons of ending residence. Type: Catégorielle (codes). Modalites/valeurs codees: Migration out Death.
+
+Variable entry_date (table TResidency) : Date of Interview. Type: Date.

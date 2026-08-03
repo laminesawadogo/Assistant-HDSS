@@ -1,0 +1,101 @@
+Document: Temps_Inverse_Immigration_YaC
+
+Diapositive 1 : Analyse de la migration dans les observatoires de population Méthode du
+temps inversé Yacouba Compaoré Comprendre le principe pour calculer les taux d'immigration dans un HDSS
+
+Diapositive 2 : Plan de la présentation 1 Le problème fondamental Pourquoi on ne peut pas calculer directement le taux d'immigration ? 2 L'idée du temps inversé Le principe conceptuel : d'où vient cette idée ? 3 Code stata pour la construction des variables rev_ageday80 et rev_agebeg80 et que mesurent-elles exactement ? 4 Taux par âge Exemple numérique complet avec des exemples 5 Taux par année calendaire Même logique, axe temporel différent — exemples 2010–2024
+
+Diapositive 3 : Rappel : qu'est-ce qu'un taux de migration ? Taux  =  Nombre d'événements  ÷  Personnes-années exposées au risque ÉMIGRATION — facile Événements : on compte les départs (OMG) Exposés : les résidents du HDSS On les observe pendant leur résidence → Les personnes-années sont connues → Calcul direct possible IMMIGRATION — impossible Événements : on compte les arrivées (IMG) Exposés : les individus à l'arrivée Ils vivent hors du HDSS avant d'entrer → On ne les observe pas du tout → Calcul direct IMPOSSIBLE
+
+Diapositive 4 : Qui est « à risque d'immigrer » ? ZONE DU HDSS HORS DU HDSS ? Moussa 28 ans — Ouagadougou ? Fatima 22 ans — Ghana ? Ali 35 ans — Bobo-Dioulasso On ne sait pas
+combien ils sont
+ni depuis combien
+de temps ils sont
+« à risque » Koné 45 ans — Résident depuis 2015 Nana 31 ans — Résidente depuis 2019 Idrissa 52 ans — Résident depuis 2010 On les observe.
+On connaît leur statut
+temps de résidence. → ENTRENT
+dans le HDSS Le dénominateur du taux d'immigration est INVISIBLE : on ne peut pas le calculer directement.
+
+Diapositive 5 : L'idée clé : les résidents sont leur propre témoin Observation centrale : Chaque résident de l’observatoire a forcément immigré un jour ou est né dans l’observatoire
+Son temps de résidence représente du temps « à risque d'être entré »  vu depuis le passé. Sens normal du temps On part de la naissance
+et on avance vers l'avenir.
+
+On voit la sortie du HDSS
+(émigration)
+
+On ne voit pas l'entrée
+avant qu'elle survienne. Retourner le temps On part d'un point fixe
+(le 80e anniversaire)
+et on remonte vers le passé.
+
+L'entrée dans le HDSS
+devient un événement
+OBSERVABLE. Ce qu'on obtient Les personnes-années de
+résidence deviennent du
+temps « à risque rétrograde ».
+
+On calcule le taux
+d'immigration par âge
+à l’arrivée. C’est comme comme lire un livre à l'envers :  les dernières pages deviennent les premières, les fins deviennent des débuts.
+
+Diapositive 6 : Le point d'ancrage : pourquoi le 80ᵉ anniversaire ? On a besoin d’un point fixe dans le futur à partir duquel « remonter le temps ». Ce point = le 80e anniversaire de chaque individu  →  DoB + 80 ans Dépasse la durée de vie observée Très peu d'individus dépassent 80 ans en Afrique sub-saharienne. On exclut explicitement les épisodes au-delà de 80 ans avec l'option if(age80!=80). Cela évite d'inclure des épisodes artificiels. Commun à tous les individus Le 80e anniversaire est calculé de façon individuelle (DoB + 80 ans), pas une date fixe. Chaque personne a son propre point d'ancrage. La distance mesurée est donc toujours relative à l'individu. Symétrie avec l'axe d'âge En temps inversé, "50 ans avant 80" correspond à un âge réel de 30 ans. L'axe résultant va de 0 à 80 ans,  exactement comme l'axe normal de l'émigration. La comparaison est directe. Formule :  rev_ageday80  =  (DoB  +  80 × 365.25 × 24 × 3 600 × 1 000)  −  EventDate
+
+Diapositive 7 : Que mesurent exactement les variables en temps inversé ? Variable Définition En temps réel En temps inversé datebeg Début de
+l'épisode Date à laquelle l'individu devient résident (ou naît) = rev_agebeg80
+= 80e anniv. − datebeg
+→ fin épisode en temps inv. EventDate Fin de
+l'épisode Date de l'événement qui termine l'épisode (OMG, DCD, OBE...) = rev_ageday80
+= 80e anniv. − EventDate
+→ début épisode en temps inv. censor_out
+(émigration) Événement
+d'intérêt Sortie du HDSS (OMG ou fin d'observation) ≡ censor_in
+Entrée dans le HDSS
+→ immigration ATTENTION : datebeg (début réel) devient la FIN en temps inversé, et EventDate (fin réelle) devient le DÉBUT. Les rôles s'inversent.
+
+Diapositive 8 : Taux d'immigration par âge — trois exemples Objectif : calculer à quel âge les individus entrent dans le HDSS. On analyse l'entrée « comme si » c'était une sortie, mais vue depuis le futur (depuis le 80ᵉ anniversaire). Moussa Date de naissance 01/01/1985 Entrée dans le HDSS 01/01/2015 (30 ans) Fin d'observation 01/01/2024 (39 ans) 80e anniversaire 01/01/2065 Fatima Date de naissance 01/01/1995 Entrée dans le HDSS 01/01/2018 (23 ans) Fin d'observation 01/01/2024 (29 ans) 80e anniversaire 01/01/2075 Ali Date de naissance 01/01/1970 Entrée dans le HDSS 01/01/2010 (40 ans) Fin d'observation 01/01/2024 (54 ans) 80e anniversaire 01/01/2050
+
+Diapositive 9 : Calcul des variables en temps inversé — résultats Pour chaque individu : rev_ageday80 = 80e_anniv − EventDate   |   rev_agebeg80 = 80e_anniv − datebeg Individu Âge réel
+à l'entrée rev_ageday80
+(en années) rev_agebeg80
+(en années) Durée
+épisode censor_in Interprétation Moussa 30 ans 80 − 30 = 50 ans
+(= 2065 − 2015) 80 − 39 = 41 ans
+(= 2065 − 2024) 9 ans 1 (entré à 30) Épisode de 41 à 50 ans
+en temps inversé
+→ taux à 30–39 ans Fatima 23 ans 80 − 23 = 57 ans
+(= 2075 − 2018) 80 − 29 = 51 ans
+(= 2075 − 2024) 6 ans 1 (entrée à 23) Épisode de 51 à 57 ans
+en temps inversé
+→ taux à 23–29 ans Ali 40 ans 80 − 40 = 40 ans
+(= 2050 − 2010) 80 − 54 = 26 ans
+(= 2050 − 2024) 14 ans 1 (entré à 40) Épisode de 26 à 40 ans
+en temps inversé
+→ taux à 40–54 ans Vérification :  âge_réel_à_l'entrée  +  rev_ageday80 (en ans)  =  80   →   Moussa : 30 + 50 = 80    Fatima : 23 + 57 = 80    Ali : 40 + 40 = 80
+
+Diapositive 10 : Visualiser le retournement — Moussa (né 1985, entré à 30 ans) Temps réeL (sens normal) 0 10 20 30 39 50 60 70 80 Âge (ans) Invisible
+(hors HDSS) Visible — 9 ans de résidence Entrée Temps inversé (depuis le 80ᵉ anniversaire = 2065) 80 70 60 50 40 39 30 20 10 0 Ans avant         ans → censor_in=1
+(entrée HDSS) Épisode visible en temps inversé : de 41 à 50 ans Correspondance entre les deux axes : Âge 30 (entrée) 50 ans avant 80 rev_ageday80 = 50 ans → time0 dans stset Âge 39 (fin obs.) 41 ans avant 80 rev_agebeg80 = 41 ans → t dans stset Durée : 9 ans Durée : 9 ans (50−41) La durée est identique dans les deux sens
+
+Diapositive 11 : Calcul par année calendaire - point d'ancrage : 01/01/2024 Formule :  rev_eventd2024  =  01/01/2024  −  EventDate   |   rev_datebeg2024  =  01/01/2024  −  datebeg Individu Entrée
+(réelle) Fin obs.
+(réelle) rev_eventd2024
+(en années) rev_datebeg2024
+(en années) Année
+identifiée Moussa 01/01/2015 01/01/2024 2024−2015 = 9 ans 2024−2024 = 0 an 2015 (il y a 9 ans) Fatima 01/01/2018 01/01/2024 2024−2018 = 6 ans 2024−2024 = 0 an 2018 (il y a 6 ans) Ali 01/01/2010 01/01/2024 2024−2010 = 14 ans 2024−2024 = 0 an 2010 (il y a 14 ans)
+
+Diapositive 12 : Visualiser le retournement — axe année calendaire Moussa : entré en 2015, observé jusqu'en 2024. Point d'ancrage = 01/01/2024. TEMPS RÉEL 2009 2010 2012 2014 2015 2016 2018 2020 2022 2024 Invisible
+(avant HDSS) Visible
+2015 → 2024 TEMPS INVERSÉ (depuis 2024) censor_in=1
+Entrée HDSS 0 1 2 3 4 5 6 7 8 9 10 12 14 15 Ans avant 2024 → Visible en temps inversé : de 0 à 9 ans avant 2024 Correspondance : 2015 (entrée) 9 ans avant 2024 rev_eventd2024 = 9 ans → time0 2024 (fin obs.) 0 an avant 2024 rev_datebeg2024 = 0 an → t Durée : 9 ans 9 − 0 = 9 ans même durée, sens inversé
+
+Diapositive 13 : Code Stata Construire les variables en temps inversé gen double rev_ageday80  = (DoB + 80*365.25*24*60*60*1000) - EventDate
+gen double rev_agebeg80  = (DoB + 80*365.25*24*60*60*1000) - datebeg Définir la censure pour l'immigration by IndividualId: gen censor_in = ///
+    (residence[_n+1]==0 & EventCode[_n+1]!=4 ///
+     & EventCode[_n+1]!=6 & EventCode[_n+1]!=1 ///
+     & EventCode[_n+1]!=2) if residence == 1 stset en temps inversé + calcul des taux stset rev_agebeg80 if residence==1, id(IndividualId) ///
+    failure(censor_in==1) time0(rev_ageday80) ///
+    if(age80!=80) exit(time .) scale(31557600000)
+
+stptime, at(0 1 5(5)80) per(1000) dd(2)   // taux par âge Attention : time0 = rev_ageday80 (fin épisode en réel) et t = rev_agebeg80 (début épisode en réel) — rôles inversés par rapport à l'émigration.
+
+Diapositive 14 : Repartons sur Stata pour la pratique Formation HDSS  -  OPO Ouagadougou  |  Résidence et migration

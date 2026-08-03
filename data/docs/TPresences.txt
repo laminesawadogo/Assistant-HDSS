@@ -1,0 +1,22 @@
+Table: TPresences
+
+Titre: Table TPresences
+Description: Presence Table
+
+Variable eventid (table TPresences) : EVENT ID. Type: Identifiant.
+
+Variable episodeid_res (table TPresences) : RESIDENCY EPISODE ID. Type: Texte / Numérique.
+
+Variable observeid (table TPresences) : OBSERVATION ID. Type: Identifiant.
+
+Variable individid (table TPresences) : INDIVIDUAL ID. Type: Identifiant.
+
+Variable enter_periode (table TPresences) : Usually sleep in the household since more than 6 months (Only for round zero individuals). Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable sleep_lastnight (table TPresences) : Slept last night in the location (courtyard). Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable arrive_date (table TPresences) : Date of last arrival in location (courtyard). Type: Date.
+
+Variable depart_date (table TPresences) : Date of last depart from location (courtyard). Type: Date.
+
+Variable entry_date (table TPresences) : Interview date. Type: Date.

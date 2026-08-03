@@ -1,0 +1,44 @@
+Table: TBase_HistMig
+
+Titre: Table TBase_HistMig
+Description: Migratory Event
+
+Variable observeid (table TBase_HistMig) : OBSERVATION ID. Type: Identifiant.
+
+Variable socialgpid (table TBase_HistMig) : HOUSEHOLD ID. Type: Identifiant.
+
+Variable individid (table TBase_HistMig) : INDIVIDUAL ID. Type: Identifiant.
+
+Variable birth_place (table TBase_HistMig) : Place of birth. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Ouagadougou | 2=Other town in Burkina | 3=Rural area in Burkina | 4=Côte d’Ivoire | 5=Other African country | 6=Other country (no Africa) 7 Don’t know 8 In this location | 99=Missing value.
+
+Variable birth_place_sect (table TBase_HistMig) : District of Birth. Type: Texte / Numérique.
+
+Variable birth_place_prov (table TBase_HistMig) : Province of birth. Type: Texte / Numérique.
+
+Variable arrive_year (table TBase_HistMig) : Year of First arrival in Ouaga. Type: Texte / Numérique.
+
+Variable where_lived (table TBase_HistMig) : Place of residence prior to arriving for the first time in this location (courtyard). Type: Catégorielle (codes). Modalites/valeurs codees: 1=Ouagadougou | 2=Other town in Burkina | 3=Rural area in Burkina | 4=Côte d’Ivoire | 5=Other African country | 6=Other country (no Africa) 7 Don’t know 8 In this location | 99=Missing value.
+
+Variable where_lived_sect (table TBase_HistMig) : District of residence before arriving in this location (courtyard). Type: Catégorielle (codes). Modalites/valeurs codees: 0. Not concerned.
+
+Variable where_lived_prov (table TBase_HistMig) : Province of residence before arriving in this location (courtyard). Type: Catégorielle (codes). Modalites/valeurs codees: 0. Not concerned.
+
+Variable return_lastplace (table TBase_HistMig) : Stayed during at least three months last year in one of its previous residences. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 3=Don’t know | 99=Missing value | 0=Not concerned.
+
+Variable arrive_uch_year (table TBase_HistMig) : Year of o first arrival live in this location (courtyard). Type: Texte / Numérique.
+
+Variable last_livedplace (table TBase_HistMig) : Place of residence prior to arriving for the first time in Ouaga. Type: Catégorielle (codes). Modalites/valeurs codees: 2=Other town in Burkina | 3=Rural area in Burkina | 4=Côte d’Ivoire | 5=Other African country | 6=Other country (no Africa) 7 Don’t know | 99=Missing value | 0=Not concerned.
+
+Variable last_livedplace_prov (table TBase_HistMig) : Province of residence before arriving in Ouagadougou for the first time. Type: Catégorielle (codes). Modalites/valeurs codees: 0. Not concerned.
+
+Variable reason_outp (table TBase_HistMig) : Reason for leaving the previous place of residence (by category). Type: Catégorielle (codes). Modalites/valeurs codees: 1 for family reasons 2 for security reasons 3 due to habitat characteristics 4 due to an employment 5 for cost reasons 6 for health reason 7 for education reasons 8 due to a conflict 9 other reasons | 99=Missing value | 0=Not concerned.
+
+Variable reason_outs (table TBase_HistMig) : Reason for leaving the previous place of residence (detailed). Type: Catégorielle (codes). Modalites/valeurs codees: 11=one of family member or friend has gone | 12=married | 13=moved with his family / parent | 14=divorced / separated or became widower | 15=took its independence from the family | 16=left in some body's care | 17=other family reasons 21 insecurity (crime, burglary) | 22=other security reason | 31=poor habitat(floor, wall, roof) | 32=poor conditions of toilet / bathroom / electricity 33 rooms / too small houses | 34=damaged house | 35=construction of a new home | 36=other reason related to habitat | 41=lost a job | 42=little employment prospects | 43=too far from the workplace | 44=no land to cultivate | 45=other reason related to employment | 51=rent too high | 52=too expensive food | 53=health fees too high | 54=schooling fees too high | 55=other cost reasons | 61=poor health services | 62=dirty environment | 63=health other reason | 71=for schooling (primary or secondary) | 72=for schooling University / professional school | 73=finished school (primary or secondary) | 74=finished school (University / professional school) | 75=other reason linked to education | 81=conflict with a family member / friend | 82=civil conflict | 83=banished | 84=other reason related to a conflict | 91=just for changing | 92=other | 93=Don’t know | 99=Missing value | 0=Not concerned.
+
+Variable reason_inp (table TBase_HistMig) : Reasons for coming in this location (by category). Type: Catégorielle (codes). Modalites/valeurs codees: 1 for family reasons 2 for security reasons 3 due to habitat characteristics 4 due to an employment 5 for cost reasons 6 for health reason 7 for education reasons 9 other reasons | 99=Don’t known or Missing value | 0=Not concerned.
+
+Variable reason_ins (table TBase_HistMig) : Reasons for coming in this location (detailed). Type: Catégorielle (codes). Modalites/valeurs codees: 11=one of family member or friend has gone | 12=married | 13=moved with his family / parent | 14=divorced / separated or became widower | 15=took its independence from the family | 16=left in some body's care | 17=other family reasons 21 insecurity (crime, burglary) | 22=other security reason | 31=poor habitat(floor, wall, roof) | 32=poor conditions of toilet / bathroom / electricity 33 rooms / too small houses | 34=damaged house | 35=construction of a new home | 36=other reason related to habitat | 41=lost a job | 42=little employment prospects | 43=too far from the workplace | 44=no land to cultivate | 45=other reason related to employment | 51=rent too higth | 52=too expensive food | 53=health fees too high | 54=schooling fees too high | 55=other cost reasons | 61=poor health services | 62=dirty environment | 63=health other reason | 71=for schooling (primary or secondary) | 72=for schooling University / professional school | 73=finished school (primary or secondary) | 74=finished school (University / professional school) | 75=other reason linked to education | 91=just for changing | 92=other | 93=Don’t know | 99=Missing value | 0=Not concerned.
+
+Variable indiv_relig (table TBase_HistMig) : Religion. Type: Catégorielle (codes). Modalites/valeurs codees: 1 No religion 2 Catholic 3 Muslim 4 Protestant 5 Traditional religion | 6=Other religion 9 Don’t know | 99=Missing value.
+
+Variable entry_date (table TBase_HistMig) : Interview date. Type: Date.

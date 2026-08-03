@@ -1,0 +1,34 @@
+Table: TRelationship
+
+Titre: Table TRelationship
+Description: Table Relationship
+
+Variable eventid (table TRelationship) : EVENT ID. Type: Identifiant.
+
+Variable individid (table TRelationship) : INDIVIDUAL ID. Type: Identifiant.
+
+Variable individid2 (table TRelationship) : SPOUSE ID. Type: Texte / Numérique.
+
+Variable sobserveid (table TRelationship) : EVENT STARTING OBSERVATION ID. Type: Identifiant.
+
+Variable sdate (table TRelationship) : Starting date of union. Type: Date.
+
+Variable conj_res (table TRelationship) : Spouse resides in the same home. Type: Catégorielle (codes). Modalites/valeurs codees: Yes No.
+
+Variable uni_start (table TRelationship) : Has ever cohabited. Type: Catégorielle (codes). Modalites/valeurs codees: Yes No | 99=Don’t known or Missing value.
+
+Variable uni_relig (table TRelationship) : Religious wedding realized. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable uni_trad (table TRelationship) : Traditional wedding realized. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable uni_civil (table TRelationship) : Civil wedding realized. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable uni_start_date (table TRelationship) : Date of entry into cohabitation. Type: Date.
+
+Variable uni_relig_date (table TRelationship) : Date of religious wedding. Type: Date.
+
+Variable uni_trad_date (table TRelationship) : Date of traditional wedding. Type: Date.
+
+Variable uni_civil_date (table TRelationship) : Date of civil wedding. Type: Date.
+
+Variable entry_date (table TRelationship) : Interview date. Type: Date.

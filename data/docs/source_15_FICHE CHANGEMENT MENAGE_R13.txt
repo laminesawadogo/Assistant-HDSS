@@ -1,0 +1,52 @@
+Document: 15_FICHE CHANGEMENT MENAGE_R13
+
+﻿FICHE CHANGEMENT DE MENAGE		Numéro de fiche: |__|__|__|__|
+
+ROUND N°........
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant:
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+Identification de l'UCH
+
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x
+
+Identification de la personne qui vient de changer de ménage
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+Nom et Prénoms.............................................................
+
+Date de changement                   …….../……./……..
+jj     mm     an.
+
+Est-ce que le ménage de destination est un nouveau ménage dans UCH ? Oui/Non
+
+Si oui, Identifiant du ménage de destination
+
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x
+
+Si non
+Nouveau ménage                 N° temporaire…………………..
+
+(Si nouveau ménage alors création de ménage et il est automatiquement le CM)
+
+Lien de parenté avec chef de ménage……
+
+1 Chef de ménage
+2 Epouse / époux
+3 Fils / fille
+4 Beau-fils / belle-fille
+5 petit fils / petite fille
+6 Père / mère
+7 Beau-père / belle-mère
+8 Frère / sœur
+9 Neveu / nièce
+10 Aucun lien de parenté
+11 Autre parent
+12 Ne sais pas

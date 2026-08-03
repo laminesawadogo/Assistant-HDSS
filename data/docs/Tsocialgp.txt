@@ -1,0 +1,10 @@
+Table: Tsocialgp
+
+Titre: Table Tsocialgp
+Description: Household identification
+
+Variable socialgpid (table Tsocialgp) : Household ID. Type: Identifiant.
+
+Variable locationid (table Tsocialgp) : Location (courtyard) ID. Type: Identifiant.
+
+Variable entry_date (table Tsocialgp) : Date of interview. Type: Date.

@@ -1,0 +1,31 @@
+Document: Correspondance des tables de la base OPO (Systeme de Surveillance Demographique)
+
+Unites suivies:
+TLocation = table des unites collectives d'habitation (UCH)
+TSocialgp = table des menages
+TIndividual = table des individus
+TVisitor = table des nouveaux visiteurs
+
+Episodes:
+TRelationship = table des unions
+TUpdRelationship = table de suivi des unions
+TSocialgp_head = table des episodes de chefferie de menage
+TResidency = table des episodes de residence
+TMembership = table des episodes d'appartenance a un menage
+
+Evenements:
+TIndividual_charact = caracteristiques des individus (mise a jour)
+TDeath = table des deces
+TPregnancy = table des grossesses
+TPregoutcome = table des issues de grossesse
+TBirth = table des naissances
+TPresences = table des presences
+TMigration_out = table des departs de la zone
+
+Baselines (historiques individuels):
+TBase_educ = education
+TBase_histgen = histoire genesique
+TBase_histmig = histoire migratoire
+TBase_histmat = histoire matrimoniale
+TBase_vacc = vaccination
+TBase_socialgp = biens du menage

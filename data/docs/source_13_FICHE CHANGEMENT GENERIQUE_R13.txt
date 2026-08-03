@@ -1,0 +1,14 @@
+Document: 13_FICHE CHANGEMENT GENERIQUE_R13
+
+﻿FICHE CHANGEMENT GENERIQUE		Numéro de fiche: |__|__|__|__|
+
+ROUND N°........
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant:
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+ID (UCH / ménage/ individu)	Variable a changer	Ancienne valeur	Nouvelle valeur

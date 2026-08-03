@@ -1,0 +1,22 @@
+Table: TBase_HistMat
+
+Titre: Table TBase_HistMat
+Description: Marriage Event
+
+Variable observeid (table TBase_HistMat) : OBSERVATION ID. Type: Identifiant.
+
+Variable individid (table TBase_HistMat) : INDIVIDUAL ID. Type: Identifiant.
+
+Variable socialgpid (table TBase_HistMat) : HOUSEHOLD ID. Type: Identifiant.
+
+Variable union_ended (table TBase_HistMat) : Has already been in a union which ended. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable union_num (table TBase_HistMat) : Total number of unions. Type: Numérique.
+
+Variable union_age (table TBase_HistMat) : Age at first union. Type: Texte / Numérique.
+
+Variable entry_date (table TBase_HistMat) : Interview date. Type: Date.
+
+Variable field_wrkr (table TBase_HistMat) : None. Type: Texte / Numérique.
+
+Variable status_dat (table TBase_HistMat) : None. Type: Texte / Numérique.

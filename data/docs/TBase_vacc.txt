@@ -1,0 +1,50 @@
+Table: TBase_vacc
+
+Titre: Table TBase_vacc
+Description: Vaccination Table
+
+Variable observeid (table TBase_vacc) : OBSERVATION ID. Type: Identifiant.
+
+Variable individid (table TBase_vacc) : INDIVIDUAL ID. Type: Identifiant.
+
+Variable socialgpid (table TBase_vacc) : HOUSEHOLD ID. Type: Identifiant.
+
+Variable health_record (table TBase_vacc) : Child health record seen by field worker. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable bcg (table TBase_vacc) : Date of BCG vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable dtcoq1 (table TBase_vacc) : Date of DTCOQ1 vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable dtcoq2 (table TBase_vacc) : Date of DTCOQ2 vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable dtcoq3 (table TBase_vacc) : Date of DTCOQ3 vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable polio0 (table TBase_vacc) : Date of POLIO0 vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable polio1 (table TBase_vacc) : Date of POLIO1 vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable polio2 (table TBase_vacc) : Date of POLIO2 vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable polio3 (table TBase_vacc) : Date of POLIO3 vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable hepb1 (table TBase_vacc) : Date of HEPB1 vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable hepb2 (table TBase_vacc) : Date of HEPB2 vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable hepb3 (table TBase_vacc) : Date of HEPB3 vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable hib1 (table TBase_vacc) : Date of HIB1 vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable hib2 (table TBase_vacc) : Date of HIB2 vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable hib3 (table TBase_vacc) : Date of HIB3 vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable yellow_fever (table TBase_vacc) : Date of yellow fever vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable measles (table TBase_vacc) : Date of measles vaccination. Type: Catégorielle (codes). Modalites/valeurs codees: 01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined.
+
+Variable vitamin_a (table TBase_vacc) : Vitamin A in last 12 months. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 3=Don’t know | 99=Missing value.
+
+Variable disinfest (table TBase_vacc) : Disinfested in last 12 months. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 3=Don’t know | 99=Missing value.
+
+Variable entry_date (table TBase_vacc) : Interview date. Type: Date.

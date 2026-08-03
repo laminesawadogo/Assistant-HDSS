@@ -1,0 +1,36 @@
+Table: Tlocation
+
+Titre: Table Tlocation
+Description: Location / courtyard characteristics
+
+Variable locationid (table Tlocation) : Location (courtyard) ID. Type: Identifiant.
+
+Variable zd (table Tlocation) : cluster ID. Type: Texte / Numérique.
+
+Variable bloc (table Tlocation) : block ID. Type: Texte / Numérique.
+
+Variable uch_num (table Tlocation) : location (courtyard) number. Type: Numérique.
+
+Variable owner_id (table Tlocation) : Owner ID. Type: Identifiant.
+
+Variable uch_empty (table Tlocation) : The location (courtyard) is empty. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No.
+
+Variable socialgp_nb (table Tlocation) : Number of households in the location (courtyard). Type: Numérique.
+
+Variable building_nb (table Tlocation) : Number of houses (buildings) in the location (courtyard). Type: Numérique.
+
+Variable fence (table Tlocation) : Presence of a fence. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No.
+
+Variable altitude (table Tlocation) : Altitude coordinates. Type: Texte / Numérique.
+
+Variable latitude (table Tlocation) : Latitude coordinates. Type: Texte / Numérique.
+
+Variable longitude (table Tlocation) : Longitude coordinates. Type: Texte / Numérique.
+
+Variable dop (table Tlocation) : GPS accuracy. Type: Texte / Numérique.
+
+Variable lat_texte (table Tlocation) : Latitude coordinates (detailed). Type: Texte / Numérique.
+
+Variable long_texte (table Tlocation) : Longitude coordinates (detailed). Type: Texte / Numérique.
+
+Variable entry_date (table Tlocation) : Date of interview. Type: Date.

@@ -1,0 +1,72 @@
+Document: 03_FICHE NOUVEAU VISITEUR_R13
+
+﻿FICHE NOUVEAU VISITEUR	Numéro de fiche: |__|__|__|__|
+
+ROUND N°........
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+A. Si la personne est arrivée avec tout son ménage et que le ID du ménage, le nom et le ID de l’individu ont déjà été retrouvé en remplissant la fiche création de ménage
+
+	B. Nouvelle personne dans un ménage
+
+Avez-vous déjà été suivi dans le cadre de l’OPO ? oui/ non / NSP……………|___|
+Avez-vous habité après octobre 2008 un des quartiers suivants de Ouaga : Nioko II / Niokwardin, Polesgo / Toudbweogo, Thangin, Kilwin, Markoussy / Nonghin… oui/ non / NSP …………|___|
+
+C. Nom et prénom
+ID de la personne (affiché par Pocket PC) : ……………..
+(Le pocket PC affiche la fiche de la dernière UCH habitée par la personne) :
+Venez-vous directement de .. (description de l’UCH), sans avoir habité ailleurs entre temps ?
+Oui / non
+
+Si oui
+    • visiteur avec ID direct
+Si non
+=> visiteur avec ID non direct	D. Si OUI ou NSP à une de ces deux questions
+Nom et prénom de l’individu
+Nom du chef du ménage que l’individu a quitté…………………………………………….
+Ethnie du chef du ménage que l’individu a quitté…………....|___|___|
+Numéro du secteur que l’individu a quitté ……………..…....|___|___|
+Noms de jusqu’à trois autres individus dans le ménage que l’individu a quitté
+………………………………………………………………..
+……..………………………………………………………….
+…………………………………………………………………
+Faire tourner le logiciel de matching
+
+Si le logiciel trouve un ID correspondant, aller au point C
+
+Si le logiciel ne trouve pas de ID, aller au point E	E. si NON à ces deux questions
+Nom et prénom
+ID de la personne : (à créer)……
+
+=> visiteur nouvelle ID
+
+Date d’arrivée dans l’UCH………………………………………..|___|___||___|___||___|___|
+
+A l’issue de ce module, on définit trois types de visiteurs :
+Visiteur nouvelle ID : passer toute le reste de la fiche
+Visiteur avec ID direct : afficher les anciennes caractéristiques, et actualiser
+Visiteur avec ID indirect : afficher les anciennes caractéristiques, et actualiser
+
+CARACTERISTIQUES DEMO
+Sexe ………………………………………………………….|___|
+Date de naissance……………….……………………………|___|___| |___|___| |___|___|
+Ethnie………………………………………………………...|___|___|
+
+Père en vie ?.............................................................................|___| (possibilité NSP)
+Si OUI No de ligne père (si dans UCH) ……………………..|___|___|
+Mère en vie ?...........................................................................|___| (possibilité NSP)
+Si OUI No de ligne mère (si dans UCH) ………………..……..|___|___|
+Lien de parenté avec le chef de ménage……………………..|___|___|
+
+Numéro de téléphone du CM……………………..|___|___| |___|___| |___|___| ___|___|
+
+Pour les femmes de 12 et + et hommes 15 ans +
+Etat matrimonial actuel…………………………………………….|___|
+
+Provenance d’une autre UCH oui/ non ……………                        |___|
+Si Oui :
+ID de l’UCH de provenance ……………………………… |_____|_____||_____|_____|_____|____]
+ID du ménage de provenance ……………………………… |_____|_____||_____|_____|_____|____]
+Nom et Prénom du CM

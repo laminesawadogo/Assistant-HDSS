@@ -1,0 +1,1734 @@
+Document: manuel technique et d'utilisation des données du ODSS  (juil04)
+
+﻿
+
+Observatoire de Population de Ouagadougou
+Membre de GEGA et d’INDEPTH
+
+Système de Surveillance Démographique de Ouagadougou
+
+AVANT PROPOS
+
+Ce manuel est conçu pour les informaticiens et les utilisateurs des données du SSDO afin d’assurer une meilleure utilisation de l’application HRS-OPO et une analyse plus rigoureuse des données du système.
+Les informaticiens pourront aussi se référer au guide technique de HRS 2 rédigé par Professeur Bruce Macleod pour maîtriser certains outils de base de l’application HRS2. Il est à rappeler que HRS-OPO est une adaptation de l’application HRS 2.
+Les utilisateurs des données se réfèreront au manuel Comprendre et utiliser les données du SSDO pour consulter les définitions précises des concepts ainsi que les instruments de collectes
+Le SSDO évolue. Les manuels sont donc susceptibles d’être mis à jour. Assurez-vous que vous avez la version la plus récente en consultant le site de l’UERD (uerd.multimania.com) ou de l’OPO ().
+
+REMERCIEMENTS
+
+Je remercie le Professeur Bruce Macleod pour sa collaboration et son entière disponibilité.
+
+Le développement du HRS-OPO a été possible grâce au soutien financier des Fondations Rockefeller (subvention 2001 HE 025) et Mellon et à l’appui du Population Council
+
+I Présentation du système de surveillance démographique	9
+II Architecture du système informatique	9
+II.1	Règles de gestion	9
+Zone d’étude	9
+UCH	9
+Ménage	10
+Chef de ménage	10
+Statut de résidence	10
+Evénements vitaux	10
+Evénements ménage	11
+Evénements scolaires	11
+Données de base (baseline)	11
+II.2	Modèle de traitements	11
+II.2.1	Enchaînement des traitements	11
+Concepts utilisés pour la modélisation des traitements	11
+Description  des traitements	13
+Processus de décès	13
+Processus grossesse	14
+Processus union	15
+Processus de présence du résident	16
+Processus de présence de l’ancien résident	17
+Processus de présence du visiteur	18
+Processus éducation	19
+Processus éducation (suite)	20
+II.3	Modèle de données	21
+II.3.1	Entités de base de la modélisation	21
+II.3.2	Description des tables	23
+Table Location	28
+Table Observation_location	28
+Table Location_charact	29
+Table Location_chiefs	30
+Table Accommodations	30
+Table Accom_charact	31
+Table Accom_owners	32
+Table Accom_dest	33
+Table Structures_types	34
+Table Structures_type_classes	34
+Table Structures_type_diplomas	35
+Table Structures_genres	35
+Table Structures	36
+Table Alphab_languages	36
+Table Activity_domain	36
+Table Apprenticeship_domain	36
+Table Educ_baseline	37
+Table Expupils_baseline	39
+Table Alphab_baseline	39
+Table Train_baseline	40
+Table Pupils	41
+Table Pupils_absences	42
+Table Pupils_absences_detail	43
+Table Socialgroup	45
+Table Observation	46
+Table Hhold_baseline	46
+Table Individual	48
+Table Membership	49
+Table Socialgp_head	50
+Table Socialgp_rltn	51
+Table Residency	52
+Table Residency_accom	53
+Table Residency_status	54
+Table Vacc_baseline	55
+Table Indiv_baseline	56
+Table Union_baseline	57
+Table Relationship	58
+Table Relationship_husb	60
+Table Presences	62
+Table Visitors_hhd	64
+Table Visitors	64
+Table Indvstatus	65
+Table Pregoutcome	66
+Table Birth	67
+Table Death	68
+III Organisation du SSDO	70
+III.1	Concepts utilisés	70
+III.2	Graphe de circulation des informations	71
+IV L’application HRS-OPO	75
+IV.1	Présentation	75
+IV.2	Guide technique	75
+IV.2.1	Base de données	75
+IV.2.2	Formulaires	77
+Propriétés et méthodes des formulaires	77
+Propriétés et méthodes des contrôles	78
+Variable globale oGHRS	78
+Contrôle hrsformcontroller	79
+Boutons du contrôle	79
+Méthodes du contrôle	80
+Formulaires de base	80
+IV.2.3	Procédures stockées	84
+IV.2.4	Validation des données après la saisie	85
+IV.2.5	Utilitaires	85
+IV.2.6	Outputs automatiques	86
+IV.3	Guide d’utilisation de l’application	86
+IV.3.1	Niveaux d’accès	86
+IV.3.2	Description des interfaces	86
+Saisie des données	89
+Validation	121
+Etats ou données	126
+Registres des visites	133
+Amendements	140
+Utilitaires	141
+Paramètres	145
+
+Table des tableaux
+
+Tableau 1 : Table Location	28
+Tableau 2 : Table Observation_location	29
+Tableau 3: Table Location_charact	29
+Tableau 4: Table Location_chiefs	30
+Tableau 5: Accommodations	31
+Tableau 6 : Table Accom_charact	32
+Tableau 7 : Table Accom_owners	33
+Tableau 8 : Table Accom_dest	34
+Tableau 9 : Table Structures_types	34
+Tableau 10 : Table Structures_type_classes	35
+Tableau 11 : Table Structures_type_diplomas	35
+Tableau 12 : Table Structures	36
+Tableau 13 : Table Alphab_languages	36
+Tableau 14 : Table Activity_domain	36
+Tableau 15 : Table Apprenticeship_domain	37
+Tableau 16 : Table Educ_baseline	38
+Tableau 17 : Table Expupils_baseline	39
+Tableau 18 : Table Alphab_baseline	40
+Tableau 19 : Table Train_baseline	41
+Tableau 20 : Table Pupils	42
+Tableau 21 : Table Pupils_absences	43
+Tableau 22 : Table Pupils_absences_detail	44
+Tableau 23 : Table Socialgroup	45
+Tableau 24 : Table Observation	46
+Tableau 25 : Table Hhold_baseline	47
+Tableau 26 : Table Individual	49
+Tableau 27 : Table Membership	50
+Tableau 28 : Table Socialgp_head	51
+Tableau 29 : Table Socialgp_rltn	52
+Tableau 30 : Table Residency	53
+Tableau 31 : Table Residency_accom	54
+Tableau 32 : Table Residency_status	55
+Tableau 33 : Table Vacc_baseline	56
+Tableau 34 : Table Indiv_baseline	57
+Tableau 35 : Table Union_baseline	58
+Tableau 36 : Table Relationship	59
+Tableau 37 : Table Relationship_husb	61
+Tableau 38 : Table Presences	63
+Tableau 39 : Table Visitors_hhd	65
+Tableau 40 : Table Visitors	66
+Tableau 41 : Table Indvstatus	67
+Tableau 42 : Table Pregoutcome	68
+Tableau 43 : Table Birth	69
+Tableau 44 : Table Death	70
+
+Abbreviations
+
+GEGA	Global Equity Gauge Alliance
+HRS	Household Registration System
+ID	Identifiant
+OPO	Observatoire de Population de Ouagadougou
+SSD	Système de surveillance démographique
+SSDO	Système de surveillance démographique de Ouagadougou
+UCH	Unité collective d’habitations
+UERD	Unité d’enseignement et de recherche en démographie
+ZD	Zone de dénombrement
+
+I Présentation du système de surveillance démographique
+Le système de surveillance démographique de Ouagadougou (SSDO) constitue une base de données longitudinales permettant de mesurer l’évolution dans le temps de la population, d’un phénomène (la pauvreté, la scolarisation) ou l’effet d’une intervention sur une population. Il est aussi une base de sondage pour des enquêtes sur des problématiques ponctuelles (nutrition, itinéraires thérapeutique, problèmes scolaires) nécessitant des échantillons spécifiques.
+le SSDO consiste donc à suivre en longitudinal la population d’une zone d’étude, en enregistrant lors des passages trimestriels les événements vitaux de la population cible et lors des passages annuels la mise à jour des caractéristiques de l’habitat et des biens des ménages. Les événements vitaux portent sur les grossesses, les résultats des grossesses, les unions, les ruptures d’union, les migrations, les décès et l’éducation (entrée à l’école, absence scolaire, rentrée scolaire)1.
+Le SSDO pilote a commencé par un recensement de base qui a permis d’obtenir les informations de base de la population suivie telles que les caractéristiques des unités d’habitation collectives (UCH), des ménages et des membres de ces ménages.
+II Architecture du système informatique
+II.1 Règles de gestion
+Zone d’étude
+La zone d’étude du suivi longitudinal est découpée en ZD (zones de dénombrement) qui sont aussi découpées en blocs à l’intérieur desquels sont localisées  les UCH.
+UCH
+Une UCH est un ensemble de logements, et est donc, à l’instar des logements qui la composent, une structure physique. Les logements d’une même UCH sont liés entre eux par certaines relations schématisées sur un algorithme décisionnel.
+La structure d’une UCH n’est pas figée, elle évolue dans le temps avec la construction de nouveaux logements, le changement des anciens logements ou leur destruction.
+Une UCH peut avoir plusieurs chefs d’UCH dans le temps mais un seul chef à un moment donné. Un logement peut avoir plusieurs propriétaires dans le temps mais un seul à un moment donné. Les UCH et les logements sont suivis annuellement pour permettre la mise à jour de leurs caractéristiques.
+Ménage
+Le ménage est un ensemble d’individus qui vivent en commun et qui pourvoient en commun à leurs habitudes alimentaires tout en reconnaissant l’autorité  d’une même personne comme chef de ménage. Les individus qui constituent un ménage sont membres de ce ménage. Un ménage ne vit que dans une seule UCH à un instant t. Par conséquent tous les membres de ce ménage vivent dans la même UCH à cet instant, on dit qu’ils sont résidents de cette UCH.
+Une personne est résidente d’une UCH, d’un bloc, d’une ZD, bref, de toute localité physique ou territoriale si elle y est présente plus d'une certaine durée. Attention, on n’est pas résident d’un ménage car le ménage n‘est pas une entité physique mais sociale. Au recensement de base, tous les individus recensés ont été considérés résidents de leur UCH d’habitation.
+Les membres d’un ménage ne partagent pas forcément le même logement. Leurs statuts d’occupation dans leurs logements peuvent être différents.
+Tout résident doit avoir un identifiant unique pour qu’on puisse  le suivre dans le temps indépendamment de l’UCH et du ménage dans lequel il se trouve. En effet, un individu peut déménager dans une autre UCH ou rejoindre un autre ménage tout en restant dans la zone d’étude.
+Chef de ménage
+Le chef d’un ménage n’est pas fixe dans le temps, le ménage peut avoir plusieurs chefs au cours d’une période mais un seul chef à un instant t. De ce fait, le ménage a toujours un chef,  même s’il en est l’unique membre. Les membres d’un ménage ont un seul lien de parenté avec le chef de ménage à l’instant t. Dès que ce dernier change, il faut définir les nouveaux liens de parenté de tous les membres de ce ménage avec le nouveau chef.
+Statut de résidence
+Un visiteur d’une UCH est un non-résident qui a dormi la veille du passage trimestriel dans l’UCH. A chaque passage les enquêteurs enregistrent la durée de présence dans l’UCH de tous les résidents, les anciens résidents et les visiteurs pendant le round  .La durée de présence détermine le statut de résidence et conditionne changement de statut de résidence. Un résident qui a été absent de l’UCH plus de 45 jours par round pendant  deux rounds consécutifs est déclaré ancien résident (AR). Un visiteur ou un ancien résident qui a été absent de l’UCH plus de 45 jours par round pendant deux rounds consécutifs est déclaré retiré du suivi (RT). Un visiteur ou un ancien résident qui a été présent de l’UCH plus de 45 jours par round pour deux rounds consécutifs est déclaré résident (RE).
+Evénements vitaux
+Les ménages sont visités trimestriellement afin d’enregistrer les événements vitaux qui y sont survenus : les grossesses, les résultats des grossesses, les unions, les ruptures d’union, les migrations et les décès.
+Tout résultat de grossesse doit avoir au préalable la grossesse déclarée. De même, toute rupture d’union doit avoir au préalable l’union déclarée.
+Les unions et les ruptures d’union sont captées au niveau de chaque conjoint résident.
+Un résident qui décède n’est plus résident de l’UCH ni membre du ménage auquel il appartenait à sa mort. Le décès met fin aussi aux épisodes de chefs de ménage si le décédé était chef de ménage à sa mort. De même Le décès met fin aussi aux épisodes de scolarisation et d’unions du décédé.
+Tout nouveau né vivant est considéré comme résident de l’UCH et membre du ménage de sa mère dès la date de sa naissance.
+Evénements ménage
+Les enquêteurs enregistrent aussi à chaque passage les changements de structure du ménage : la présence de ses membres (résidents),  des anciens résidents et des anciens visiteurs qui lui étaient rattachés, l’enregistrement des nouveaux visiteurs, le changement de ménage (lorsqu’un individu quitte un ménage pour rejoindre un autre ménage de la même UCH) et le changement de chef de ménage.
+Evénements scolaires
+Seuls les enfants qui ont été enregistrés lors d’un passage précédant comme allant à l’école (statut scolarisé) sont susceptibles de subir l’événement absence scolaire et les individus non scolarisés l’événement entrée à l’école.
+Données de base (baseline)
+Tout nouveau résident doit avoir les données de base (baseline) éducations (si son age >=2 ans), vaccinations (si age<5 ans) mises à jour. De même, tout nouveau ménage ayant au moins un résident doit avoir ses biens mis à jour.
+Le passage annuel permet la mise à jour des biens des ménages et des changements de logement.
+II.2 Modèle de traitements
+Le modèle de traitements  décrit  l’ensemble des traitements du système de surveillance démographique, sans tenir compte de celui qui exécute le traitement, du moment de l’exécution du traitement, et de la manière dont est exécuté le traitement (automatisé ou manuel).
+II.2.1 Enchaînement des traitements
+Concepts utilisés pour la modélisation des traitements
+Un événement est une occurrence de fait réel du système d’information et qui a pour conséquence l’exécution des actions du domaine considéré.
+Une opération conceptualise les traitements du système d’information en réaction avec un ou plusieurs événements. C’est un enchaînement d’actions ininterruptibles (pas d’attente d’occurrence de nouveaux événements). Une opération est caractérisée par les événements qui la déclenchent, les actions à entreprendre et les événements produits.
+La synchronisation d’une opération est une proposition logique sur les événements déclencheurs de cette opération.
+Les règles d’émission permettent de conceptualiser par une proposition logique les règles de gestion qui doivent régir l’émission des événements produits.
+Un processus est l’enchaînement des opérations dans chacun des sous domaines du domaine d’étude.
+Figure 1: Conceptualisation d’une opération
+
+Description  des traitements
+Processus de décès
+
+Processus grossesse
+
+Processus union
+
+Processus de présence du résident
+
+Processus de présence de l’ancien résident
+
+Processus de présence du visiteur
+
+Processus éducation
+
+Processus éducation (suite)
+
+II.3 Modèle de données
+Le modèle de données fait la description de l’ensemble des données du domaine d’étude qui seront mémorisées dans le système d’information.
+II.3.1 Entités de base de la modélisation
+L’ensemble des données du  SSDO sont catégorisées en deux principaux groupes. Le premier groupe comprend l’ensemble des données stables ou permanentes du système. Ces données ne changement pas dans le temps. Elles sont constituées des informations de base des unités d’analyses (UCH, logement, ménage ou individu) ou du système telles que les paramètres (structures ou des classes).
+Ex : identifiant d’un résident, date de naissance d’un résident, code d’une structure.
+Le second groupe est un ensemble de données qui permettent de refléter l’état ou la situation d’une unité d’analyse (UCH, logement, ménage ou individu) à un moment donné. Ces changements d’état interviennent lorsque des événements relatifs aux unités d’analyses ont lieu. Ces événements sont de deux types : les événements caractérisés par une date appelés « point events » en Anglais ou événements ponctuels et les événements caractérisés par une date de début et une date de fin appelés « episodes » ou épisodes .
+Ex : « événements ponctuels » : décès (on meurt à une date t), « épisodes » : période de résidence dans une UCH (on vit dans une UCH pendant la période t et t+n, avec n>=0).
+
+La catégorisation des données du SSDO permet d’obtenir trois entités de base pour la modélisation de l’ensemble des données, ce sont les entités « stables », les « événements ponctuels » et les « épisodes ».
+Les propriétés des entités « stables » sont
+    • l’identifiant de l’entité,
+    • les informations de base de l’entité et éventuellement,
+    • le code de l’enquêteur,
+    • le code de l’agent de saisie,
+    • la date de saisie et
+    • le statut de validité de l’entité.
+Les propriétés des entités « événements ponctuels » sont
+    • l’identifiant de l’événement,
+    • l’identifiant de l’unité d’analyse,
+    • la date de l’événement,
+    • le type de l’événement,
+    • l’identifiant de la visite au cours de laquelle l’événement est notifié,
+    • l’identifiant du répondant,
+    • les informations liées à l’événement,
+    • le code de l’enquêteur,
+    • le code de l’agent de saisie,
+    • la date de saisie et
+    • le statut de validité de l’entité.
+Les propriétés des entités « épisodes » sont
+    • l’identifiant de l’épisode,
+    • l’identifiant de l’unité d’analyse,
+    • la date de début de l’épisode,
+    • l’identifiant de la visite au cours de laquelle le début de l’épisode est notifié,
+    • l’identifiant du répondant au début de l’épisode,
+    • les informations liées au début de l’épisode,
+    • la date de fin de l’épisode,
+    • l’identifiant de la visite au cours de laquelle la fin de l’épisode est notifiée,
+    • l’identifiant du répondant à la fin de l’épisode,
+    • les informations liées à la fin de l’épisode,
+    • le code de l’agent de saisie,
+    • la date de saisie et
+    • le statut de validité de l’entité.
+
+On obtient le schéma de base suivant :
+
+ID Unité : identifiant de l’unité d’analyse
+Field_wrkr : code de l’enquêteur
+Data_clerk : code de l’agent de saisie
+De_date : date de saisie des informations de l’entité
+Status_dat : statut de validité des données de l’entité
+ID Event : identifiant de l’événement
+ObserveID : identifiant de la visite au cours de laquelle l’événement est notifié
+RespondID : identifiant du répondant
+Date : date de l’événement
+Type : type de l’événement
+ID Episode : identifiant de l’épisode
+SobserveID : identifiant de la visite au cours de laquelle le début de l’épisode est notifié
+SRespondID : identifiant du répondant au début de l’épisode
+Sdate : date de début de l’épisode
+EobserveID : identifiant de la visite au cours de laquelle la fin de l’épisode est notifiée
+ERespondID : identifiant du répondant à la fin de l’épisode
+Edate : date de début de l’épisode
+
+II.3.2 Description des tables
+Dans cette section nous décrivons les tables de la base de données.
+En orange nous aurons les tables (PregOutcome), en vert les variables sur lesquelles on peut faire des tabulations (Birth_date),et en bleu les identifiants (IndividID) et les variables de gestion du système (Data_clerk).
+
+Table Location
+Cette table contient les informations de base de toutes les UCH de la zone d’étude. L’identifiant de l’UCH (LocationID) est la concaténation de l’identifiant de la ZD (Region), de l’identifiant du bloc (Cluster) et du numéro de l’UCH dans le bloc (House_num).
+Dans une UCH on peut avoir plusieurs ménages qui y vivent.
+Tableau 1 : Table Location
+Libellé	Type	Taille	Description
+LocationID	C	12	Identifiant de l’UCH
+Region	C	6	Identifiant de la ZD
+Cluster	C	2	Identifiant du bloc
+House_num	N	4	Numéro de l’UCH dans le bloc
+District	C	15	Quartier de l’UCH
+Street	C	10	Numéro de rue de l’UCH
+Hhd_num	N	2	Nombre de ménages présents dans l’UCH au moment du recensement
+Entry_date	D	8	Date de recensement de l’UCH
+Field_wrkr	C	5	Code de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Observation_location
+Cette table contient les informations de base des visites effectuées pendant les passages trimestriels. C’est au cours de ces visites que les informations sur les UCH sont mises à jour. L’identifiant de la visite est la concaténation de l’identifiant de l’UCH (LocationID) et du numéro du passage (Round).
+Ex : 28N070BF000401 où ID UCH = 28N070BF0004 et numéro du round=01
+Tableau 2 : Table Observation_location
+Libellé	Type	Taille	Description
+Lobserveid	C	14	Identifiant de la visite de l’UCH
+LocationID	C	12	Identifiant de l’UCH, voir Location
+Round	N	2	Numéro du round
+Date	D	8	Date de visite
+Begin_time	C	5	Heure de début de l’entretien
+End_time	C	5	Heure de fin de l’entretien
+Int_lang	C	10	Code de la langue de l’entretien
+Field_wrkr	C	5	Code de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Location_charact
+Cette table contient les caractéristiques propres des UCH recensés à un passage donné. Ces données ne sont pas mises à jour trimestriellement.
+Tableau 3: Table Location_charact
+Libellé	Type	Taille	Description
+LocationID	C	12	Identifiant de l’UCH, voir Location
+RespondID	C	19	Identifiant du répondant
+Lobserveid	C	14	Identifiant de la visite au cours de laquelle on recense les caractéristiques, voir Observation_location
+Fence	C	1	Présence de clôture, modalités = {O,N}
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+
+ Table Location_chiefs
+Cette table contient la liste des chefs des UCH pour une période donnée. Le chef de l’UCH est une personne connue du système par son identifiant. Pour avoir les informations de base sur le chef  de l’UCH (identité, sexe par exemple ..), reportez-vous à la description de la table Individual. Ces données ne sont pas mises à jour trimestriellement.
+Tableau 4: Table Location_chiefs
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode, numéro automatique
+LocationID	C	12	Identifiant de l’UCH, voir Location
+ChiefID	C	19	Identifiant du chef de l’UCH, voir Individual
+SrespondID	C	19	Identifiant du répondant au début de l’épisode
+Slobserveid	C	14	Identifiant de la visite au cours de laquelle on notifie le nouveau chef, voir Observation_location
+Seventtype	C	3	Evénement qui entraîne le début de l’épisode, modalités={ENU=énumération,NEW=nouveau}
+Sdate	D	8	Date à partir de la quelle ChefID est considéré comme chef
+ErespondID	C	19	Identifiant du répondant à la fin de l’épisode
+Elobserveid	C	14	Identifiant de la visite au cours de laquelle on notifie que ChefID n’est plus le chef, , voir Observation_location
+Eeventtype	C	3	Evénement qui met fin à l’épisode, modalités={DTH}
+Edate	D	8	Date à partir de laquelle ChefID cesse d’être le chef
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+ Table Accommodations
+Cette table contient la liste de tous les logements des UCH. L’identifiant du logement est la concaténation de l’identifiant de l’UCH (LocationID), de la lettre « A » et du numéro du logement dans l’UCH (Accom_num). Ex : 28N070BF0004A01 où ID UCH=28N070BF0004 et numéro du logement=01
+Tableau 5: Accommodations
+Libellé	Type	Taille	Description
+AccomID	C	15	Identifiant du logement
+LocationID	C	12	Identifiant de l’UCH, voir Location
+Accom_num	N	2	Numéro du logement
+Entry_date	D	8	Date de recensement du logement
+Building_date	D	8	Date de construction du logement
+Field_wrkr	C	5	Code de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+ Table Accom_charact
+Cette table contient les caractéristiques des logements recensés au cours d’un passage donné. Ces données ne sont pas mises à jour trimestriellement.
+Tableau 6 : Table Accom_charact
+Libellé	Type	Taille	Description
+AccomID	C	15	Identifiant du logement, voir Accommodations
+RespondID	C	19	Identifiant du répondant
+Lobserveid	C	14	Identifiant de la visite au cours de laquelle on recense les caractéristiques, voir Observation_location
+Chg_date	D	8	Date de changement des caractéristiques
+Accom_type	C	3	Type de logement, modalités={VIL, MAI, CEL, APP, AUT}
+Inhabitable_rooms_num	N	2	Nombre de pièces habitables
+Inhabited_rooms_num	N	2	Nombre de pièces habitées
+Roof_nat	C	3	Nature du matériau du toit, modalités={TUI, TAP, TSP, BAN, PAI, AUT, NSP}
+Wall_nat	C	3	Nature du matériau du mur, modalités={CIM, PIE, BAN, BOI, PAI, AUT, NSP}
+Floor_nat	C	3	Nature du sol, modalités={MAR, CAR, CIM, TER, TES, AUT, NSP}
+Mode_light	C	3	Mode d’éclairage fréquemment utilisé, modalités={ELE, GAZ, PET, BOU, BOI, AUT, SAN}
+Toilet_nat	C	1	Type d’aisance utilisé, modalités={1,2,3,4,5,6}
+Toilet_shar	C	1	Précise si le type d’aisance est partagé, modalités={O N}
+Shower_nat	C	3	Type de douche utilisé, modalités={1,2,3,4,5,6,7}
+Water_In	C	1	Précise si le logement est pourvu en eau, modalités={O N}
+Throw_domwast	C	1	Principal mode d’évacuation des ordures, modalités={1,2,3,4,5,6,7}
+Throw_wastewater	C	1	Principal mode d’évacuation des eaux ménagères, modalités={1,2,3,4,5}
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+ Table Accom_owners
+Cette table contient la liste des propriétaires des logements des UCH pour une période donnée. Ces données ne sont pas mises à jour trimestriellement.
+Tableau 7 : Table Accom_owners
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode, numéro automatique
+AccomID	C	12	Identifiant du logement, voir Accommodations
+OwnerID	C	19	Identifiant du propriétaire du logement, voir Individual
+SrespondID	C	19	Identifiant du répondant au début de l’épisode
+Slobserveid	C	14	Identifiant de la visite au cours de laquelle on notifie le nouveau propriétaire, voir Observation_location
+Seventtype	C	3	Evénement qui entraîne le début de l’épisode, modalités={ENU=énumération,NEW=nouveau}
+Sdate	D	8	Date à partir de la quelle OwnerID est considéré comme propriétaire
+ErespondID	C	19	Identifiant du répondant à la fin de l’épisode
+Elobserveid	C	14	Identifiant de la visite au cours de laquelle on notifie que OwnerID n’est plus propriétaire, voir Observation_location
+Eeventtype	C	3	Evénement qui met fin à l’épisode, modalités={DTH=décès}
+Edate	D	8	Date à partir de laquelle OwnerID cesse d’être le propriétaire
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Accom_dest
+Cette table contient la liste des logements détruits. Un logement détruit fera plus l’objet de mise à jour de ses caractéristiques pour les passages postérieurs à sa destruction.
+Tableau 8 : Table Accom_dest
+Libellé	Type	Taille	Description
+EventID	N	12	Numéro de l’événement, numéro automatique
+AccomID	C	12	Identifiant du logement, voir Accommodations
+RespondID	C	19	Identifiant du répondant
+Lobserveid	C	14	Identifiant de la visite au cours de laquelle on notifie la construction du logement, voir Observation_location
+Type	C	3	Modalités= {DES}
+Date	D	8	Date de construction
+Field_wrkr	C	5	Code de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Structures_types
+Cette table contient la liste des différents types de structures. Le type de structure peut être une école primaire, secondaire, supérieure, une pharmacie, un centre de formation professionnelle, un lieu d’alphabétisation ou une formation sanitaire.
+Tableau 9 : Table Structures_types
+Libellé	Type	Taille	Description
+Struct_type_code	C	10	Code du type de structure
+Struct_type_name	C	100	Libellé du type de structure
+ Table Structures_type_classes
+Dans le cas où la structure est une école, un centre de formation professionnelle ou un lieu d’alphabétisation on peut définir les différentes classes de ce type de structure.
+Tableau 10 : Table Structures_type_classes
+Libellé	Type	Taille	Description
+Struct_type_code	C	10	Code du type de structure, voir Structures_types
+Class_code	C	10	Code de la classe
+ Table Structures_type_diplomas
+Dans le cas où la structure est une école, un centre de formation professionnelle ou un lieu d’alphabétisation on peut définir les différents diplômes de ce type de structure.
+Tableau 11 : Table Structures_type_diplomas
+Libellé	Type	Taille	Description
+Diploma_code	C	10	Code du diplôme
+Diploma_name	C	50	Libellé du diplôme
+Struct_type_code	C	10	Code du type de structure, voir Structures_types
+Table Structures_genres
+Dans le cas où la structure est une école, un centre de formation professionnelle ou un lieu d’alphabétisation on peut définir les différents genres de structure. Le genre de structure peut être publique, privé, privé laïque, privé protestant, privé catholique, franco-arabe ou medersa.
+
+Tableau 12 : Table Structures_genres
+Libellé	Type	Taille	Description
+Struct_genres_code	C	10	Code du genre
+Struct_genres _name	C	50	Libellé du genre
+
+Table Structures
+Cette table contient la liste des structures, pour chaque structure on définit le type de structure défini ci-dessus (table Structures_types). Le type de structure peut être une école primaire, secondaire, supérieure, une pharmacie, un centre de formation professionnelle, un lieu d’alphabétisation ou une formation sanitaire.
+Tableau 13 : Table Structures
+Libellé	Type	Taille	Description
+Struct_code	C	10	Code de la structure
+Struct_name	C	50	Nom de la structure
+Struct_nature	C	3	Nature de la structure, modalités={PRI=Privé, PUB=Public, NSP=Ne Sait Pas}
+Struct_address	C	50	Adresse de la structure
+Struct_type_code	C	10	Code du type de la structure, , voir Structures_types
+Struct_genres_code	C	10	Code du genre de la structure, voir Structures_genres
+ Table Alphab_languages
+Cette table contient la liste des langues d’alphabétisation et celles des interviews.
+Tableau 14 : Table Alphab_languages
+Libellé	Type	Taille	Description
+Alphab_lang_code	C	10	Code de la langue
+Alphab_lang_name	C	25	Libellé de la langue
+ Table Activity_domain
+Cette table contient la liste des domaines d’activités rémunératrices.
+Tableau 15 : Table Activity_domain
+Libellé	Type	Taille	Description
+Activity_domain_code	C	3	Code du domaine d’activité
+Activity_domain_name	C	50	Libellé du domaine d’activité
+ Table Apprenticeship_domain
+Cette table contient la liste des domaines d’apprentissage.
+Tableau 16 : Table Apprenticeship_domain
+Libellé	Type	Taille	Description
+App_domain_code	C	3	Code du domaine d’apprentissage
+App_domain_name	C	50	Libellé du domaine d’apprentissage
+ Table Educ_baseline
+C’est la porte d’entrée pour analyser les données de base de l’éducation d’un résident. A partir de cette table on pourra savoir si l’individu fréquente, a déjà fréquenté ou n’a jamais fréquenté. En fonction de cette modalité, d’autres données ont été mises à jour (voir questionnaire du recensement de base). Au recensement de base le module éducation a été administré aux résidents ayant au moins 2 ans. Rappelons que les données de cette table ne sont pas mises à jour trimestriellement.
+Tableau 17 : Table Educ_baseline
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode de résidence de l’individu au moment de la collecte de l’information, voir Residency
+IndividID	C	19	Identifiant de l’individu, voir Individual
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+School_train	C	3	Demande si l’individu fréquente, modalités={OUI, DEJ=Déjà, JAM=Jamais}
+App_train	C	1	Précise si l’individu suit un apprentissage, modalités={O,N}
+App_domain	C	10	Code du domaine d’apprentissage, voir   Apprenticeship_domain
+Relig_train	C	1	Précise si l’individu suit un enseignement religieux, modalités={O,N}
+Relig_train_type	C	1	Type de l’enseignement religieux, modalités={1,2,3,4}
+Helper	C	1	Précise si l’individu exerce un travail d’aide familiale, modalités={O,N}
+Activ_paid	C	1	Précise si l’individu exerce une activité rémunératrice, modalités={O,N}
+Activity	C	10	Code de l’activité rémunératrice, voir Activity_domain
+Household	C	1	Précise si l’individu est une ménagère, modalités={O,N}
+Commerce	C	1	Précise si l’individu exerce une activité commerciale, modalités={O,N}
+Other	C	1	Précise si l’individu exerce une autre activité, modalités={O,N}
+Moore	C	1	Précise si l’individu sait lire et écrire le Mooré, modalités={O,N}
+Dioula	C	1	Précise si l’individu sait lire et écrire le Dioula, modalités={O,N}
+Fulfulde	C	1	Précise si l’individu sait lire et écrire le Fulfuldé, modalités={O,N}
+Gourm	C	1	Précise si l’individu sait lire et écrire le Gourmantché, modalités={O,N}
+Other_nlang	C	1	Précise si l’individu sait lire et écrire une autre langue nationale, modalités={O,N}
+French	C	1	Précise si l’individu sait lire et écrire le Français, modalités={O,N}
+English	C	1	Précise si l’individu sait lire et écrire l’anglais, modalités={O,N}
+Arabic	C	1	Précise si l’individu sait lire et écrire l’Arabe, modalités={O,N}
+German	C	1	Précise si l’individu sait lire et écrire l’Allemand, modalités={O,N}
+Other_ilang	C	1	Précise si l’individu sait lire et écrire une autre langue internationale, modalités={O,N}
+Code_diploma	C	1	Code du dernier diplôme obtenu, modalités={1,2,3,4,5,6,7,8,9,10,11,12}
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Expupils_baseline
+Cette table contient la liste des ex-scolarisés. Ces informations ont été collectées à partir du questionnaire de base de l’éducation. Rappelons que ces données ne sont pas mises à jour trimestriellement.
+Tableau 18 : Table Expupils_baseline
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode de résidence de l’individu au moment de la collecte de l’information, voir Residency
+IndividID	C	19	Identifiant de l’individu, voir Individual
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+Struct_code	C	10	Code de la dernière école, voir Structures
+Class_code	C	10	Code de la dernière classe
+School_year	N	4	Dernière année scolaire
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Alphab_baseline
+Cette table contient la liste des individus qui suivent une formation d’alphabétisation. Ces informations ont été collectées à partir du questionnaire de base de l’éducation. Rappelons que ces données ne sont pas mises à jour trimestriellement.
+Tableau 19 : Table Alphab_baseline
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode de résidence de l’individu au moment de la collecte de l’information, voir Residency
+IndividID	C	19	Identifiant de l’individu, voir Individual
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+Struct_code	C	10	Code du lieu d’alphabétisation, voir Structures
+Alphab_lang_code	C	10	Code du langage d’alphabétisation, voir Alphab_languages
+Alphab_decl	C	1	Précise si l’individu est déclaré alphabétisé, modalités={O,N}
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Train_baseline
+Cette table contient la liste des individus qui suivent une formation. Cette formation peut être scolaire, professionnelle ou des cours du soir. Le type de la formation est déterminé à partir du champ Type. Ces informations ont été collectées à partir du questionnaire de base de l’éducation. Rappelons que ces données ne sont pas mises à jour trimestriellement.
+Dans le cas où l’individu suit une formation scolaire, la table Pupils est mise à jour pour prendre en compte l’épisode scolaire en cours.
+Tableau 20 : Table Train_baseline
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode de résidence de l’individu au moment de la collecte de l’information, voir Residency
+IndividID	C	19	Identifiant de l’individu, voir Individual
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+Struct_code	C	10	Code de la structure, voir Structures
+Class_code	C	10	Code de la classe
+Type	C	3	Modalités={SCH=formation scolaire, ECT=cours du soir, PTC=formation professionnelle}
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Pupils
+Cette table contient la liste des épisodes scolaires déclarés. Ces informations ont été collectées à partir du questionnaire de base de l’éducation ou pendant les passages trimestriels (événement Entrée à l’école). L’épisode scolaire correspond au moins à l’année scolaire : pour une année scolaire on peut avoir plusieurs épisodes scolaires, cela peut être dû aux abandons et aux reprises.
+Tableau 21 : Table Pupils
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode scolaire, numéro automatique
+IndividID	C	19	Identifiant de l’individu, voir Individual
+Struct_code	C	10	Code de l’école, voir Structures
+Class_code	C	10	Code de la classe
+SrespondID	C	19	Identifiant du répondant au début de l’épisode
+SobserveID	C	18	Identifiant de la visite au cours de laquelle on recense le début de l’épisode scolaire, voir Observation
+Seventtype	C	3	Evénement qui entraîne le début de l’épisode, modalités={ENU=énumération, REP=reprise, NEW=nouveau}
+Sdate	D	8	Date de début de l’épisode scolaire
+ErespondID	C	19	Identifiant du répondant à la fin de l’épisode
+EobserveID	C	14	Identifiant de la visite au cours de laquelle on recense la fin de l’épisode, voir Observation
+Eeventtype	C	3	Evénement qui met fin à l’épisode, modalités={DTH, ABD}
+Edate	D	8	Date de fin de l’épisode scolaire
+Made_exam	C	3	Précise si l’élève a fait un examen, modalités={O, N, NSP}
+Spec_exam	C	4	Précise l’examen fait, modalités={CEP, BEPC, BAC, CAP, BEP, AUT, NSP}
+Success_exam	C	3	Précise si l’individu à réussi son examen, modalités={O,N,NSP,NA}
+Enrolled	C	3	Précise si l’élève s’est inscrit pour l’année scolaire prochaine, modalités={O, N, NSP}
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Statut_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Pupils_absences
+Cette table contient les informations de base sur les absences scolaires collectées au cours d’une visite donnée. Les absences scolaires concernent uniquement les scolarisés. En cas d’abandon scolaire, l’épisode scolaire en cours est mise à jour en affectant la modalité ABD au champ Eeventtype (voir Pupils) et l’individu n’est plus considéré comme un scolarisé.
+Tableau 22 : Table Pupils_absences
+Libellé	Type	Taille	Description
+EventID	N	12	Numéro de l’événement, numéro automatique
+EpisodeID	N	12	Numéro de l’épisode scolaire au cours de laquelle la série d’absences est constatée, voir Pupils
+IndividID	C	19	Identifiant de l’individu, voir Individual
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+Date	D	8	Date de l’enquête
+Type	C	3	Modalité {ABS=Absence}
+Absent	C	1	Précise si l’individu est absent au moment du passage, modalités={O,N}
+Def_abd	C	1	Précise s’il s’agit d’un abandon définitif suite aux absences scolaires, modalités={O,N}
+Field_wrkr	C	5	Code de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Statut_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Pupils_absences_detail
+Cette table contient le détail des absences scolaires collectées au cours d’une visite donnée. Les champs Reason1 à Reason18 indiquent les motifs des absences scolaires.
+Tableau 23 : Table Pupils_absences_detail
+Libellé	Type	Taille	Description
+PabseventID	N	12	Numéro de l’événement permettant d’identifier les informations de base de la série d’absences, voir Pupils_absences
+IndividID	C	19	Identifiant de l’individu, voir Individual
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+Periode_num	N	2	Numéro de la période
+Month	C	4	Mois de l’absence, modalités={JAN, FEV, MAR, AVR, MAI, JUIN, JUIL, AOU, SEP, OCT, NOV, DEC}
+Duration	N	2	Nombre de jours d’absences
+Reason1	C	1	Précise s’il s’agit d’un problème de santé de l’enfant, modalités={O,N}
+Reason2	C	1	Précise s’il s’agit d’un mauvais résultat, modalités={O,N}
+Reason3	C	1	Précise s’il s’agit d’un renvoi, modalités={O,N}
+Reason4	C	1	Précise s’il s’agit d’une grossesse, modalités={O,N}
+Reason5	C	1	Précise s’il s’agit d’un mariage, modalités={O,N}
+Reason6	C	1	Précise s’il s’agit d’un désintérêt de l’enfant, modalités={O,N}
+Reason7	C	1	Précise s’il s’agit d’une activité rémunératrice, modalités={O,N}
+Reason8	C	1	Précise s’il s’agit de l’absence de l’enseignant, modalités={O,N}
+Reason9	C	1	Précise s’il s’agit d’un rapport conflictuel avec l’enseignant, modalités={O,N}
+Reason10	C	1	Précise s’il s’agit d’une difficulté d’accès à l’école, modalités={O,N}
+Reason11	C	1	Précise s’il s’agit de l’arrêt de la cantine, modalités={O,N}
+Reason12	C	1	Précise s’il s’agit d’un problème de santé dans la famille, modalités={O,N}
+Reason14	C	1	Précise s’il s’agit d’un problème d’aide aux travaux, modalités={O,N}
+Reason15	C	1	Précise s’il s’agit d’un problème de manque de moyens, modalités={O,N}
+Reason16	C	1	Précise s’il s’agit du fait qu’il est dans une école religieuse, modalités={O,N}
+Reason17	C	1	Autres raisons{O,N}
+Reason18	C	1	Raison non précisée, modalités={O,N}
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Socialgroup
+Cette table contient la liste des groupes sociaux. Un groupe social peut être un ménage, une famille, une association ou une communauté. Le champ Type permet de déterminer le type du groupe social. L’identifiant d’un groupe social (SocialgpID) est la concaténation de l’identifiant de l’UCH dans laquelle il a été recensé (Locationid), de la première lettre du type du groupe social (Type) et du numéro du groupe social dans l’UCH de recensement (Socialgpnum). Ex : 28N070BF0009H001 où 28N070BF0009 est l’UCH de recensement, H est la première lettre de HHD (ménage résident) et 001 est le numéro du groupe social dans l’UCH de recensement.
+Dans le cas où le groupe social est un ménage, l’UCH de résidence de ce ménage est celle du chef de ménage. Si l’identifiant d’un groupe social est 28N070BF0009H001 cela ne signifie pas que ce groupe social réside dans l’UCH à l’instant t (avec t postérieur au recensement de base).
+Un ménage est considéré comme un ménage non résident si tous les membres de ce ménage sont des visiteurs c’est à dire qui n’ont pas vécu plus de 45 jours pendant deux rounds consécutifs dans leur UCH d’arrivée.
+Tableau 24 : Table Socialgroup
+Libellé	Type	Taille	Description
+SocialgpID	C	16	Identifiant du groupe social
+Socialgpnum	N	3	Numéro du groupe social
+Locationid	C	12	Identifiant de l’UCH dans laquelle est localisé le groupe social à son inscription, voir Location
+Name	C	25	Nom du groupe social
+Entry_date	D	8	Date de recensement du groupe social
+HeadID	C	19	Identifiant du chef du groupe social au recensement, voir Individual
+Type	C	3	Type du groupe social, modalités={HHD=ménage résident, FAM=famille, TMP=ménage non résident}
+type_hhd			Type de ménage, modalité={STD=menage Standard, INS=menage institutionel}
+Field_wrkr	C	5	Code de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Observation
+Cette table contient la liste des visites rendues aux groupes sociaux lors des passages. L’identifiant d’une visite (ObserveID) est la concaténation de l’identifiant du groupe social (SocialgpID) et du numéro du passage trimestriel ou round en Anglais(Round). Ex : 28N070BF0009H00101 où 28N070BF0009H001 est l’identifiant du groupe social et 01 est le numéro du passage.
+Tableau 25 : Table Observation
+Libellé	Type	Taille	Description
+ObserveID	C	18	Identifiant de la visite
+SocialgpID	C	16	Identifiant du groupe social, voir Socialgroup
+LocationID	C	12	Identifiant de l’UCH dans laquelle est localisé le groupe social au moment de la visite, voir Location
+Round	N	2	Numéro du passage
+Date	D	8	Date de visite
+Begin_time	C	5	Heure de début de l’entretien
+End_time	C	5	Heure de fin de l’entretien
+Int_lang	C	10	Code de la langue utilisée lors de l’entretien, voir  le libellé dans la table alphab_languages
+Field_wrkr	C	5	Code de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Hhold_baseline
+Cette table contient la liste des informations sur les équipements, les animaux et le type d’approvisionnement en eau des ménages. Ces informations sont collectées lorsqu’un ménage dévient résident. Rappelons que ces données ne sont pas mises à jour trimestriellement.
+Tableau 26 : Table Hhold_baseline
+Libellé	Type	Taille	Description
+SocialgpID	C	16	Identifiant du groupe social, voir Socialgroup
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite, voir Observation
+Radio_num	N	3	Nombre de radios
+Tv_num	N	3	Nombre de télévisions
+Bic_num	N	3	Nombre de bicyclettes
+Moto_num	N	3	Nombre de mobylettes
+perscar_num	N	3	Nombre d’automobiles personnels
+Comcar_num	N	3	Nombre d’automobiles personnels
+Truck_num	N	3	Nombre de camions
+Tract_num	N	3	Nombre de tracteurs
+Handcart_num	N	3	Nombre de charrettes
+Phone_num	N	3	Nombre de téléphones
+Video_num	N	3	Nombre de magnétoscopes
+Ref_num	N	3	Nombre de réfrigérateurs
+Ox_num	N	3	Nombre de bœufs
+Goat_num	N	3	Nombre de chèvres
+Sheep_num	N	3	Nombre de moutons
+Fowl_num	N	3	Nombre de volailles
+Horse_num	N	3	Nombre de chevaux
+Donk_num	N	3	Nombre d’ânes
+Rabb_num	N	3	Nombre de lapins
+Pig_num	N	3	Nombre de porcs
+Camel_num	N	3	Nombre de chameaux
+Supp_drink_wat	C	2	Principal mode d’approvisionnement en eau de boisson, modalités={1,2,3,4,5,6,7,8,9,10}
+cooking	C	1	Précise si le ménage prépare
+Combust_cooking	C	1	Combustible utilisé, modalités={1,2,3,4,5,6,7}
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Individual
+Cette table contient la liste des individus du système. Un individu peut être résident ou non résident. Un non résident peut être un visiteur ou une personne n’ayant jamais vécu dans la zone d’étude mais ayant un lien avec un résident, par exemple le mariage. Le champ Baseline_rsd_status est le statut de résidence de l’individu au recensement de base. Pour savoir le statut de résidence d’un individu à un instant t postérieur au recensement de base il faut effectuer les recherches dans les tables Residency ou Visitors. La table Residency contient la liste des résidents et la table Visitors la liste des visiteurs.
+L’identifiant d’un individu (IndividID) est la concaténation de l’identifiant du groupe social dans lequel il a été recensé et du numéro de ligne de cet individu dans le groupe social. Ex : identifiant=28N070BF0009H001001 où 28N070BF0009H001 est l’identifiant du groupe social où il a été recensé et 001 son numéro de ligne dans le groupe social. Cet identifiant est unique et permanent pour cet individu quelque soit son lieu résidence et le groupe social d’appartenance à un instant t postérieur au recensement de base. Si l’identifiant d’un individu est 28N070BF0009H001001 cela ne signifie pas qu’il réside dans l’UCH 28N070BF0009 et qu’il est membre du groupe social 28N070BF0009H001 à un instant t postérieur au recensement de base. Pour savoir le lieu de résidence et le groupe social auquel un individu appartient à un instant t postérieur au recensement de base, il faut effectuer les rechercher respectivement dans les tables Residency et Membership.
+Tableau 27 : Table Individual
+Libellé	Type	Taille	Description
+IndividID	C	19	Identifiant de l’individu
+Name	C	25	Nom de famille de l’individu
+Forename	C	25	Prénom de l’individu
+Baseline_rsd_status	C	2	Statut de résidence de l’individu au baseline, modalités={RP=résident présent, RA=résident absent, VI=visiteur, NA=non applicable}
+Gender	C	1	Sexe de l’individu
+Birth_date	D	8	Date de naissance, la modalité 01/01/1800 = Ne Sait Pas
+MotherID	C	19	Identifiant de la mère, la modalité NSP=Ne Sait Pas, voir Individual
+FatherID	C	19	Identifiant du père, la modalité NSP=Ne Sait Pas, voir Individual
+Ethnic_gp	C	3	Ethnie de l’individu
+Field_wrkr	C	5	Code de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Membership
+Cette table contient les périodes pendant lesquelles un individu appartient à un groupe social. A un instant t, un individu ne peut appartenir au plus à un ménage. Il est possible à un résident de changer de ménage sans que cela n’implique un changement de son identifiant. Il conservera toujours cet identifiant qui est indépendant du ménage dans lequel il se trouvera.
+Tableau 28 : Table Membership
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode, numéro automatique
+IndividID	C	19	Identifiant de l’individu, voir Individual
+SocialgpID	C	18	Identifiant du groupe social, voir Socialgroup
+Type	C	3	Type du groupe social, modalités={HHD=ménage, FAM=Famille}
+Rltn_Head	C	3	Relation entre individID et le chef du groupe social au moment où individID appartient au groupe social
+SrespondID	C	19	Identifiant du répondant au début de l’épisode
+SobserveID	C	18	Identifiant de la visite au cours de laquelle on recense le début de l’épisode, voir Observation
+Seventtype	C	3	Evénement qui entraîne le début de l’épisode, modalités={ENU=énumération, CHG=changement, ENT=migration in, BIR=naissance}
+Sdate	D	8	Date de début de l’épisode
+ErespondID	C	19	Identifiant du répondant à la fin de l’épisode
+EobserveID	C	14	Identifiant de la visite au cours de laquelle on recense la fin de l’épisode, voir Observation
+Eeventtype	C	3	Evénement qui met fin à l’épisode, modalités={EXT=migration out, DTH=décès, DIV=divorce, SEP=séparation, WID=veuvage, CHG=changement}
+Edate	D	8	Date de fin de l’épisode
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+ Table Socialgp_head
+Cette table contient les périodes pendant lesquelles un individu est le chef d’un groupe social. Dans le temps un groupe social peut avoir plusieurs chefs, cela peut être dû aux décès ou aux changements de statut (passer du statut de résident au statut de non résident).
+Tableau 29 : Table Socialgp_head
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode, numéro automatique
+HeadID	C	19	Identifiant du chef, voir Individual
+SocialgpID	C	18	Identifiant du groupe social, voir Socialgroup
+SrespondID	C	19	Identifiant du répondant au début de l’épisode
+Sobserveid	C	18	Identifiant de la visite au cours de laquelle on recense le début de l’épisode, voir Observation
+Seventtype	C	3	Evénement qui entraîne le début de l’épisode, modalités={ENU=énumération, NEW=nouveau}
+Sdate	D	8	Date de début de l’épisode
+ErespondID	C	19	Identifiant du répondant à la fin de l’épisode
+Eobserveid	C	14	Identifiant de la visite au cours de laquelle on recense la fin de l’épisode, voir Observation
+Eeventtype	C	3	Evénement qui met fin à l’épisode, modalités={EXT=migration out, DTH=décès}
+Edate	D	8	Date de fin de l’épisode
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Socialgp_rltn
+Cette table contient les relations qui existent entre le chef d’un group social et les différents membres de ce groupe social. A chaque changement du chef du groupe social, il faut définir les relations qui existent entre le chef et les différents membres de ce groupe social.
+Tableau 30 : Table Socialgp_rltn
+Libellé	Type	Taille	Description
+EventID	N	12	Numéro de l’événement, numéro automatique
+EpisodeID	N	12	Numéro de l’épisode du chef du groupe social, voir Socialgp_head
+IndividID	C	19	Identifiant du membre du groupe social, voir Individual
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on recense la relation, voir Observation
+Type	C	3	Modalité= {REL=relation}
+Date	D	8	Date de l’enquête
+Rltn_head	C	3	Relation entre l’individu et le chef du groupe social
+Field_wrkr	C	5	Identifiant de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+ Table Residency
+Cette table contient les périodes de résidence des individus du système. Cette table ne concerne que les personnes résidentes du système et non les visiteurs. Pour savoir les périodes de séjour des visiteurs, reportez-vous à la description de la table Visitors. Rappelons ici qu’un visiteur devient résident d’une UCH lorsqu’il a été enregistré comme présent pour plus de 45 jours sur deux rounds consécutifs. De façon symétrique, un résident devient non-résident lorsqu’il a été déclaré absent pour une période de plus de 45 jours sur deux round consécutifs.
+Tableau 31 : Table Residency
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode, numéro automatique
+IndividID	C	19	Identifiant du résident, voir Individual
+LocationID	C	12	Identifiant de l’UCH de résidence, voir Location
+Type	C	3	Modalités={RES=résidence}
+SrespondID	C	19	Identifiant du répondant au début de l’épisode
+Sobserveid	C	18	Identifiant de la visite au cours de laquelle on recense le début de l’épisode de résidence dans l’UCH, voir Observation
+Seventtype	C	3	Evénement qui entraîne le début de l’épisode, modalités={ENU=énumération, ENT=migration in, BIR=naissance}
+Sdate	D	8	Date de début de l’épisode de résidence dans l’UCH
+ErespondID	C	19	Identifiant du répondant à la fin de l’épisode
+Eobserveid	C	14	Identifiant de la visite au cours de laquelle on recense la fin de l’épisode de résidence dans l’UCH, voir Observation
+Eeventtype	C	3	Evénement qui met fin à l’épisode, modalités={EXT=migration out, DTH=décès}
+Edate	D	8	Date de fin de l’épisode de résidence dans l’UCH
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Residency_accom
+Cette table contient les périodes de résidence des individus dans les logements des UCH. Dans une même UCH un résident peut vivre dans plusieurs logements dans le temps, mais dans un seul logement à un instant t. Le changement de logement ne met pas fin à la période de résidence dans l’UCH.
+Tableau 32 : Table Residency_accom
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode, numéro automatique
+EpisodeID_res	N	12	Numéro de la période de résidence dans l’UCH, voir Residency
+IndividID	C	19	Identifiant du résident, voir Individual
+AccomID	C	12	Identifiant du logement, voir Accommodations
+Type	C	3	Modalités={RES=résidence}
+SrespondID	C	19	Identifiant du répondant au début de l’épisode
+Sobserveid	C	18	Identifiant de la visite au cours de laquelle on recense le début de l’épisode de résidence dans le logement, voir Observation
+Seventtype	C	3	Evénement qui entraîne le début de l’épisode, modalités={ENU=énumération, ENT=migration in, BIR=naissance}
+Sdate	D	8	Date de début de l’épisode de résidence dans le logement
+ErespondID	C	19	Identifiant du répondant à la fin de l’épisode
+Eobserveid	C	14	Identifiant de la visite au cours de laquelle on recense la fin de l’épisode de résidence dans le logement, voir Observation
+Eeventtype	C	3	Evénement qui met fin à l’épisode, modalités={EXT=migration out, DTH=décès}
+Edate	D	8	Date de fin de l’épisode de résidence dans le logement
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Residency_status
+Cette table contient le statut d’occupation d’un résident dans un logement pendant les périodes de résidence dans ce logement. Un résident peut avoir plusieurs statuts d’occupation dans un même logement dans le temps. Il peut par exemple passer du statut locataire au statut propriétaire pour le même logement.
+Tableau 33 : Table Residency_status
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode, numéro automatique
+EpisodeID_accom	N	12	Numéro de la période de résidence dans le logement, voir Residency_accom
+IndividID	C	19	Identifiant du résident, voir Individual
+Occup_status	C	3	Statut d’occupation du résident dans le logement
+SrespondID	C	19	Identifiant du répondant au début de l’épisode
+Sobserveid	C	18	Identifiant de la visite au cours de laquelle on recense le début de l’épisode du statut d’occupation, voir Observation
+Seventtype	C	3	Evénement qui entraîne le début de l’épisode, modalités={ENU=énumération, ENT=migration in, BIR=naissance}
+Sdate	D	8	Date de début de l’épisode du statut d’occupation
+ErespondID	C	19	Identifiant du répondant à la fin de l’épisode
+Eobserveid	C	14	Identifiant de la visite au cours de laquelle on recense la fin de l’épisode du statut d’occupation, voir Observation
+Eeventtype	C	3	Evénement qui met fin à l’épisode, modalités={EXT=migration out, DTH=décès}
+Edate	D	8	Date de fin de l’épisode du statut d’occupation
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Vacc_baseline
+Cette table contient les informations du baseline sur la vaccination pour les enfants qui ont entre 0 et 5 ans. La date 01/01/1800 indique que l’enfant a fait le vaccin mais on ignore la date de vaccination et la date 01/01/1700 correspond à la modalité NSP (Ne Sait Pas).
+Tableau 34 : Table Vacc_baseline
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode de résidence de l’individu au moment de la collecte de l’information, voir Residency
+IndividID	C	19	Identifiant de l’individu, voir Individual
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+Vacc_rec	C	1	Précise si l’enfant a un carnet de vaccination, modalités={O,N}
+Bcg	D	8	Précise si l’enfant a fait le vaccin de BCG
+Dtcoq1	D	8	Précise si l’enfant a fait le vaccin de Dtcoq (1ère dose)
+Dtcoq2	D	8	Précise si l’enfant a fait le vaccin de Dtcoq(2ème dose)
+Dtcoq3	D	8	Précise si l’enfant a fait le vaccin de Dtcoq(3ème dose)
+Polio0	D	8	Précise si l’enfant a fait le vaccin de Polio (à la naissance 1ère dose)
+Polio1	D	8	Précise si l’enfant a fait le vaccin de Polio (2ère dose)
+Polio2	D	8	Précise si l’enfant a fait le vaccin de Polio(3ème dose)
+Polio3	D	8	Précise si l’enfant a fait le vaccin de Polio(4ème dose)
+Yell_fever	D	8	Précise si l’enfant a fait le vaccin de la fièvre jaune (1ère dose)
+Measles	D	8	Précise si l’enfant à fait le vaccin de la fièvre jaune
+Imovax1	D	8	Précise si l’enfant a fait le vaccin de Imovax (1ère dose)
+Imovax2	D	8	Précise si l’enfant a fait le vaccin de Imovax (2ère dose)
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Indiv_baseline
+Cette table contient les informations de base sur les résidents, ces informations portent sur le baseline.
+Tableau 35 : Table Indiv_baseline
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode de résidence de l’individu au moment de la collecte de l’information, voir Residency
+IndividID	C	19	Identifiant de l’individu, voir Individual
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+Religion	C	3	Religion de l’individu
+Father_alive	C	1	Précise si le père de l’individu est vivant, modalités={O,N}
+Mother_alive	C	1	Précise si la mère de l’individu est vivante, modalités={O,N}
+Marital_status	C	3	Situation matrimoniale de l’individu au baseline
+Marital_date	D	8	Date de mariage de l’individu
+Protect_mosq	C	1	Mode de protection contre les moustiques, modalités={1,2 3,4,5,6,7}
+Inv_blind	C	1	Précise si l’individu a la cécité, modalités={O,N}
+Inv_deaf	C	1	Précise si l’individu est sourd, modalités={O,N}
+Inv_motor	C	1	Précise si l’individu a un handicap moteur, modalités={O,N}
+Inv_mental	C	1	Précise si l’individu a un handicap mental, modalités={O,N}
+Inv_other	C	1	Précise si l’individu a un autre cas d’invalidité, modalités={O,N}
+Inv_none	C	1	Précise si l’individu n’a aucun cas d’invalidité, modalités={O,N}
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+ Table Union_baseline
+Cette table contient les informations sur le lieu de résidence du mari d’une résidente au moment du baseline. On recueillait ces informations lorsque la femme ne résidait pas avec son mari.
+Tableau 36 : Table Union_baseline
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode de résidence de l’individu au moment de la collecte de l’information, ce numéro est dans la table Residency
+IndividID	C	19	Identifiant de la femme, voir Individual
+IndividID2	C	19	Identifiant temporaire du mari, voir Individual
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+Type	C	3	Type de l’union, modalités={MART=mariage traditionnel, MARL=mariage légal, CON=Concubinage}
+Husb_region	C	25	Ville ou village de résidence du mari
+Husb_district	C	15	Quartier de résidence du mari
+Husb_street	C	10	Rue de résidence du mari
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Relationship
+Cette table contient les informations sur les unions et les ruptures d’union des femmes résidentes. Si le mari est inconnu du système c’est à dire s’il n’a pas d’identifiant, un identifiant temporaire lui est attribué automatiquement. Cette méthode permet de capter toutes les unions des femmes résidentes indépendamment du lieu de résidence du mari.
+Tableau 37 : Table Relationship
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode, numéro automatique
+IndividID	C	19	Identifiant de la femme, voir Individual
+IndividID2	C	19	Identifiant du mari, cet identifiant est temporaire s’il n’est pas connu du système, voir Individual
+Firstrelationship	C	1	Précise si la femme est à sa première union, modalités={O,N}
+Type	C	3	Type de l’union, modalités={MART=mariage traditionnel, MARL=mariage légal, CON=Concubinage}
+Rank	N	2	Rang de la femme dans le foyer au moment de l’union
+Scowives_num	N	2	Nombre de coépouses au moment de l’union
+Shusb_rsd	C	1	Lieu de résidence du mari au moment de la visite, modalités={1 2 3 4}
+Shusb_region	C	6	Identifiant de la ZD dans laquelle vit le mari s’il réside dans la zone d’étude mais pas avec la femme au moment de la visite
+Shusb_locationid	C	12	Identifiant de l’UCH dans laquelle vit le mari s’il réside dans la zone d’étude mais pas avec la femme au moment de la visite, voir Location
+Shusb_rsd_specified	C	25	Précise le lieu de résidence du mari s’il n’est pas dans la zone d’étude au moment de la visite
+SrespondID	C	19	Identifiant du répondant au début de l’épisode
+SobserveID	C	18	Identifiant de la visite au cours de laquelle on recense l’union, voir Observation
+Seventtype	C	3	Evénement qui entraîne l’union dans le système, modalités={ENU=énumération, MAR=mariage, UNI=Union, ENT=migration in }
+Sdate	D	8	Date de l’union
+ErespondID	C	19	Identifiant du répondant à la fin de l’épisode
+Eobserveid	C	14	Identifiant de la visite au cours de laquelle on recense la rupture d’union, voir Observation
+Eeventtype	C	3	Evénement qui met fin à l’union, modalités={ DIVT=divorce traditionnel, DIVL=divorce légal, VEU=décès du mari, SEP=séparation, EXT=migration out, DTH=décès de la femme}
+Edate	D	8	Date de rupture de l’union
+Ecowives_num	N	2	Nombre de coépouses à la rupture
+Ehusb_rsd	C	1	Lieu de résidence du mari à la rupture, modalités={1 2 3 4}
+Ehusb_region	C	6	Identifiant de la ZD dans laquelle vit le mari s’il réside dans la zone d’étude mais pas avec la femme à la rupture
+Ehusb_locationid	C	12	Identifiant de l’UCH dans laquelle vit le mari s’il réside dans la zone d’étude mais pas avec la femme à la rupture, voir Location
+Ehusb_rsd_specified	C	25	Précise le lieu de résidence du mari s’il n’est pas dans la zone d’étude à la rupture
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Relationship_husb
+Cette table contient les informations sur les unions et les ruptures d’union des hommes résidents. Si la mariée est inconnue du système c’est à dire si elle n’a pas d’identifiant, un identifiant temporaire lui est attribuée automatiquement. Cette méthode permet de capter toutes les unions des hommes résidents indépendamment du lieu de résidence de la mariée.
+Tableau 38 : Table Relationship_husb
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode, numéro automatique
+IndividID	C	19	Identifiant de l’homme, voir Individual
+IndividID2	C	19	Identifiant de la femme, cet identifiant est temporaire si elle n’est pas connue du système, voir Individual
+Firstrelationship	C	1	Précise si l’homme est à sa première union, modalités={O,N}
+Type	C	3	Type de l’union, modalités={MART=mariage traditionnel, MARL=mariage légal, CON=Concubinage}
+Swives_num	N	2	Nombre d’épouses au moment de l’union
+Swife_rsd	C	1	Lieu de résidence de la femme au moment de la visite, modalités={1 2 3 4}
+Swife_region	C	6	Identifiant de la ZD dans laquelle vit la femme si elle réside dans la zone d’étude mais pas avec l’homme au moment de la visite
+Swife_locationid	C	12	Identifiant de l’UCH dans laquelle vit la femme si elle réside dans la zone d’étude mais pas avec l’homme au moment de la visite, voir Location
+Swife_rsd_specified	C	25	Précise le lieu de résidence de la femme si elle  n’est pas dans la zone d’étude au moment de la visite
+SrespondID	C	19	Identifiant du répondant au début de l’épisode
+SobserveID	C	18	Identifiant de la visite au cours de laquelle on recense l’union, voir Observation
+Seventtype	C	3	Evénement qui entraîne l’union dans le système, modalités={ENU=énumération, MAR=mariage, UNI=Union, ENT=migration in }
+Sdate	D	8	Date de l’union
+ErespondID	C	19	Identifiant du répondant à la fin de l’épisode
+Eobserveid	C	14	Identifiant de la visite au cours de laquelle on recense la rupture d’union, voir Observation
+Eeventtype	C	3	Evénement qui met fin à l’union, modalités={ DIVT=divorce traditionnel, DIVL=divorce légal, VEU=décès du mari, SEP=séparation, EXT=migration out, DTH=décès de la femme}
+Ewives_num	N	2	Nombre d’épouses à la rupture
+Ewife_rsd	C	1	Lieu de résidence de la femme à la rupture, modalités={1 2 3 4}
+Ewife_region	C	6	Identifiant de la ZD dans laquelle vit la femme si elle réside dans la zone d’étude mais pas avec l’homme à la rupture
+Ewife_locationid	C	12	Identifiant de l’UCH dans laquelle vit la femme si elle réside dans la zone d’étude mais pas avec l’homme à la rupture, voir Location
+Ewife_rsd_specified	C	25	Précise le lieu de résidence de la femme si elle  n’est pas dans la zone d’étude à la rupture
+Edate	D	8	Date de rupture de l’union
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Presences
+Cette table contient les informations sur les présences des résidents et des visiteurs. Rappelons ici qu’un visiteur devient résident d’une UCH lorsqu’il a été enregistré comme présent pour plus de 45 jours sur deux rounds consécutifs. De façon symétrique, un résident devient non-résident lorsqu’il a été déclaré absent pour une période de plus de 45 jours sur deux rounds consécutifs.
+Tableau 39 : Table Presences
+Libellé	Type	Taille	Description
+EventID	N	12	Numéro de l’événement, numéro automatique
+IndividID	C	19	Identifiant de l’individu, voir Individual
+LocationID	C	19	Identifiant de l’UCH, voir Location
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+Type	C	3	Type de l’événement, modalités={PRE=présence}
+Arrive_date	D	8	Date d’arrivée
+Depart_date	D	8	Date de départ
+Last_rsd_status	C	2	Précise le statut de résidence de l’individu au round précédent
+Last_pres_status	C	1	Précise le statut de présence de l’individu au round précédent
+Sleep_lastnight	C	1	Précise si l’individu a dormi dans l’UCH la veille de la visite, modalités={O,N}
+Absent	C	1	Précise si l’individu a été absent de l’UCH durant les 3 derniers mois pour une durée totale de plus de 45 jours, modalités={O,N}
+Result	C	2	Résultat de la présence, modalités={RE=Résident, AR=Ancien Résident, VI=Visiteur, RT=Rétiré}
+EpisodeID	N	12	Identifiant de la période de résidence si l’individu (AR ou VI) dévient RE, voir Residency
+Origin	C	1	Indique la provenance du visiteur, modalités :1=« Ailleurs à Ouaga », 2=« Hors de Ouaga », 3=« Dans la zone d’étude », 4=« NSP »
+Prec_Origin	C	25	Précise la provenance si elle correspond à l’une des modalités « Ailleurs à Ouaga » ou « Hors de Ouaga »
+Origin_region	C	6	Précise la ZD si la provenance est « Dans la même zone d’étude »
+Origin_locationID	C	12	Précise l’UCH si la provenance est « Dans la même zone d’étude », voir Location
+Location	C	1	Indique la localisation de l’absent, modalités :1=« Ailleurs à Ouaga », 2=« Hors de Ouaga », 3=« Même UCH », 4=  « Dans la zone d’étude », 5=« NSP »
+Prec_location	C	25	Précise la localisation si elle correspond à l’une des modalités « Ailleurs à Ouaga » ou « Hors de Ouaga »
+Loc_region	C	6	Précise la ZD si la localisation est « Dans la même zone d’étude »
+Loc_locationID	C	12	Précise l’UCH si la localisation est « Dans la même zone d’étude », voir Location
+AccomID	C	15	Identifiant du logement si l’individu (AR ou VI) dévient RE, voir Residency_accom
+Occup_status	C	3	Statut d’occupation du logement si l’individu (AR ou VI) dévient RE
+Rltn_head	C	3	Relation avec le chef de ménage si l’individu (AR ou VI) dévient RE
+Field_wrkr	C	5	Code de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Visitors_hhd
+Cette table contient les informations de base sur l’arrivée d’un ménage dans la zone d’étude. Ce ménage peut être un ménage de la zone d’étude qui change d’UCH (c’est a dire qu’il déménage).
+Tableau 40 : Table Visitors_hhd
+Libellé	Type	Taille	Description
+EventID	N	12	Numéro de l’événement, numéro automatique
+SocialgpID	C	19	Identifiant du ménage, voir Socialgroup
+SocialgpIDtmp	C	19	Identifiant temporaire du ménage, voir Socialgroup
+LocationID	C	12	Identifiant de l’UCH d’arrivée, voir Location
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+Old_hhd	C	1	Précise s’il s’agit d’un ancien ménage ou un ménage de la zone d’étude, modalités={O,N}
+Date	D	8	Date d’arrivée du ménage, ici cette date correspond à la date d’enquête
+Field_wrkr	C	5	Code de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Visitors
+Cette table contient les informations sur les visiteurs. Rappelons ici qu’un visiteur devient résident d’une UCH lorsqu’il a été enregistré comme présent pour plus de 45 jours sur deux rounds consécutifs. Pour le visiteur on suit uniquement sa présence pendant son séjour. Il n’est pas susceptible de contracter un événement.
+Tableau 41 : Table Visitors
+Libellé	Type	Taille	Description
+EpisodeID	N	12	Numéro de l’épisode, numéro automatique
+IndividID	C	19	Identifiant du visiteur, voir Individual
+LocationID	C	12	Identifiant de l’UCH, voir Location
+SocialgpID	C	16	Identifiant du ménage, voir Socialgroup
+Rltn_head	C	3	Relation entre l’individu et le chef de ménage
+From_head	C	1	Précise si le visiteur est considéré comme visiteur suite à une arrivée ménage, modalités={O,N}
+Type	C	3	Modalités={VIS=visiteur}
+SrespondID	C	19	Identifiant du répondant au début de l’épisode
+SobserveID	C	18	Identifiant de la visite au cours de laquelle on recense le début de la visite, voir Observation
+Seventtype	C	3	Evénement qui entraîne la visite, modalités={VIS=visite}
+Sdate	D	8	Date de l’enquête
+ErespondID	C	19	Identifiant du répondant à la fin de l’épisode
+EobserveID	C	14	Identifiant de la visite au cours de laquelle on recense la fin de la visite, voir Observation
+Eeventtype	C	3	Evénement qui met fin à la visite, modalités={ DR=Devenu Résident, PV=n’est Plus Visiteur}
+Edate	D	8	Date de fin de la visite
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+ Table Indvstatus
+Cette table contient les informations sur les femmes enceintes.
+Tableau 42 : Table Indvstatus
+Libellé	Type	Taille	Description
+EventID	N	12	Numéro de l’événement, numéro automatique
+EpisodeID	N	12	Numéro de l’épisode de résidence de la femme, voir Residency
+IndividID	C	19	Identifiant de la femme enceinte, voir Individual
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+Firstpreg	C	1	Précise s’il s’agit de la première grossesse, modalités={O,N}
+Type	C	3	Type de l’événement, modalité={OBS=observation}
+Date	D	8	Date de la grossesse
+Field_wrkr	C	5	Code de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Pregoutcome
+Cette table contient les informations sur les résultats des grossesses. Le résultat de grossesse peut être un accouchement ou un avortement. Ici la grossesse en cours n’est pas considérée comme un résultat de grossesse. Le résultat de grossesse suppose au préalable la grossesse enregistrée même si le résultat de grossesse est déclaré avant la grossesse.
+Tableau 43 : Table Pregoutcome
+Libellé	Type	Taille	Description
+EventID	N	12	Numéro de l’événement, numéro automatique
+EpisodeID	N	12	Numéro de l’épisode de résidence de la femme, voir Residency
+PregeventID	N	12	Numéro de l’événement grossesse concernée par le résultat, voir Indvstatus
+IndividID	C	19	Identifiant de la femme enceinte, voir Individual
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+Type	C	3	Type du résultat, modalités={ACC=accouchement, AVO=avortement, AUT=autre}
+Date	D	8	Date du résultat de la grossesse
+FatherID	C	19	Identifiant du père de l’enfant en cas d’accouchement
+Birth_place	C	1	Lieu d’accouchement, modalités={1,2,3,4,5}
+Struct_code	C	10	Code de la formation sanitaire d’accouchement, voir la table Structures
+Struct_name_specified	C	25	Précision du lieu d’accouchement si non connu
+Birth_assistant	C	1	Personne assistante à l’accouchement, modalités={1,2,3,4,5}
+Everborn	N	2	Nombre de naissances
+Livebirths	N	2	Nombre de naissances vivantes
+Birthsinlive	N	2	Nombre de naissance encore en vie
+Ethnic_gp	C	3	Ethnie des enfants vivants
+Field_wrkr	C	5	Code de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+ Table Birth
+Cette table contient les informations sur les naissances vivantes. Cette table est mise à jour lorsque le résultat de la grossesse est un accouchement et le nombre de naissances vivantes est strictement supérieur à 0. Le nouveau né est automatiquement considéré comme un résident à partir de sa date de naissance, vit dans le même logement que sa mère et est membre du ménage de sa mère.
+Tableau 44 : Table Birth
+Libellé	Type	Taille	Description
+EventID	N	12	Numéro de l’événement, numéro automatique
+EpisodeID	N	12	Numéro de l’épisode de résidence de l’enfant, voir Residency
+IndividID	C	19	Identifiant de l’enfant, voir Individual
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+Type	C	3	modalité={BIR=naissance}
+Date	D	8	Date de naissance
+SocialgpID	C	16	Identifiant du premier ménage de l’enfant, voir Socialgroup
+LocationID	C	12	Identifiant de la première UCH de l’enfant, voir Location
+AccomID	C	15	Identifiant du premier logement de l’enfant, voir Accommodations
+Occup_status	C	3	Statut d’occupation de l’enfant dans le logement
+Rltn_head	C	3	Relation entre l’enfant et le chef de son premier ménage
+Bcg	D	8	Précise si l’enfant a fait le vaccin de BCG à sa naissance
+Polio0	D	8	Précise si l’enfant a fait le vaccin de Polio
+Field_wrkr	C	5	Code de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+Table Death
+Cette table contient les informations sur les décès. Un décédé n’est plus suivi après sa mort.
+Tableau 45 : Table Death
+Libellé	Type	Taille	Description
+EventID	N	12	Numéro de l’événement, numéro automatique
+EpisodeID	N	12	Numéro de l’épisode de résidence du décédé, voir Residency
+IndividID	C	19	Identifiant du décédé, voir Individual
+RespondID	C	19	Identifiant du répondant
+ObserveID	C	18	Identifiant de la visite au cours de laquelle on collecte l’information, voir Observation
+Type	C	3	modalité={DTH=décès}
+Date	D	8	Date de décès
+Reason	C	50	Cause de décès
+Diedinhs	C	1	Précise si la personne est décédée dans une formation sanitaire, modalités={O,N}
+Died_code_struct	C	10	Code de la formation sanitaire de décès, voir Structures
+Gonetohs	C	1	Précise si la personne s’est rendu dans une formation sanitaire avant le décès, modalités={O,N}
+Gone_code_struct	C	10	Code de la formation sanitaire avant le décès, voir Structures
+Field_wrkr	C	5	Code de l’enquêteur
+Data_clerk	C	5	Code de l’agent de saisie
+De_date	D	8	Date de saisie
+Status_dat	C	1	Etat de l’information saisie {P=en attente de validation, V=valide, W=avertissement, F=échec}
+III Organisation du SSDO
+III.1 Concepts utilisés
+Le concept de poste de travail permet de conceptualiser le lieu où les actions sont exécutées, les ressources ou les moyens requis et les personnes responsables de l’exécution des actions.
+Le concept de procédure fonctionnelle permet de décomposer une opération conceptuelle pour rendre compte des aspects organisationnels (où, quand, qui ?).
+Les flux entrants constituent l’ensemble des informations utilisées comme données au cours de l’exécution d’une procédure fonctionnelle.
+Les flux sortants constituent l’ensemble des informations produites comme résultats par une procédure fonctionnelle.
+
+Quelques supports de schématisation des flux
+
+			ordinateur
+
+			document papier
+
+			données sur le disque dur
+
+III.2 Graphe de circulation des informations
+Lieu
+Temps	Environnement
+Extérieur	Superviseur
+SSD	Agents de saisie	Administrateur de la BDD
+Qques jours avant le round
+
+Saisie
+brute
+
+Après
+saisie
+brute
+
+IV L’application HRS-OPO
+IV.1 Présentation
+HRS-OPO (Household Registration System - Observatoire de Population de Ouagadougou) est une application développée sous Visual FoxPro dont le but est de constituer une base de données longitudinale sur une population localisée dans un espace géographique de type urbain. Elle est une adaptation de HRS2 (Household Registration System- version 2 développé sous Visual FoxPro version 5) créée par Bruce Macleod de la University of Southern Maine (USA) et utilisée dans d’autres observatoires comme celui de Navrongo, au Ghana.
+L’application HRS-OPO garantit l’intégrité et la cohérence des données par la conception rigoureuse de la base de données et par la validation des données avant et après la saisie. Cette garantie offre aux chercheurs une base de données valides pour des études spécifiques, de meilleures analyses et publications.
+IV.2 Guide technique
+IV.2.1 Base de données
+L’application HRS-OPO utilise une base de données Visual FoxPro. Visual FoxPro structure la base de données en tables et chaque table correspond à un fichier dbf. Toutes les tables de la base de données sont liées logiquement entre elles par un objet « database connectivity ».
+Visual FoxPro offre un ensemble de fonctionnalités pour permettre une meilleure gestion de la base de données. En effet Visual FoxPro gère un nombre illimité de données si l’espace disque dur du serveur le permet. Il est possible de définir des clés primaires ou candidates pour éviter les doublons d’enregistrement. Pour chaque champ d’une table, il est possible de définir des règles pour assurer la validité des données du champ. Aussi pour valider les enregistrements d’une table, on peut écrire une fonction qui contiendra l’ensemble des règles à vérifier pour chaque enregistrement de la table. Les messages d’erreur sont affichés dès qu’une incohérence est détectée lors de la validation d’un champ ou des enregistrements d’une table. Certaines fonctions peuvent être exécutées lors de la mise à jour d’une table (ajout, modification ou suppression d’un enregistrement).
+
+Figure 1
+
+Dans la section « Field validation », la zone « Rule » permet de définir les règles que doivent vérifiées la valeur du champ pour être valide.
+Figure 2
+
+Dans la section « Record validation », la zone « Rule » permet de définir la fonction qui doit être exécutée pour valider les données de chaque enregistrement de la table lors de l’ajout ou de la modification d’un enregistrement.
+Dans la section « Triggers », la zone « insert trigger » permet de définir la fonction qui doit être exécutée après l’ajout d’un enregistrement dans la table. La zone « update trigger » permet de définir la fonction qui doit être exécutée après la modification d’un enregistrement de la table. La zone « delete trigger » permet de définir la fonction qui doit être exécutée après la suppression d’un enregistrement de la table.
+IV.2.2 Formulaires
+Propriétés et méthodes des formulaires
+Buffer mode : indique le mode de mise à jour des données de la source de données du formulaire dans la base de données
+Caption : texte à afficher pour la description du formulaire
+Init : permet d’exécuter des instructions lorsque le formulaire est créé
+Refresh : permet d’exécuter des instructions lorsque le formulaire est redessiné et rafraîchi
+Destroy : permet d’exécuter des instructions lorsque le formulaire est détruit
+AddMode : indique si le formulaire est en mode ajout des données
+EditMode : indique si le formulaire est en mode modification des données
+Displayerrormessage : affiche le message d’erreur et permet à l’utilisateur d’annuler la saisie ou la modification en cours
+Propriétés et méthodes des contrôles
+StatusBarText : texte à afficher dans la barre d’état pour décrire le contrôle
+Value : valeur du contrôle
+ControlSource : le champ de la source de données auquel est lié la valeur du contrôle
+Format : le format de saisie ou d’affichage de la valeur du contrôle
+MaxLength : le nombre maximal de caractères à saisir pour le contrôle
+Name : nom du contrôle
+ReadOnly : indique si la valeur du contrôle est en lecture seulement
+OnlyAdd : indique si le contrôle est seulement utilisé lors de l’ajout des informations
+When : permet d’exécuter des instructions avant que le contrôle ne reçoit le curseur
+Refresh : permet d’exécuter des instructions lorsque le contrôle est redessiné et sa valeur rafraîchie
+CheckFieldRule : valeur booléenne indiquant si les règles de validité du champ lié doivent être vérifiées
+CheckValidity : permet de vérifier la validité des données saisies, c’est ici que doivent être écrites les règles de validité à respecter
+Displayerrormessage : affiche le message d’erreur et permet à l’utilisateur d’annuler la saisie ou la modification en cours
+Variable globale oGHRS
+La variable oGHRS est une instance de la classe GHRS. Cette variable est visible et utilisée dans toute la partie code de l’application HRS-OPO. L’ensemble des propriétés de cette variable représentent les paramètres stables du système. La description suivante liste quelques propriétés de la variable.
+    • Bir = BIR  --- libellé de l’événement naissance vivante
+    • Databasename = whrs  --- nom de la base de données
+    • Dateformat = FRENCH  --- format de la date
+    • Div = DIV  --- libellé de l’événement divorce
+    • Dth = dth  --- libellé de l’événement décès
+    • Earliestenudate = 15/01/2002  --- date de démarrage des activités du SSD
+    • Household = HHD  --- libellé indiquant que le group social est un ménage
+    • Lenindividid = 19  --- nombre de caractères maximal pour l’identifiant de l’individu
+    • Lenlocationid = 12  --- nombre de caractères maximal pour l’identifiant de l’UCH
+    • Lensocialgpid = 16  --- nombre de caractères maximal pour l’identifiant du groupe social
+    • Lenobserveid = 18  --- nombre de caractères maximal pour l’identifiant de la visite du ménage
+    • Livebirth = ACC  --- libellé de l’événement accouchement
+    • Male = M  --- libellé du sexe masculin
+    • Female = F  --- libellé du sexe féminin
+    • Yes = O  --- libellé lorsque la réponse est oui
+    • No = N --- libellé lorsque la réponse est non
+    • Mar = MAR  --- libellé de l’événement mariage
+    • QueryDate = 01/01/1800  --- date inconnue
+    • QueryYear = 1800  --- année inconnue
+    • Relaxccrules =  .F.  --- permet de ne pas tester les règles de validité d’un enregistrement
+    • Relaxidrules = .F.  --- permet de ne pas tester les règles de validité d’un identifiant
+    • Pending = P  ---  indique que l’enregistrement n’a pas encore été validé
+    • Valid = V  ---  indique que l’enregistrement est valide
+    • Warning = W  ---  indique que l’enregistrement comporte une erreur mineure
+    • Fatal = F  ---  indique que l’enregistrement comporte une erreur fatale
+    • StartEpisode = .T.  --- permet la saisie ou la modification d’un formulaire de type Epsiod Form
+    • Unk = NSP  --- modalité NSP (Ne Sait Pas) pour des caractères
+    • UnkDate = 01/01/1700  --- modalité NSP pour une date
+    • UnknownID = NSP  --- modalité NSP pour un identifiant
+Contrôle hrsformcontroller
+Le contrôle hrsformcontroller est une instance de la classe buttonset. Il est utilisé dans tous les formulaires qui servent à mettre à jour les données de la base de données. Il est composé de plusieurs boutons avec les fonctionnalités différentes.
+Boutons du contrôle
+
+Top : permet d’aller au premier enregistrement de la source de données
+Prev : permet d’aller à l’enregistrement précédant l’enregistrement courant de la source de données
+Next : permet d’aller à l’enregistrement suivant l’enregistrement courant de la source de données
+Bottom : permet d’aller au dernier enregistrement de la source de données
+Add : permet d’ajouter un enregistrement dans la source de données
+Edit : permet de modifier un enregistrement existant de la source de données
+Save : effectue les mises à jour (ajout ou modification) dans la source de données
+Del/Und : permet de marquer un enregistrement pour suppression ou de rappeler un enregistrement marqué pour suppression
+Exit : ferme le formulaire
+Méthodes du contrôle
+BeforeAdd : cette méthode est exécutée avant l’ajout d’un nouvel enregistrement vierge, elle peut être utilisée pour l’initialisation des contrôles non liés à la source de données.
+BeforeUpdate : cette méthode est exécutée avant la mise à jour des données de la source de données, elle peut être utilisée pour rechercher certaines incohérences avant la mise à jour.
+TransactionCode : cette méthode est utilisée lorsque la mise à jour concerne plusieurs tables. Cette fonction fait partie d’une transaction, dès qu’une erreur intervient la mise à jour est annulée.
+AfterSuccessfulUpdate : cette méthode est utilisée après une mise à jour des données effectuée
+UnSuccessfulUpdate : cette méthode est utilisée après une mise à jour des données non effectuée.
+AfterDelete : cette méthode est utilisée après avoir marqué un enregistrement pour suppression.
+AfterRecall : cette méthode est utilisée après avoir rappelé un enregistrement marqué pour suppression.
+Formulaires de base
+On distingue cinq formulaires de base qui servent à la saisie ou à la consultation des données du SSD. Chaque formulaire a une utilité bien précise. Ces formulaires de base sont :
+    • Entry Form : ce formulaire sert à saisir ou à consulter les données stables du système. Il peut être utilisé par exemple pour saisir les informations sur les formations sanitaires ou les écoles. Ex : formulaire structures
+    • Object Form : ce formulaire sert aussi à saisir ou à consulter les données stables du système. La différence entre les formulaires Entry Form et Object Form est que le formulaire Object Form prend en compte deux champs qui sont le code de l’enquêteur et le statut de validité de l’enregistrement de la source de données liée. Ex : formulaire individual
+    • Event Form : ce formulaire sert à saisir ou à consulter les informations des événements de type « événements ponctuels ». Ex : formulaire death
+    • Episode Form : ce formulaire sert à saisir ou à consulter les informations des événements de type « épisodes ». Ex : formulaire membership
+    • HrsOutForm : ce formulaire sert à consulter les informations du système telles que les indicateurs démographiques, les registres. Ex : formulaire register_hhd
+
+NB : Le contrôle « isRecordDeleted » indique si l’enregistrement courant est marqué pour suppression
+
+Figure 1 : Entry Form
+
+Figure 2 : Object Form
+
+Figure 3 : Event Form
+
+Figure 4 : Episode Form
+
+Figure 5 : HrsOutForm
+
+IV.2.3 Procédures stockées
+L’ensemble des fonctions et procédures utilisées pour valider les données au niveau de la base de données et des formulaires sont stockées dans la rubrique « Stored procedures ». Sélectionnez « Stored procedures » et ensuite cliquez sur le bouton « Modify » pour voir son contenu.
+
+IV.2.4 Validation des données après la saisie
+Nous distinguons plusieurs niveaux de validation des données. D’abord au niveau de la base de données, on peut définir des règles de validation pour les champs et aussi pour les enregistrements d’une table. Ensuite au niveau des formulaires, on peut définir des règles pour rechercher les incohérences sur les données saisies en utilisant la méthode CheckValidity d’un contrôle ou la méthode BeforeUpdate du contrôle hrsformcontroller. En plus de ces validations une autre est exécutée après la saisie de toutes les données d’un round donné en vue de détecter d’autres types d’erreurs dans la base de données. Ces incohérences ou avertissements peuvent être :
+    • les identifiants des parents n’existent pas
+    • les parents de l’individu ont moins de 9 ans
+    • la mère doit être de sexe féminin
+    • le père doit être de sexe masculin
+    • le résident n’est pas membre d’un ménage
+    • le ménage résident n’a pas de chef de ménage
+    • date de naissance inconnue
+    • identifiants vides pour les parents
+    • identifiant inconnue pour cet individu
+    • date d’entrée du ménage inconnue
+Aussi à cette validation, on ajoute les règles de validité des champs et des enregistrements de toutes les tables de la base de données.
+Dès qu’une erreur est détectée lors de la validation, le statut de validité de l’enregistrement concerné prend l’une des valeurs « W » ou « F » en fonction du type d’erreur. « W » correspond à warning ou avertissement pour indiquer que l’erreur est mineure. Et « F » correspond à fail ou fatal pour indiquer que l’erreur est fatale. Le statut de validité prend la valeur « V » si aucune erreur n’est détectée. « V » correspond à un enregistrement valide.
+Une fois la validation terminée, un état est généré pour récapituler les erreurs recensées.
+IV.2.5 Utilitaires
+Pour résoudre certains problèmes complexes qui font appel à la manipulation de plusieurs données, il est recommandé d’écrire une fonction ou une procédure pour remédier au problème en question. Cette fonction ou une procédure est considérée comme un utilitaire pour résoudre les problèmes futurs de même genre.
+Par exemple, supposons qu’un agent de saisie fasse une erreur lors de la saisie de l’identifiant d’une nouvelle UCH de la zone d’étude. Et par la suite il continue à saisir les ménages de l’UCH. Les identifiants des nouveaux ménages, des visites et des membres de ces ménages qui sont générés à partir de l’identifiant de l’UCH seront aussi incorrects. Pour résoudre ce problème, il est préférable d’écrire un utilitaire qui sera par la suite utilisé lorsque ce genre de problème sera rencontré.
+Un utilitaire peut être aussi un état de contrôle des données, par exemple la liste des ménages non visités pour un round donné.
+IV.2.6 Outputs automatiques
+Au début de chaque round les registres des UCH, des ménages et des membres des ménages sont imprimés et remis aux enquêteurs en vue de mieux diriger les interviews. Chaque registre comporte les informations de base des unités d’analyses et aussi les événements susceptibles d’être contractés. De même, pour les enquêtes panels qualitatives ou quantitatives des registres comportant les informations appropriées aux panels sont imprimés et remis aux enquêteurs.
+L’application HRS-OPO génère des indicateurs démographiques sur la fécondité et la mortalité en tenant compte des personnes jours observés. Aussi, il est possible de visualiser la structure par âge et par sexe de la population suivie à laquelle est associée une représentation graphique qui est la pyramide des âges.
+L’extraction des données du SSD porte sur l’importation de la base de données ou des fichiers générés (résidence, décès, grossesse, unions et ruptures d’union) dans le type de format du choix de l’utilisateur. Le format peut être FoxPro, Excel, SPSS ou Stata.
+IV.3 Guide d’utilisation de l’application
+Ce guide est un outil nécessaire à tout utilisateur de l’application HRS-OPO en vue de se familiariser à cette application. Il fait ressortir les niveaux d’accès, la description des interfaces utilisées, l’enchaînement des interfaces et les recommandations à suivre pour une meilleure utilisation.
+IV.3.1 Niveaux d’accès
+Pour permettre une meilleure sécurisation des données, l’application HRS-OPO regroupe l’ensemble des utilisateurs en trois principaux groupes:
+    • les agents de saisie : ils sont chargés uniquement de la saisie des données du recensement de base, des passages trimestrielles et annuels. Ils n’ont aucun pouvoir de modification, ni de suppression des données.
+    • les chercheurs : ils accèdent uniquement aux registres et aux outputs automatiques du système (données et indicateurs)
+    • les administrateurs : ils ont les pleins pouvoirs, ils ont accès à toute l’application. Ils sont chargés de l’administration de la base de données (définition des utilisateurs, validation des données et correction des données).
+IV.3.2 Description des interfaces
+Au démarrage de l’application, un écran de connexion est affiché pour une identification de l’utilisateur. A ce stade, l’utilisateur doit sélectionner le nom d’utilisateur qui lui a été assigné par l’administrateur et ensuite saisir son mot de passe. L’utilisateur doit faire attention à la casse en saisissant son mot passe, une différence est faite entre majuscule et minuscule pour le mot de passe saisi. Si le nom d’utilisateur et le mot de passe ne concordent pas, un message d’erreur apparaît. Sinon, le menu général est affiché en tenant compte du profil de l’utilisateur. Les boutons activés sur le menu général permettent un accès complet à l’utilisateur.
+Ecran de connexion
+
+Menu général pour un agent de saisie
+
+Menu général pour un chercheur
+
+Menu général pour un administrateur
+
+Saisie des données
+Cette section décrit le processus de la saisie des données du recensement de base, des passages trimestriels et annuels. Dans ce menu on distingue six sous menus qui sont baseline des UCH, mise à jour des UCH, baseline des ménages, mise à jour du baseline des ménages, mise à jour des ménages et le sous menu arrivée ménage.
+Cette section est réservée uniquement aux agents de saisie.
+
+Menu saisie des données
+
+Boutons du contrôle hrsformcontroller
+
+Top : permet d’aller au premier enregistrement de la source de données
+Prev : permet d’aller à l’enregistrement précédant l’enregistrement courant de la source de données
+Next : permet d’aller à l’enregistrement suivant l’enregistrement courant de la source de données
+Bottom : permet d’aller au dernier enregistrement de la source de données
+Add : permet d’ajouter un enregistrement dans la source de données
+Edit : permet de modifier un enregistrement existant de la source de données
+Save : effectue les mises à jour (ajout ou modification) dans la source de données
+Del/Und : permet de marquer un enregistrement pour suppression ou de rappeler un enregistrement marqué pour suppression
+Exit : ferme le formulaire
+
+Baseline des UCH
+
+Cette option permet la saisie des informations de base d’une UCH lorsque celle ci intègre nouvellement le système. L’intégration est faite au moment du recensement de base ou lorsque l’UCH est nouvelle et habitable. Cette option est aussi utilisée lorsque l’UCH a été omise au recensement de base.
+
+Pour saisir une nouvelle UCH, cliquez sur le bouton Add et ensuite saisissez les informations requises. Lorsqu’une erreur est détectée lors de la saisie d’une donnée, un message d’erreur faisant la description de l’erreur apparaît.
+
+Cliquez sur le bouton OK pour revenir au formulaire en vue de corriger l’erreur. Mais si vous êtes dans une impasse, cliquez sur le bouton Annuler pour annuler la saisie en cours.
+Cliquez sur le bouton Record pour enregistrer l’erreur dans la base de données en vue de la résoudre ultérieurement.
+Une fois le nombre de logements saisi, la grille du formulaire comportera un nombre équivalent de lignes au nombre de logements. Chaque ligne de la grille correspond à un logement. Accom ID correspond à l’identifiant du logement, il est la concaténation de l’identifiant de l’UCH, de la lettre A pour accommodation et du numéro du logement dans l’UCH sur deux positions. Ex : 28N070BH0009A01 avec 28N070BH0009 identifiant de l’UCH et 01 numéro du logement n°1 dans l’UCH.
+Pour saisir les informations sur un logement, sélectionnez le dans la grille et ensuite cliquez sur le bouton correspondant aux informations à saisir.
+Dès que toutes les informations sont saisies, cliquez sur le bouton Save.
+Pour revenir à une UCH déjà saisie, par exemple pour ajouter des informations complémentaires, il faut d’abord rechercher l’UCH en cliquant sur le bouton Find. La fenêtre suivante apparaîtra.
+
+Sélectionnez le champ locationid, l’opérateur equals et ensuite saisissez l’identifiant de l’UCH à rechercher. Et enfin cliquez sur le bouton Search pour effectuer la recherche.
+Lorsque l’UCH existe, un filtre est appliqué pour ne tenir compte de l’UCH trouvée dans la source de données liée au formulaire. Cliquez sur le bouton Edit en vue de procéder aux ajouts.
+Pour visualiser tous les enregistrements de la source de données après une recherche réussie, cliquez sur le bouton Find et ensuite All.
+
+Mise à jour des UCH
+
+Cette option permet la mise à jour des informations des UCH (caractéristiques des UCH et des logements, chefs d’UCH, propriétaires des logements, logements détruits et les nouveaux logements) lors des passages trimestriels ou annuels.
+
+Pour saisir la mise à jour des informations d’une UCH, cliquez sur le bouton Add. Ensuite saisissez les informations requises. Dès que l’identifiant de l’UCH est saisie et qu’il est correct, automatiquement sont affichés l’identifiant de la visite de l’UCH, le nombre de logements qui composent l’UCH et ensuite la liste détaillée des logements de l’UCH. Si un logement est détruit, il aura la valeur DES comme type sinon aucune valeur (voir la grille du formulaire).
+Pour la mise à jour des informations d’un logement, sélectionnez le dans la grille et ensuite  cliquez sur le bouton correspondant aux informations à mettre à jour.
+Dès que toutes les informations sont saisies, cliquez sur le bouton Save.
+Pour rechercher une mise à jour déjà saisie, cliquez sur le bouton Find. La fenêtre suivante apparaîtra.
+
+Sélectionnez le champ lobserveid, l’opérateur equals et ensuite saisissez l’identifiant de la visite à rechercher. Et enfin cliquez sur le bouton Search pour effectuer la recherche.
+Lorsque l’identifiant de la visite existe, un filtre est appliqué pour ne tenir compte de l’identifiant trouvé dans la source de données liée au formulaire. Cliquez sur le bouton Edit en vue de procéder aux ajouts.
+Pour visualiser tous les enregistrements de la source de données après une recherche réussie, cliquez sur le bouton Find et ensuite All.
+Il est à signaler que l’identifiant de la visite d’une UCH est la concaténation de l’identifiant de l’UCH et du numéro du passage trimestriel qui doit être sur deux positions. Ex : 28N070AH046201 avec 28N070AH0462 identifiant de l’UCH et 01 numéro du round 1.
+
+Baseline des ménages
+
+Cette option permet la saisie des informations d’un ménage identifié au recensement de base. Elle est aussi utilisée lorsqu’un ménage a été omis au recensement de base.
+
+Pour ajouter un nouveau ménage, cliquez sur le bouton Add. Ensuite saisissez les informations requises. A cette étape, les informations de base de l’UCH dans laquelle le ménage est recensé, doivent être au préalable saisies sinon l’UCH sera considérée comme inexistante. Une fois le nombre de personnes composant le ménage est saisi, la grille du formulaire comportera un nombre équivalent de lignes au nombre de personnes. Chaque ligne de la grille correspond à un membre du ménage. Pour chaque membre, un identifiant est généré. Il est la concaténation de l’identifiant du ménage et du numéro de l’individu dans le ménage. Ce numéro est aléatoire et est inférieur ou égal au nombre de personnes indiqué.
+Ex : 28N070BH0004H001001 avec 28N070BH0004H001 identifiant du ménage et 001 numéro de l’individu dans le ménage.
+Pour chaque individu du ménage, remplissez les informations le concernant sur sa ligne dans la grille. Une fois toutes les informations de la grille saisies pour chaque individu du ménage, saisissez les informations liées à l’éducation ou à la vaccination. Pour cela, sélectionnez d’abord l’individu dans la grille et ensuite cliquez sur le bouton Education ou Vaccination en fonction du type d’informations à saisir.
+Dès que toutes les informations sont saisies, cliquez sur le bouton Save.
+
+Pour rechercher les informations au recensement de base d’un ménage, cliquez
+sur le bouton Find. La fenêtre suivante apparaîtra.
+
+Sélectionnez le champ socialgpid, l’opérateur equals et ensuite saisissez l’identifiant du ménage à rechercher. Et enfin cliquez sur le bouton Search pour effectuer la recherche.
+Lorsque le ménage existe, un filtre est appliqué pour ne tenir compte du ménage trouvé dans la source de données liée au formulaire. Cliquez sur le bouton Edit en vue de procéder aux ajouts.
+Pour visualiser tous les enregistrements de la source de données après une recherche réussie, cliquez sur le bouton Find et ensuite All.
+
+Mise à jour du baseline des ménages
+
+Cette option permet d’insérer les membres d’un ménage non identifiés au recensement de base alors qu’ils étaient membres du ménage au moment du recensement.
+
+Pour insérer les membres d’un ménage oubliés au recensement de base, cliquez sur le bouton Add. Ensuite saisissez les données requises. Une fois le nombre de personnes indiqué, la grille comportera un nombre de ligne équivalent au nombre de personnes à insérer. Chaque ligne correspond à un individu, pour chaque individu un identifiant est généré. Remplissez toutes les lignes de la grille.
+Pour saisir les informations des individus sur l’éducation ou la vaccination, sélectionnez d’abord l’individu concerné dans la grille et ensuite cliquez sur le bouton Education ou Vaccination selon le type d’information à saisir.
+Dès que toutes les informations sont saisies, cliquez sur le bouton Save.
+
+Pour rechercher les informations déjà saisies concernant les membres d’un ménage oubliés au recensement de base, cliquez sur le bouton Find. La fenêtre suivante apparaîtra.
+
+Sélectionnez le champ socialgpid, l’opérateur equals et ensuite saisissez l’identifiant du  ménage. Sélectionnez l’opérateur And, le champ Date, l’opérateur equals et ensuite saisissez la date de recensement des membres oubliés. Et enfin cliquez sur le bouton Search pour effectuer la recherche. Lorsque la mise à jour existe, un filtre est appliqué pour ne tenir compte de la mise à jour en question. Cliquez sur le bouton Edit en vue de procéder aux ajouts.
+Pour visualiser tous les enregistrements de la source de données après une recherche réussie, cliquez sur le bouton Find et ensuite All.
+
+Arrivée ménage
+
+Cette option permet la saisie des informations lorsqu’un ménage arrive nouvellement dans une UCH de la zone d’étude. Ce ménage peut être un ménage connu du système.
+
+Pour saisir l’arrivée d’un ménage dans une UCH, cliquez sur le bouton Add. Ensuite saisissez les données requises. La donnée Ancien ménage permet de savoir si le ménage qui arrive est déjà connu du système. Si la valeur est O, l’identifiant du ménage est renseignée et ensuite un identifiant temporaire est assigné à ce ménage dans cette UCH. Aussi la grille comportera la liste des membres de ce ménage. Sélectionnez chaque membre du ménage, ensuite cliquez sur le bouton Mise à jour des présences pour saisir les informations sur la présence.
+Si la valeur de Ancien ménage est N, un identifiant est automatique généré pour le nouveau ménage. Une fois le nombre de personnes composant le ménage est saisi, la grille comportera un nombre de ligne équivalent au nombre de membres du ménage. La donnée ID ? permet de savoir si le membre est connu du système. S’il est connu saisissez O et ensuite indiquez son identifiant. S’il est inconnue saisissez N, un identifiant sera généré pour ce membre.
+Dès que toutes les informations de la grille sont saisies, sélectionnez chaque membre du ménage, ensuite cliquez sur le bouton Mise à jour des présences pour saisir les informations sur la présence.
+Dès que toutes les informations sont saisies, cliquez sur le bouton Save.
+Pour rechercher les informations déjà saisies concernant une arrivée ménage, cliquez sur le bouton Find. La fenêtre suivante apparaîtra.
+
+Sélectionnez le champ locationid, l’opérateur equals et ensuite saisissez l’identifiant de l’UCH d’arrivée du ménage. Et enfin cliquez sur le bouton Search pour effectuer la recherche. Lorsque l’UCH existe dans les arrivées ménages, un filtre est appliqué pour ne tenir compte des arrivées ménages ayant eu lieu dans l’UCH en question. Utilisez les boutons de navigation (Top, Botton, Next, Prev) pour se positionner sur l’arrivée ménage recherchée.
+Cliquez sur le bouton Edit en vue de procéder aux ajouts.
+Pour visualiser tous les enregistrements de la source de données après une recherche réussie, cliquez sur le bouton Find et ensuite All.
+
+Mise à jour des ménages
+
+Cette option permet la mise à jour des informations des ménages et des membres des ménages à partir des événements contractés. Les événements sont collectés pendant les passages trimestriels ou annuels. Si aucun événement n’est collecté, cette mise à jour doit être effectuée pour indiquer que le ménage a été visité pendant le passage.
+
+Pour saisir les événements collectés pendant un passage, cliquez sur le bouton Add. Ensuite saisissez les informations requises. Une fois l’identifiant du ménage est saisi et est correct, il est affiché automatiquement l’identifiant de la visite du ménage (voir ID Observation) et dans la grille la liste des résidents de ce ménage à ce passage. Pour visualiser la liste des visiteurs ou des anciens résidents du ménage à ce passage, cliquez sur la case à option appropriée Visiteurs ou Anciens résidents.
+Les visiteurs et les anciens résidents sont soumis uniquement à l’événement présence.
+Pour saisir un événement, sélectionnez d’abord l’individu concerné et ensuite cliquez sur le bouton correspondant à l’événement. Le formulaire événement s’ouvre automatiquement en mode ajout. Mais si l’événement était déjà saisi, il est ouvert en mode lecture.
+Dès que toutes les informations sont saisies, cliquez sur le bouton Save.
+La saisie des événements d’un individus doit être faite dans l’ordre chronologique des événements.
+
+Pour rechercher la mise à jour d’un ménage à un passage donné, cliquez sur le bouton Find. La fenêtre suivante apparaîtra.
+
+Sélectionnez le champ observeid, l’opérateur equals et ensuite saisissez l’identifiant de la visite. Et enfin cliquez sur le bouton Search pour effectuer la recherche. Lorsque l’identifiant de la visite existe, un filtre est appliqué pour ne tenir compte de cette visite. Cliquez sur le bouton Edit en vue de procéder aux ajouts de nouveaux événements.
+Pour saisir un événement, sélectionnez d’abord l’individu concerné et ensuite cliquez sur le bouton correspondant à l’événement. Le formulaire événement s’ouvre automatiquement en mode ajout. Mais si l’événement était déjà saisi, il est ouvert en mode lecture.
+Pour visualiser tous les enregistrements de la source de données après une recherche réussie, cliquez sur le bouton Find et ensuite All.
+Il est à signaler que l’identifiant de la visite d’un ménage est la concaténation de l’identifiant du ménage et du numéro du passage trimestriel qui doit être sur deux positions.
+Ex : 29A005AH0462H00101 avec 29A005H0462H001 identifiant du ménage et 01 numéro du round 1.
+
+Présence
+
+Cette option permet de suivre le changement de statut d’un individu. En effet un résident qui a été absent de l’UCH plus de 45 jours par round pour deux rounds consécutifs est déclaré ancien résident (AR). Un visiteur ou un ancien résident qui a été absent de l’UCH plus de 45 jours par round pour deux rounds consécutifs est déclaré retiré du suivi (RT). Un visiteur ou un ancien résident qui a été présent de l’UCH plus de 45 jours par round pour deux rounds consécutifs est déclaré résident (RE).
+
+Changement de ménage
+
+Cette option permet de saisir les changements de ménage. Ici le changement de ménage suppose que l’individu ne change pas de résidence, il demeure dans la même UCH. Le ménage de destination peut être un ancien ou un nouveau ménage de la zone d’étude.
+Si le ménage de destination est un nouveau ménage, un identifiant est automatiquement généré pour ce ménage et par conséquent l’individu dévient le chef de ménage du nouveau ménage.
+La date d’entrée dans le ménage de destination doit être égale à la date de sortie du précédent ménage plus un jour.
+
+Entrée en union et ruptures d’union (Hommes)
+
+Cette option est à la fois utilisée pour les entrées en union et les ruptures d’unions du côté des hommes. Si la femme est inconnue du système, ID Femme doit prendre la valeur NSP. Ensuite on saisit l’identité de la femme inconnue. Au cours de la mise à jour de cette union, un identifiant temporaire est automatiquement généré pour cette femme inconnue.
+Type relation est le type d’union. Ce type peut être un mariage traditionnel (MART), un mariage légal (MARL) ou un concubinage (CON).
+Type du début de l’épisode est l’événement qui a entraîné l’union. Si l’événement a eu lieu avant le recensement de base saisissez la valeur ENU (énumération) sinon UNI (union).
+Type de la fin de l’épisode est l’événement qui a entraîné la rupture d’union. Cet événement peut être le décès de l’homme (DTH), le décès de la femme (VEU), la séparation (SEP), le divorce traditionnel (DIVT) ou le divorce légal (DIVL).
+
+Entrée en union et ruptures d’union (Femmes)
+
+Cette option est à la fois utilisée pour les entrées en union et les ruptures d’unions du côté des femmes. Si l’homme est inconnu du système, ID Homme doit prendre la valeur NSP. Ensuite on saisit l’identité de l’homme inconnu. Au cours de la mise à jour de cette union, un identifiant temporaire est automatiquement généré pour cet homme inconnue.
+Type relation est le type d’union. Ce type peut être un mariage traditionnel (MART), un mariage légal (MARL) ou un concubinage (CON).
+Rang est le rang de la femme dans le foyer.
+Type du début de l’épisode est l’événement qui a entraîné l’union. Si l’événement a eu lieu avant le recensement de base saisissez la valeur ENU (énumération) sinon UNI (union).
+Type de la fin de l’épisode est l’événement qui a entraîné la rupture d’union. Cet événement peut être le décès de la femme (DTH), le décès de l’homme (VEU), la séparation (SEP), le divorce traditionnel (DIVT) ou le divorce légal (DIVL).
+
+Grossesse
+
+Cette option permet d’enregistrer les grossesses des femmes résidentes. Date de début est la date estimée du début de la grossesse.
+
+Résultats de grossesse
+
+Cette option permet d’enregistrer les résultats de grossesse. Le résultat d’une grossesse est toujours liée à une grossesse existante. La grossesse doit être saisie avant d’enregistrer le résultat.
+Si le conjoint est inconnu du système, saisissez la modalité NSP pour ID conjoint.
+Le résultat d’une grossesse est un accouchement (ACC), un avortement (AVO) ou autre (AUT). Si le résultat est un accouchement, il faut qu’il aie au moins une durée de 7 mois entre la date de début de la grossesse et la date d’accouchement.
+S’il y a des naissances vivantes, des identifiants sont automatiquement générés pour les naissances vivantes.
+Par défaut un nouveau né vivant réside dans l’UCH de sa mère au moment de l’accouchement et il est membre du ménage de sa mère au moment de l’accouchement.
+
+Entrée à l’école
+
+Cette option permet d’enregistrer la scolarisation d’un ex-scolarisé. Cela suppose que nous ne sommes pas au mois de Novembre où la rentrée scolaire est appliquée.
+
+Absences scolaires
+
+Cette option permet d’enregistrer les absences scolaires des scolarisés.
+
+Saisissez le nombre d’absences scolaires constatés, automatiquement la grille comportera un nombre de ligne équivalent au nombre d’absences. Pour chaque absence, saisissez le mois d’absence, la durée et les motifs.
+Absent de l’école? permet de savoir si le scolarisé était toujours absent au moment du passage.
+
+Rentrée scolaire
+
+Cette option permet la mise à jour des années scolaires des scolarisés par l’enregistrement du résultat scolaire, de l’examen effectué, le diplôme obtenu et éventuellement l’année scolaire prochaine. Aussi cette option permet de prendre en compte la scolarisation des ex-scolarisés.
+La rentrée scolaire est appliquée uniquement au mois de Novembre.
+
+Décès
+
+Cette option permet l’enregistrement des résidents décédés.
+
+Nouveau visiteur
+
+Cette option permet l’enregistrement des nouveaux visiteurs dans un ménage. Un visiteur d’une UCH est un non-résident qui a dormi la veille du passage trimestriel dans l’UCH.
+Si le visiteur est inconnu du système, saisissez la valeur NSP pour ID Visiteur et ensuite son identité, son sexe, sa date de naissance, son ethnie, les identifiants de ses parents. Si ses parents sont inconnus, saisissez la valeur NSP.
+Ici Venu avec un ménage tmp doit toujours prendre la valeur N.
+La date à laquelle il est considéré visiteur est la date de l’enquête.
+
+Caractéristiques individuelles
+
+Cette option permet l’enregistrement des caractéristiques individuelles. Elle est appliquée lorsqu’un visiteur inconnu du système dévient résident.
+
+Education
+
+Cette option permet l’enregistrement des baselines éducation. Elle est appliquée lorsqu’un visiteur inconnu du système dévient résident.
+
+Vaccination
+
+Cette option permet l’enregistrement des baselines vaccination. Elle est appliquée lorsqu’un visiteur inconnu du système dévient résident et s’il âgé de moins de 5 ans.
+
+La modalité 01/01/1800 indique que la vaccination a été faite mais on ignore la date.
+La modalité 01/01/1700 correspond à NSP (Ne Sait Pas).
+
+Equipements, animaux et approvisionnement
+
+Cette option permet l’enregistrement des biens des ménages. Elle est appliquée lorsqu’un ménage temporaire du système dévient résident, cela sous entend qu’au moins un membre du ménage est devenu résident. Elle est aussi appliquée pour mettre à jour annuellement les biens des ménages résidents.
+
+Changement de chef de ménage
+
+Cette option permet l’enregistrement du changement des chefs de ménage. Elle est appliquée lorsque le ménage est résident et s’il n’a pas de chef.
+
+Le nouveau chef dévient chef à partir du lendemain de la fin de chefferie de l’ancien chef. Une fois l’identifiant du nouveau chef saisi, la grille comporte automatiquement la liste des membres du ménage. Par défaut la relation entre le nouveau chef et lui même est EGO. Saisissez les relations qui existent entre les autres membres du ménage et le nouveau chef. Ensuite cliquez sur le bouton Save pour enregistrer le changement.
+
+Changement de logement
+
+Cette option permet l’enregistrement du changement de logements. Le changement de logement suppose que le résident ne change pas de résidence, ni de ménage. Le changement de logement est un événement mis à jour annuellement.
+
+Date de fin de résidence est la date de sortie de l’ancien logement. La date d’occupation est le lendemain de la date de sortie de l’ancien logement.
+N°logement est doit être obligatoirement un logement connu de l’UCH dans laquelle réside le résident qui change de logement.
+
+Validation
+Cette section décrit le processus de validation des données du recensement de base et des passages trimestriels et annuels. La validation est effectuée après la saisie et la correction des données. Dans ce menu on distingue deux sous menus qui sont Données du baseline et Données des passages.
+Cette section est uniquement réservée à l’ administrateur de la base de données.
+
+Menu validation
+
+Validation des données du recensement de base ou baseline
+
+Cette option permet la validation des données du recensement de base. La validation est effectuée après la saisie des données. Après la validation, une liste des incohérences ou avertissements détectés est générée, cette liste peut être imprimée. Les incohérences ou les avertissements détectés peuvent être :
+    • le nombre de ménages enregistrés est différent du nombre indiqué au baseline
+    • l’UCH n’a pas de baseline enregistré
+    • l’UCH n’a pas de chef enregistré au baseline
+    • l’UCH n’a pas de caractéristiques enregistrés au baseline
+    • le logement n’a pas de propriétaire enregistré au baseline
+    • le logement n’a pas de caractéristiques enregistrés au baseline
+    • le ménage n’a pas de baseline enregistré
+    • l’individu n’a pas de baseline éducation enregistré
+    • l’individu n’a pas de baseline vaccination enregistré
+
+Pour effectuer la validation du baseline sur un critère donné, cliquez sur la case à cocher en face du libellé Critère. La fenêtre suivante apparaîtra.
+
+Sélectionnez la liste des champs faisant partie du critère dans la section Champs, ensuite définissez la proposition logique du critère dans la section Enter FOR expression. Cliquez sur le bouton OK pour la prise en compte du critère.
+
+Cliquez sur le bouton OK du formulaire Validation du baseline pour démarrer la validation.
+
+Validation de la base de données
+
+Cette option permet la validation des données des passages trimestriels et annuels. La validation est effectuée après la saisie et la correction des données du round courant. Après la validation, une liste des incohérences ou avertissements détectés est générée, cette liste peut être imprimée. Les incohérences ou les avertissements détectés peuvent être :
+    • les identifiants des parents n’existent pas
+    • les parents de l’individu ont moins de 9 ans
+    • la mère doit être de sexe féminin
+    • le père doit être de sexe masculin
+    • le résident n’est pas membre d’un ménage
+    • le ménage résident n’a pas de chef de ménage
+    • date de naissance inconnue
+    • identifiants vides pour les parents
+    • identifiant inconnue pour cet individu
+    • date d’entrée du ménage inconnue
+Aussi à cette validation, on ajoute les règles de validité des champs et des enregistrements de toutes les tables de la base de données.
+Dès qu’une erreur est détectée lors de la validation, le statut de validité de l’enregistrement concerné prend l’une des valeurs « W » ou « F » en fonction du type d’erreur. « W » correspond à warning ou avertissement pour indiquer que l’erreur est mineure. Et « F » correspond à fail ou fatal pour indiquer que l’erreur est fatale. Le statut de validité prend la valeur « V » si aucune erreur n’est détectée. « V » correspond à un enregistrement valide.
+Une fois la validation terminée, un état est généré pour récapituler les erreurs recensées.
+
+Pour effectuer la validation des données sur un critère donné, cliquez sur la case à cocher en face du libellé Critère. La fenêtre suivante apparaîtra.
+
+Sélectionnez la liste des champs faisant partie du critère dans la section Champs, ensuite définissez la proposition logique du critère dans la section Enter FOR expression. Cliquez sur le bouton OK pour la prise en compte du critère.
+
+Cliquez sur le bouton OK du formulaire Validation de la base de données pour démarrer la validation.
+
+Etats ou données
+Cette section permet de générer des états (indicateurs démographiques, table de survie) et d’extraire des données de la base de données (tables sources de la base de données ou les fichiers générés).
+
+Menu Etats ou données
+
+Indicateurs démographiques
+
+Cette option permet de générer certains indicateurs démographiques sur la fécondité et la mortalité. Cette section est uniquement réservée aux chercheurs.
+
+Pour calculer un indicateur définissez la période d’observation, la zone d’étude, le statut de validité des données de la table individual, le dénominateur qui est soit la population de la période ou de la mi-période, choisissez l’indicateur et cliquez sur le bouton OK.
+L’état de l’indicateur sera automatiquement généré, cet état peut être imprimé.
+
+Etat démographique – Fécondité
+
+Etat démographique - Mortalité
+
+Répartition de la population par sexe et par groupe d’age de 5 ans
+
+La population au dénominateur est comptabilisée en personne jours d’observation. Seuls les résidents sont inclus au dénominateur.
+Un résident d’une période d’observation est un  résident qui a séjourné au moins un jour entre la date de début et la date de fin de la période d’observation.
+La population suivie pour une période d’observation est l’ensemble des résidents de la période d’observation pour qui la dernière date d’observation de leur ménage est
+    • soit postérieure à la date de fin de la période d’observation,
+    • soit comprise dans la période d’observation.
+La population suivie à une date t est l’ensemble des résidents à cette date pour qui la dernière date d’observation de leur ménage est égale ou postérieure à la date de la mi-période d’observation .
+HRS propose de calculer les taux selon deux type de dénominateur : la population de la période ou la population à mi-période
+Pour calculer le dénominateur Population de la période HRS détermine la population suivie au cours de la période d’observation. Pour chaque individu de la population suivie, il dénombre le nombre de jours observés au cours de la période d’observation.
+Pour calculer le dénominateur Population de la mi-période HRS détermine la population suivie à la mi-période d’observation. La date à la mi-période est égale à date de début + (date de fin-date de début)/2. Pour chaque individu de la population suivie, on suppose qu’il a été observé pendant la durée de la période d’observation (date de fin-date de début +1jour).
+
+Table de survie
+
+Pour générer la table de survie définissez la période d’observation, la zone d’étude, le statut de validité des données de la table individual, le type (Homme, Femme ou Total) et cliquez sur le bouton OK.
+L’état de la table de survie sera automatiquement généré, cet état peut être imprimé.
+
+Importation de la base de données
+
+Cette option permet d’importer les données sources de la base de données dans un format de donnée défini par l’utilisateur (FoxPro, Excel, SPSS ou Stata). Ces données sont enregistrés dans un répertoire défini par l’utilisateur.
+
+Indiquez le répertoire de d’enregistrement des données et leur format, ensuite cliquez sur le bouton OK.
+
+Extraction des données
+
+Cette option permet d’extraire les données de la base de données dans un format de donnée défini par l’utilisateur (FoxPro, Excel, SPSS ou Stata). Ces données sont enregistrés dans un répertoire défini par l’utilisateur.
+
+Indiquez la période d’observation, les fichiers à générer, le répertoire de d’enregistrement des fichiers et leur format, ensuite cliquez sur le bouton OK.
+Les fichiers générés sont décrits dans le manuel d’utilisation des fichiers générés par l’application HRS-OPO.
+Registres des visites
+Cette section permet de générer les instruments de collecte des données qui serviront aux enquêteurs lors des interviews pendant les passages trimestriels ou annuels.
+Cette section est uniquement réservée aux chercheurs.
+
+Menu Registres des visites
+
+Registre des UCH
+
+Cette option permet de générer le registre des UCH de la zone d’étude. Ce registre comporte les informations de base de l’UCH et les événements susceptibles d’être contractés par l’UCH ou ses logements.
+
+Pour effectuer l’impression sur un critère donné, cliquez sur la case à cocher en face du libellé Critère. La fenêtre suivante apparaîtra.
+
+Sélectionnez la liste des champs faisant partie du critère dans la section Champs, ensuite définissez la proposition logique du critère dans la section Enter FOR expression. Cliquez sur le bouton OK pour la prise en compte du critère.
+
+Cliquez sur le bouton OK du formulaire Edition du registre des UCH pour démarrer l’impression. Un état est automatiquement généré, il peut être imprimé.
+
+Registre des ménages
+
+Cette option permet de générer le registre des ménages des UCH de la zone d’étude. Ce registre comporte les informations de base des ménages.
+
+Pour effectuer l’impression sur un critère donné, cliquez sur la case à cocher en face du libellé Critère. La fenêtre suivante apparaîtra.
+
+Sélectionnez la liste des champs faisant partie du critère dans la section Champs, ensuite définissez la proposition logique du critère dans la section Enter FOR expression. Cliquez sur le bouton OK pour la prise en compte du critère.
+
+Cliquez sur le bouton OK du formulaire Edition du registre des ménages pour démarrer l’impression. Un état est automatiquement généré, il peut être imprimé.
+
+Registre des membres des ménages
+
+Cette option permet de générer le registre des membres des ménages des UCH de la zone d’étude. Ce registre comporte les informations de base des membres des ménages et pour chaque membre les événements susceptibles d’être contractés. Ces événements dépendent des informations de base des membres des ménages.
+
+Pour effectuer l’impression sur un critère donné, cliquez sur la case à cocher en face du libellé Critère. La fenêtre suivante apparaîtra.
+
+Sélectionnez la liste des champs faisant partie du critère dans la section Champs, ensuite définissez la proposition logique du critère dans la section Enter FOR expression. Cliquez sur le bouton OK pour la prise en compte du critère.
+
+Cliquez sur le bouton OK du formulaire Edition du registre des membres pour démarrer l’impression. Un état est automatiquement généré, il peut être imprimé.
+
+Amendements
+Cette section permet à l’administrateur de procéder à certaines corrections telles que la modification, la suppression et rarement l’ajout. L’ensemble des interfaces utilisées sont identiques aux événements ou aux structures des tables de la base de données.
+Cette partie est uniquement réservée à l’administrateur.
+
+Menu des amendements
+
+Utilitaires
+Cette option permet l’administration de la base de données par la génération
+Les utilitaires sont des moyens de contrôle ou des programmes pour corriger des erreurs de saisie ou de terrain.
+Cette section est uniquement réservée à l’administrateur.
+
+Menu Utilitaires
+
+Compacter les fichiers
+
+Cette option permet de supprimer définitivement de la base de données les enregistrements marqués pour la suppression. Par conséquent elle réduit la taille de la base de donnée compactée et aussi améliore les performances d’accès aux données.
+
+Réindexer les fichiers
+
+Cette option permet de restructurer les index associés aux tables de la base de données. Les index sont généralement utilisés pour faciliter l’accès aux données, éviter les doublons d’enregistrements et ordonner les données dans une table. Souvent ces index sont corrompus donc il est nécessaire de les restructurer pour améliorer leurs performances.
+
+Changer identifiant des ZD
+
+Cette option permet de corriger l’identifiant d’une zone démographique s’il est incorrect.
+
+Saisissez l’identifiant de la ZD à corriger, ce dernier doit exister. Ensuite saisissez le nouvel identifiant  de la ZD, celui-ci ne doit pas exister. Cliquez sur le bouton OK pour démarrer la modification.
+
+Changer identifiant des UCH
+
+Cette option permet de corriger l’identifiant d’une UCH s’il est incorrect.
+
+Saisissez l’identifiant de l’UCH à corriger, ce dernier doit exister. Ensuite saisissez le nouvel identifiant  de l’UCH, celui-ci ne doit pas exister. Cliquez sur le bouton OK pour démarrer la modification.
+
+Changer identifiant des ménages
+
+Cette option permet de corriger l’identifiant d’un ménage s’il est incorrect.
+
+Saisissez l’identifiant du ménage à corriger, ce dernier doit exister. Ensuite saisissez le nouvel identifiant  du ménage, celui-ci ne doit pas exister. Cliquez sur le bouton OK pour démarrer la modification.
+
+Etat des ménages non visités
+
+Cette option permet de générer la liste des ménages non enquêtés pour un round donné.
+
+Saisissez le round concerné et ensuite cliquez sur le bouton OK. Un état est généré s’il existe des ménages non visités.
+
+Etat des individus sans fiche de présence ou non enquêtés
+
+Cette option permet de générer la liste des individus non enquêtés pour un round donné.
+
+Saisissez le round concerné et ensuite cliquez sur le bouton OK. Un état est généré s’il existe des individus non enquêtés.
+
+Paramètres
+Cette section permet de définir les paramètres du système tels que les utilisateurs, les périodes des passages trimestriels, les enquêteurs, les structures, les types de structures, les classes, les diplômes, les domaines d’apprentissage ou d’activité et les langues d’interviews ou d’alphabétisation. Cette section est uniquement réservée à l’administrateur.
+
+Menu Paramètres
+
+Gestion des utilisateurs
+
+Cette option permet de définir les utilisateurs de l’application.
+
+On distingue trois niveaux d’accès :
+    • niveau d’accès 1 correspond aux agents de saisie
+    • niveau d’accès 2 correspond aux chercheurs
+    • niveau d’accès 5 correspond aux administrateurs
+
+Pour ajouter un nouvel utilisateur, cliquez sur le bouton Add. Ensuite saisissez les informations requises. Et enfin cliquez sur le bouton Save.
+Pour rechercher un utilisateur, cliquez sur le bouton Find. La fenêtre suivante apparaîtra.
+
+Sélectionnez le champ username, l’opérateur equals et ensuite saisissez le nom d’accès de l’utilisateur à rechercher. Et enfin cliquez sur le bouton Search pour effectuer la recherche.
+Lorsque l’utilisateur existe, un filtre est appliqué pour ne tenir compte de l’utilisateur trouvée dans la source de données liée au formulaire. Cliquez sur le bouton Edit en vue de procéder aux modifications.
+Pour visualiser tous les enregistrements de la source de données après une recherche réussie, cliquez sur le bouton Find et ensuite All.
+
+Gestion des enquêteurs
+
+Cette option permet de définir les enquêteurs du système.
+
+Pour ajouter un nouvel enquêteur, cliquez sur le bouton Add. Ensuite saisissez les informations requises. Et enfin cliquez sur le bouton Save.
+Pour rechercher un enquêteur, cliquez sur le bouton Find. La fenêtre suivante apparaîtra.
+
+Sélectionnez le champ name, l’opérateur contains et ensuite saisissez le nom ou le prénom de l’enquêteur à rechercher. Et enfin cliquez sur le bouton Search pour effectuer la recherche.
+Lorsqu’un ou plusieurs enquêteurs ont une identité comportant le nom ou le prénom indiqué, un filtre est appliqué pour ne tenir compte de ces enquêteurs trouvés dans la source de données liée au formulaire. Utilisez les boutons de navigation (Top, Bottom, Prev, Next) pour vous positionner sur l’enquêteur recherché. Cliquez sur le bouton Edit en vue de procéder aux modifications.
+Pour visualiser tous les enregistrements de la source de données après une recherche réussie, cliquez sur le bouton Find et ensuite All.
+
+Gestion des rounds
+
+Cette option permet de définir la période des passages trimestriels.
+
+Pour saisir un nouveau round, cliquez sur le bouton Add. Ensuite saisissez les informations requises et cliquez sur le bouton Save.
+La donnée MAJ baselines permet de savoir si le passage courant sera utilisé pour la mise à jour des baselines.
+
+Pour rechercher un round, cliquez sur le bouton Find. La fenêtre suivante apparaîtra.
+
+Sélectionnez le champ round_num, l’opérateur equals et ensuite saisissez le numéro du round à rechercher. Et enfin cliquez sur le bouton Search pour effectuer la recherche.
+Lorsque le round existe, un filtre est appliqué pour ne tenir compte du round trouvé dans la source de données liée au formulaire. Cliquez sur le bouton Edit en vue de procéder aux modifications.
+Pour visualiser tous les enregistrements de la source de données après une recherche réussie, cliquez sur le bouton Find et ensuite All.

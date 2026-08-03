@@ -1,0 +1,36 @@
+Table: TBase_HistGen
+
+Titre: Table TBase_HistGen
+Description: Births History
+
+Variable histgen_num (table TBase_HistGen) : GENESIQUE EVENT ID. Type: Numérique.
+
+Variable observeid (table TBase_HistGen) : OBSERVATION ID. Type: Identifiant.
+
+Variable socialgpid (table TBase_HistGen) : HOUSEHOLD ID. Type: Identifiant.
+
+Variable individid (table TBase_HistGen) : INDIVIDUAL ID (WOMAN ID). Type: Identifiant.
+
+Variable already_had_child (table TBase_HistGen) : Woman already had a living birth. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 4=No answer.
+
+Variable childid (table TBase_HistGen) : CHILD ID. Type: Identifiant.
+
+Variable uch_resident (table TBase_HistGen) : Child currently resides in the location. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 4=No answer | 0=Not concerned.
+
+Variable birth_place (table TBase_HistGen) : Child birth place. Type: Catégorielle (codes). Modalites/valeurs codees: In Ouaga Elsewhere | 4=No answer | 0=Not concerned.
+
+Variable gender (table TBase_HistGen) : Child gender. Type: Catégorielle (codes). Modalites/valeurs codees: Male Female | 4=No answer | 0=Not concerned.
+
+Variable died (table TBase_HistGen) : Child died. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 4=No answer | 0=Not concerned.
+
+Variable death_age (table TBase_HistGen) : Age at his death. Type: Catégorielle (codes). Modalites/valeurs codees: 98 Not concerned.
+
+Variable death_place (table TBase_HistGen) : Death place. Type: Catégorielle (codes). Modalites/valeurs codees: In ouaga Elsewhere | 4=No answer | 0=Not concerned.
+
+Variable current_age (table TBase_HistGen) : Current age or age  if he wasn’t died. Type: Catégorielle (codes). Modalites/valeurs codees: 98 Not concerned.
+
+Variable unwanted_pregnancy (table TBase_HistGen) : Desire for the pregnancy. Type: Catégorielle (codes). Modalites/valeurs codees: 1=At this time | 2=Later | 3=Unwanted | 4=No answer | 0=Not concerned.
+
+Variable Register (table TBase_HistGen) : Birth registered at the registry office. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value | 4=No answer | 0=Not concerned.
+
+Variable Entry_date (table TBase_HistGen) : Interview date. Type: Date.

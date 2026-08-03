@@ -1,0 +1,40 @@
+Document: 04_FICHE DEPART_R13
+
+﻿FICHE DEPART		Numéro de fiche: |__|__|__|__|
+
+ROUND N°........
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant:
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+Nom et prénom (s)………………………………………………..
+
+ID…………..
+
+Lieu de destination………………………………………………|___|___|
+Ouaga (secteur), autres villes Burkina (province), rural Burkina (province), Côte d’Ivoire, autre pays africains, autres pays, NSP.
+
+Date de départ de l’UCH……………………………………….…|___|___| |___|___| |___|___|
+
+Raison pour lesquelles la personne a quitté l’endroit ou elle était ………….……… |___|___|
+
+(Une raison possible)
+
+01 S’est marié
+02 A déménagé avec sa famille / des parents
+03 A divorcé / est devenu veuf / s’est séparé
+04 Autres raisons familiales
+05 A emménagé dans sa propre maison
+06 Autre raison liée à l’habitat
+07 Pour raison professionnelle
+08 Pour faire une formation
+09 Déplacement en raison catastrophe ou d'une crise (Préciser)
+Catastrophe naturelle
+Raison sécuritaire / terrorisme
+A cause d’un autre conflit
+10 Autre, préciser
+98 NSP

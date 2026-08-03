@@ -1,0 +1,18 @@
+Table: Tindividual
+
+Titre: Table Tindividual
+Description: Core individual identification
+
+Variable individid (table Tindividual) : Individal ID. Type: Identifiant.
+
+Variable sex (table Tindividual) : Sex. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Man | 2=Woman.
+
+Variable ethnic_gp (table Tindividual) : Ethnic group. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Bobo | 2=Dioula | 3=Fulani | 4=Gourmantche | 5=Gourounsi | 6=Lobi | 7=Mossi | 8=Senoufo | 9=Touareg / Bella | 10=Autres | 11=Ne sait pas | 12=Bissa | 13=Samo.
+
+Variable birth_date (table Tindividual) : Date of birth. Type: Date.
+
+Variable fatherid (table Tindividual) : Father's ID if he is in the same concession. Type: Identifiant.
+
+Variable motherid (table Tindividual) : Mother's ID if he is in the same concession. Type: Identifiant.
+
+Variable entry_date (table Tindividual) : Date of interview. Type: Date.

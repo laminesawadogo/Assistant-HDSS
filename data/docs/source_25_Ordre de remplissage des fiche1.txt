@@ -1,0 +1,59 @@
+Document: 25_Ordre de remplissage des fiche1
+
+Ordre de remplissage des fiches
+
+Fiche présence : pour toute personne du ménage qui avait le statut de résident (absent ou présent) ou de visiteur au passage précédant, sauf les personnes décédées entre les deux passages
+
+1 Fiche arrivée : cas d’un visiteur devenu résidant
+
+2 Fiche nouveau visiteur : cas d’un résident absent ayant fait plus de 6 mois à l’extérieur de l’UCH de l’OPO et présent au moment du passage
+
+3 Fiche départ : cas d’un résident ayant fait plus de 6 mois à l’extérieur de l’UCH
+
+Fiche départ : pour tout résident qui a passé plus de 6 mois hors de l’UCH
+
+Fiche changement de chef de ménage si le résident était le CM
+
+Fiche décès : pour un membre du ménage décédé depuis le dernier passage
+
+Fiche changement de chef de ménage si le regretté était le CM
+
+Fiche Accouchement : pour tout accouchement
+
+Fiche grossesse : pour toute femme résidente âgée de 15 à 49 ans qui a contracté une grossesse mais qui n’avait pas rempli de fiche grossesse au passage précédant
+
+Fiche issue de grossesse pour toute femme âgée de 15 à 49 ans ayant déjà une fiche grossesse
+
+Fiche décès si l’issue de la grossesse est une naissance suivie de décès
+
+Fiche grossesse
+
+Fiche suivi union : recenser les nouvelles unions et l’évolution des unions déjà contractés au passage précédent
+
+Fiche création de ménage
+
+Fiche changement ménage : pour tout membre qui a changé de ménage depuis le passage précédent mais qui reste résident de la même UCH
+
+Fiche création de ménage.
+
+Fiche Emploi : pour tous les résidents de 15 ans et plus, recense les activités ou activité économiques ainsi que la situation de l’enquêté (e) dans l’activité.
+
+Fiche Education : pour tous les résidents de 5 à 34 ans, recense la situation de fréquentation scolaire actuelle ou passée et les niveaux en cours et atteints pour ceux qui fréquentent ou qui ont déjà fréquenté l’école
+
+Fiche Santé : aux répondants adultes de 15 ans et plus du ménage concernant la santé subjective, la santé mentale et les maladies diagnostiquées par un agent de sante
+
+Fiche nouveau visiteur : pour tout individu qui vient d’arriver dans le ménage et les résidents qui ont fait plus de 6 mois hors de l’UCH depuis le dernier passage et qui ont dormi la nuit de référence.
+
+Fiche arrivée : individus qui étaient visiteurs au passage précédent et sont devenus résidents absents ou présents
+
+Fiche création de ménage : pour tout nouveau ménage que le ménage vienne d'ailleurs ou qu’il soit constitué de résidents de l'UCH
+
+Fiche changement de chef de ménage : s'applique lorsque le ménage a changé de chef soit par émigration ou par décès ou l’arrivé d’un nouveau chef de ménage qui est devenu résident
+
+Fiche UCH : pour recenser toutes les UCH (toutes UCH au départ que dans les rounds suivants pour les nouvelles UCH)
+
+Fiche destruction UCH : pour la suppression de toutes les UCH détruites (quand tous les bâtiments composants l’UCH sont détruits).
+
+Fiche changement générique : pour répertorier tous les autres changements à effectuer sur un individu, un ménage ou même sur l’UCH. Il s’agit essentiellement des corrections à effectuer sur un individu, un ménage ou une UCH.
+
+Fiche omission : pour toute personne qui a été omise, c'est-à-dire qui dit avoir été présente à un passage précédant mais qui n’a pas été enregistrée à ce moment. A un Round t, ne peut être considéré comme personnes omises que les enquêtés qui dorment habituellement dans le ménage depuis le Round t-1 ou le Round t-2.

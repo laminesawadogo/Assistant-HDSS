@@ -1,0 +1,46 @@
+Document: 09_FICHE DECES_R13
+
+﻿
+FICHE DECES		Numéro de fiche: |__|__|__|__|
+ROUND N°........
+Enquêteur..................................................................................................... |___|___|
+
+Contrôleur...............................................................................................................
+Date enquête.....…./…..../…....
+ID répondant:
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+Identification de la personne décédée
+
+|____|____|____|____|____|____|	|___|___||___|___|___|___|	|____|____|____|___|___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+Nom et Prénoms.............................................................
+
+DC1	Date de décès……………………../……/…..
+jj    mm   .année.
+
+Formation sanitaire?
+
+DC2	La personne est-elle décédée dans une formation sanitaire ?......................................O  /  N si O code FS
+
+	1 = CHR/CHU
+2 = CM/CMU
+3 = CMA
+4= CSPS
+6 = Infirmerie
+8 = Cabinet de soins
+9 = Clinique médicale
+10 = Polyclinique
+92= Autre à préciser ...........................................
+
+DC3	La personne s'est-elle rendue dans une formation sanitaire avant son décès?............O / N   ou            NA
+
+réservée à l'enquêteur
+
+Chef de ménage?
+
+Le regretté est-il chef de ménage...............O  /  N
+
+Si Oui, remplir une fiche changement de chef de ménage

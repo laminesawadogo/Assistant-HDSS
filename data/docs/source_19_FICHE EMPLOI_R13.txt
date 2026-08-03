@@ -1,0 +1,57 @@
+Document: 19_FICHE EMPLOI_R13
+
+FICHE EMPLOI							 Numéro de fiche : |__|__|__|__|
+
+Renseigner la situation des membres résidents du ménage âgés de 15 et plus
+
+ROUND N°........
+
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant:
+
+Identification de la personne concernée
+
+Nom et Prénoms.............................................................
+
+E1. Dans quelle situation (NOM) se trouve vis-à-vis du travail ?
+
+1= Exerce actuellement un travail rémunéré  allez à la question E2
+
+2= A exercé un travail rémunéré dans le passé  allez à la question E2
+
+3= Est au chômage et à la recherche d’un emploi
+
+6= Est femme ou homme au foyer
+
+4= Est handicapé-e ou en incapacité permanente de travailler
+
+5= Est en cours de formation (en étude, en apprentissage ou en stage)
+
+6= Est retraité-e
+
+7= Autre
+
+E2. Quelle a été la situation de [NOM] dans cet emploi ou votre dernier emploi ?
+
+1=Indépendant
+
+2=Salarié secteur public
+
+3=Salarié secteur privé
+
+4=Employeur
+
+5=Aide familial/Bénévole
+
+6=Autres
+
+|____|____|____|____|____|____| | |___|___|  |___|___|___|___| | |____|____|____|___I . |___|___|___|
+
+   x       x        β     x       x        x |     β    β       x      x     x     x |     H       x        x     x          x    x     x
+
+|____|____|____|____|____|____| | |___|___|  |___|___|___|___| | |____|____|____|____|____|____|____|
+
+   x       x        β     x       x        x |     β    β       x      x     x     x |     H       x        x     x          x    x     x

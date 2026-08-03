@@ -1,0 +1,47 @@
+Document: 16_FICHE HISTOIRE GNENSIQUE_R13
+
+Histoire génésique 		Numéro de fiche: |__|__|__|__|
+
+Module obligatoire pour les femmes résidentes en âge de procréer (12-49 ans)
+
+ROUND N°........
+
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant:
+
+Nom et prénom (s)………………………………………………..
+
+ID…………..
+
+Prévoir un filtre pour vérifier que Nombre total d'enfants= Enfants en vie+ Enfants décédés
+
+|____|____|____|____|____|____| | |___|___|  |___|___|___|___| | |____|____|____|___I . |___|___|___|
+
+   x       x        β     x       x        x |     β    β       x      x     x     x |     H       x        x     x          x    x     x
+
+|____|____|____|____|____|____| | |___|___|  |___|___|___|___| | |____|____|____|___I . |___|___|___|
+
+   x       x        β     x       x        x |     β    β       x      x     x     x |     H       x        x     x          x    x     x
+
+Nom | Naissance vivante | Nombre total d'enfants | Enfants en vie | Enfants décédés
+
+1. Relever le nom et le n° de ligne de la femme | 2.
+Avez-vous déjà connu une naissance vivante ?
+
+1. Oui
+2. Non
+
+Si non fin du questionnaire   | 3.
+Combien d'enfants avez vous donné naissance au
+total?
+
+|____|_____| | 4.
+Combien d'enfants sont encore en vie ?
+
+|____|_____| | 5.
+Combien d'enfants sont décédés?
+
+|____|_____|

@@ -1,0 +1,16 @@
+Table: Tindividual_charact
+
+Titre: Table Tindividual_charact
+Description: Individual characteristics (updatable)
+
+Variable individid (table Tindividual_charact) : Individual ID. Type: Identifiant.
+
+Variable observeid (table Tindividual_charact) : Observation ID for the characteristic. Type: Identifiant.
+
+Variable entry_date (table Tindividual_charact) : Date of interview. Type: Date.
+
+Variable father_alive (table Tindividual_charact) : Father is alive. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don't know or missing.
+
+Variable mother_alive (table Tindividual_charact) : Mother is alive. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don't know or missing.
+
+Variable marital_status (table Tindividual_charact) : Marital status. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Never married | 2=Married | 3=divorced | 4=widowed | 99=Don't know or missing.

@@ -1,0 +1,17 @@
+Document: 12_FICHE DESTRUCTION_UCH_R13
+
+﻿FICHE DESTRUCTION D’UCH	Numéro de fiche: |__|__|__|__|
+
+ROUND N°........
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant:
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+IDENTIFIANT UCH…
+
+DATE DE DESTRUCTION DE L’UCH  …….../……../……..
+   jj    mm     an

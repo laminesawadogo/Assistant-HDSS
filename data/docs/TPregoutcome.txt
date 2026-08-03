@@ -1,0 +1,40 @@
+Table: TPregoutcome
+
+Titre: Table TPregoutcome
+Description: Pregnancy Outcome Table
+
+Variable eventid (table TPregoutcome) : EVENT ID. Type: Identifiant.
+
+Variable locationid (table TPregoutcome) : LOCATION ID. Type: Identifiant.
+
+Variable peventid (table TPregoutcome) : PREGNANCY OUTCOME ID EVENT ID. Type: Identifiant.
+
+Variable observeid (table TPregoutcome) : OBSERVATION ID. Type: Identifiant.
+
+Variable individid (table TPregoutcome) : INDIVIDUAL (WOMAN ID). Type: Identifiant.
+
+Variable outcome (table TPregoutcome) : Pregnancy outcome. Type: Catégorielle (codes). Modalites/valeurs codees: delivery abortion.
+
+Variable evtdate (table TPregoutcome) : Outcome date. Type: Date.
+
+Variable birth_place (table TPregoutcome) : delivery place. Type: Catégorielle (codes). Modalites/valeurs codees: health facility Home of a provider Home (the mother or another home) Other | 99=Don’t known or Missing value.
+
+Variable struct_code (table TPregoutcome) : Code of the health structure. Type: Catégorielle (codes). Modalites/valeurs codees: 0. Not concerned.
+
+Variable struct_specified (table TPregoutcome) : None. Type: Texte / Numérique.
+
+Variable type_acc (table TPregoutcome) : Type of DELIVERY. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Normal 2 by caesarean section | 3=Other | 99=Don’t known or Missing value.
+
+Variable birth_assistant (table TPregoutcome) : Person who assist woman for delivery. Type: Catégorielle (codes). Modalites/valeurs codees: Health staff traditional birth attendant Another | 99=Don’t know or Missing value.
+
+Variable birth_nb (table TPregoutcome) : Number of children at DELIVERY. Type: Numérique.
+
+Variable livebirth_nb (table TPregoutcome) : Number of children born alive. Type: Numérique.
+
+Variable birthinlive_nb (table TPregoutcome) : Number of children still alive. Type: Numérique.
+
+Variable fatherid (table TPregoutcome) : children father id. Type: Identifiant.
+
+Variable father_ethnic_gp (table TPregoutcome) : children father ethnic group. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Bobo | 2=Dioula | 3=Fulani | 4=Gourmantche | 5=Gourounsi | 6=Lobi | 7=Mossi | 8=Senoufo | 9=Touareg / Bella | 10=Others | 11=Don’t know or missing value | 12=Bissa | 13=Samo.
+
+Variable entry_date (table TPregoutcome) : Interview date. Type: Date.

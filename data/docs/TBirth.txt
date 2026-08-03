@@ -1,0 +1,32 @@
+Table: TBirth
+
+Titre: Table TBirth
+Description: Birth Table
+
+Variable eventid (table TBirth) : EVENT ID. Type: Identifiant.
+
+Variable pregoutid (table TBirth) : DELIVERY ID. Type: Identifiant.
+
+Variable observeid (table TBirth) : OBSERVATION ID. Type: Identifiant.
+
+Variable individid (table TBirth) : INDIVIDUAL ID(Child ID). Type: Identifiant.
+
+Variable Sex (table TBirth) : Sex. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Male | 2=Female.
+
+Variable birth_date (table TBirth) : Birth date. Type: Date.
+
+Variable weight (table TBirth) : Weight at birth. Type: Texte / Numérique.
+
+Variable height (table TBirth) : Height at birth. Type: Texte / Numérique.
+
+Variable bcg (table TBirth) : BCG date. Type: Date.
+
+Variable polio (table TBirth) : POLIO 0 date. Type: Date.
+
+Variable rltn_head (table TBirth) : relation to household head. Type: Catégorielle (codes). Modalites/valeurs codees: 3 Son or daughter 4 Son-in-law or daughter-in-law 5 Grandson/daughter 8 Brother or sister | 9=Other parent | 10=no relationship | 11=nephew | 12=Don’t know | 99=Missing value.
+
+Variable register (table TBirth) : Birth registered at the registry office. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable unwanted_pregnancy (table TBirth) : Desire for the pregnancy. Type: Catégorielle (codes). Modalites/valeurs codees: 1=At this time | 2=Later | 3=Unwanted | 4=No answer.
+
+Variable entry_date (table TBirth) : Interview date. Type: Date.

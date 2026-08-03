@@ -1,0 +1,60 @@
+Document: 11_FICHE CREATION_MENAGE_R13
+
+﻿FICHE CREATION MENAGE		Numéro de fiche: |__|__|__|__|
+
+ROUND N°........
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant (Inconnu si aucun membre du ménage n’a jamais été suivi dans l’OPO) :
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+Identification de l'UCH
+
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x
+
+Déménagement en entier ou partiel d'un ménage déjà existant tel quel ?...........................O / N
+
+Si NON, passer à XXX
+Si OUI :
+Est-ce ménage a déjà été suivi dans le cadre de l’OPO ?………………………………|___|
+Est-ce que ce ménage a habité après octobre 2008 un des quartiers suivants de Ouaga : Nioko II / Niokwardin Polesgo / Toudbweogo, Thangin, Kilwin, Markoussy / Nonghin
+
+Si oui ou NSP à une de ces deux questions, recherche l’ID du ménage
+Si non passer à XXX
+
+Nom et prénoms du chef du ménage…………………………………………….
+Nom de la Personne de référence ……………………………………………….
+Nom et prénoms d’un membre du ménage……………………………………………
+Ethnie du chef du ménage…………....|___|___|
+Numéro du secteur que le ménage a quitté ……………..…....|___|___|
+
+Si ID du ménage pas retrouvé, passer à XXX
+Si ID ménage retrouvé :
+ID du ménage
+Vérification de la liste des membres du ménage retrouvé
+Remplir une fiche nouveau visiteur pour tous les membres du ménage dont on a retrouvé l’ID et qui habite toujours avec le ménage (aller au point A sur la fiche nouveau visiteur)
+Remplir une fiche nouveau visiteur pour tout membre actuel du ménage retrouvé ou visiteur qui ne figure pas sur le liste affichée des membres (aller au point B sur la fiche nouveau visiteur)
+
+XXX
+
+N° provisoire du ménage si ménage non enregistré........................................
+
+Nom et Prénom du chef de ménage …………………………………………
+Langue utilisée (Dioula, Français, Mooré, autre) :……………..	|___|
+Ethnie du chef de ménage (voir liste Ethnie)..…………..………	|___|___|
+Date d’arrivée dans l’UCH……………………………...............	|___|___|___|___|
+Statut du questionnaire (Complet / Incomplet) :
+	Si incomplet, pourquoi ?...................................................................................
+
+Commentaire :………………………………………………………………………..
+
+Liste des individus du ménage (individus ayant habité avec le ménage depuis au moins 6 mois ou l’ayant quitté depuis moins de 6 mois, plus les personnes non citées qui ont dormi la nuit passé dans le ménage)
+N° ligne	Nom	Prénoms
+	(Nom) habitait-il dans l’UCH avant de rejoindre ce nouveau ménage ?
+
+Remplir une fiche nouveau visiteur pour chaque membre du ménage venu de l’extérieur de l’UCH (aller au point B sur la fiche)
+Remplir une fiche changement de ménage pour chaque individu venu de l’UCH

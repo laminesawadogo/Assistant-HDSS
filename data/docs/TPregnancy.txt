@@ -1,0 +1,14 @@
+Table: TPregnancy
+
+Titre: Table TPregnancy
+Description: Pregnancy Table
+
+Variable eventid (table TPregnancy) : EVENT ID. Type: Identifiant.
+
+Variable observeid (table TPregnancy) : OBSERVATION ID. Type: Identifiant.
+
+Variable individid (table TPregnancy) : INDIVIDUAL ID (WOMAN ID). Type: Identifiant.
+
+Variable evtdate (table TPregnancy) : Pregnancy starting date. Type: Date.
+
+Variable entry_date (table TPregnancy) : Interview date. Type: Date.

@@ -1,0 +1,36 @@
+Document: 10_FICHE CHANGEMENT CHEF MENAGE_R13
+
+﻿FICHE CHANGEMENT DE CHEF MENAGE	Numéro de fiche: |__|__|__|__|
+
+ROUND N°........
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant:
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+IDENTIFICATION DU MENAGE
+
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x
+
+Nom et Prénoms de l’actuel CM................................................
+ID actuel CM
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+ID du nouveau chef
+
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+Nom et Prénoms du nouveau chef................................................
+
+Date de changement........../........./...........
+
+Motif de changement du CM (Départ, Décès ou Arrivé)  : ……………………………………
+LIEN DE PARENTE AVEC LE NOUVEAU CHEF
+Recensez tous les membres du ménage à partir du registre et demander le lien de chaque personne avec le nouveau chef de ménage
+ID	Nom & prénoms	Lien de parenté

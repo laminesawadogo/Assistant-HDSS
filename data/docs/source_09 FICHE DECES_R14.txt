@@ -1,0 +1,63 @@
+Document: 09 FICHE DECES_R14
+
+FICHE DECES		Numéro de fiche : |__|__|__|__|
+
+ROUND N°........
+
+Enquêteur..................................................................................................... |___|___|
+
+Contrôleur...............................................................................................................
+
+Date enquête.....…./…..../…....
+
+ID répondant:
+
+Identification de la personne décédée
+
+DC0. Nom et Prénoms.............................................................
+
+DC1. Date de décès…………………../……/…..
+
+jj    mm   année
+
+DC2. La personne est-elle décédée dans une formation sanitaire, à domicile ou ailleurs ?
+
+FS
+
+Domicile
+
+Autre lieu à préciser…………..
+
+DC3. Si le décès a eu lieu dans une formation sanitaire, préciser le type :
+
+1 = CHR/CHU
+
+2 = CM/CMU
+
+3 = CMA
+
+4= CSPS
+
+6 = Infirmerie
+
+8 = Cabinet de soins
+
+9 = Clinique médicale
+
+10 = Polyclinique
+
+92= Autre à préciser ...........................................
+
+DC4.	La personne s'est-elle rendue dans une formation sanitaire avant son décès?.........O / N
+
+DC5.	S’agit-il d’une mort violente ?............O / N
+
+réservée à l'enquêteur
+
+|____|____|____|____|____|____| | |___|___|  |___|___|___|___| | |____|____|____|___I . |___|___|___|
+
+   x       x        β     x       x        x |     β    β       x      x     x     x |     H       x        x     x          x    x     x
+
+|____|____|____|____|____|____| | |___|___||___|___|___|___| | |____|____|____|___|___|___|___|
+
+   x       x        β     x       x        x |     β    β       x      x     x     x |     H       x        x     x          x    x     x

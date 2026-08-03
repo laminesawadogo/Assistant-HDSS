@@ -1,0 +1,40 @@
+Table: TUpdRelationship
+
+Titre: Table TUpdRelationship
+Description: Table Updrelationship
+
+Variable eventid (table TUpdRelationship) : EVENT ID. Type: Identifiant.
+
+Variable individid (table TUpdRelationship) : INDIVIDUAL ID. Type: Identifiant.
+
+Variable individid2 (table TUpdRelationship) : SPOUSE ID. Type: Texte / Numérique.
+
+Variable locationid (table TUpdRelationship) : LOCATION ID. Type: Identifiant.
+
+Variable sobserveid (table TUpdRelationship) : EVENT STARTING OBSERVATION ID. Type: Identifiant.
+
+Variable sdate (table TUpdRelationship) : Starting date of union. Type: Date.
+
+Variable conj_res (table TUpdRelationship) : Spouse resides in the same home. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable uni_relig (table TUpdRelationship) : Religious wedding realized. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable uni_trad (table TUpdRelationship) : Traditional wedding realized. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable uni_civil (table TUpdRelationship) : Civil wedding realized. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable uni_start_date (table TUpdRelationship) : Date of entry into cohabitation. Type: Date.
+
+Variable uni_relig_date (table TUpdRelationship) : Date of religious wedding. Type: Date.
+
+Variable uni_trad_date (table TUpdRelationship) : Date of traditional wedding. Type: Date.
+
+Variable uni_civil_date (table TUpdRelationship) : Date of civil wedding. Type: Date.
+
+Variable eobserveid (table TUpdRelationship) : EVENT END OBSERVATION ID. Type: Identifiant.
+
+Variable eeventtype (table TUpdRelationship) : Reasons of end of union. Type: Catégorielle (codes). Modalites/valeurs codees: Separation / divorce Death of spouse.
+
+Variable edate (table TUpdRelationship) : Date of end of union. Type: Date.
+
+Variable entry_date (table TUpdRelationship) : Interview date. Type: Date.

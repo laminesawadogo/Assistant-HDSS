@@ -1,0 +1,94 @@
+Document: Presentation_OPO_30Mars09
+
+Diapositive 1 : Health Inequities in a context of Increasing urbanisation in West Africa
+Institut supérieur des  Sciences de la Population (ISSP) / Université de Ouagadougou Banza Baya, ISSP (PI), Clémentine Rossier, INED, Younoussi Zourkaleini, ISSP, Seni Kouanda, IRSS, Sara Randall, University College London
+
+Ouagadougou, 30 mars 2009
+
+Diapositive 2 : Plan de présentation 1. Contexte
+2. Objectif principal
+3. Objectifs spécifiques de recherche
+4. Objectifs spécifiques de politique
+5. Taille population suivie
+6. Choix des zones
+7. Les données
+8. Collecte des données
+9. Division des tâches
+
+Diapositive 3 : Contexte (1) 90% de la croissance de la population mondiale des 25 prochaines années aura lieu dans les villes des PVD. Si rien n’est fait, les systèmes sociaux et de santé de ces villes vont être submergés.
+Ouagadougou est une des villes d’Afrique à la croissance la plus rapide (+4.3% entre 1985 et 1996): 1,1 millions en 2000, 2.5 millions en 2015
+Les indicateurs de santé n’ont pas progressé en Afrique depuis les années 1980, contrairement aux autres régions en développement.
+
+Diapositive 4 : Contexte (2) La santé reste meilleure en ville (versus dans les campagnes) dans les PVD, mais la moyenne urbaine recouvre d’importantes disparités. Dans les zones de concentration de pauvreté, la santé peut même être moins bonne qu’en milieu rural.
+Les habitants des villes africaines font face à la « double charge » des maladies infectieuses et des maladies dite de civilisation (=> politiques sanitaires complexes). Avec la décentralisation du système de santé en cours, une observation suivie des décès permettrait à la ville de Ouagadougou d’adapter ses politiques de santé à sa population diverse et croissante.
+
+Diapositive 5 : Objectif principal L’objectif général de ce projet de recherche est de créer un observatoire urbain de population et santé à Ouagadougou, et avec ces données, de décrire et d’expliquer les inégalités sociales et spatiales de la santé dans la ville, afin de promouvoir le développement et la mise en œuvre de politiques sanitaires urbaines fondées scientifiquement et réduisant les inégalités tant au niveau de la ville de Ouagadougou que dans toute la région africaine. .
+
+Diapositive 6 : Objectifs spécifiques scientifiques (1) Décrire et expliquer les variations de la mortalité et de la santé à Ouagadougou
+Analyser les dynamiques liant la vulnérabilité économique et la santé
+ Analyser la relation entre l'intégration urbaine des migrants et la santé
+ Analyser la vulnérabilité liée au vieillissement et la santé
+ Analyser l'accès aux services de santé
+
+Diapositive 7 : Objectifs spécifiques scientifiques (2) Analyser les relations entre les dangers environnementaux et la santé (densité, gestion des déchets, latrines, eau, pollution)
+Faire une analyse quantitative multi- niveaux comprenant les facteurs individuels, ménages, et de voisinage de santé
+Etudier l'interaction entre la santé, les différentes vulnérabilités, et les facteurs sociaux en utilisant une approche qualitative
+Décrire la croissance spatiale de la population de la ville, et ses implications pour l’avenir des inégalités de santé à Ouagadougou.
+
+Diapositive 8 : Objectifs spécifiques de politique Tester des interventions visant à améliorer la santé des populations les plus vulnérables de Ouagadougou
+Traduire les résultats des travaux scientifiques en politiques et interventions bénéfiques aux populations.
+Contribuer à améliorer le système d'état-civil géré par la ville et pour la ville entière
+
+Diapositive 9 : Taille de la population suivie Environ 80.000 personnes.
+Taille est suffisamment grande pour permettre d’avoir des données de qualité sur les causes de mortalité
+ Environ 60 000 =  nombre minimum pour étudier en détail les différentes causes de décès des adultes,
+
+Diapositive 10 : Choix des zones zones suivies géographiquement contiguës (pour réduire le coût des interventions à tester).
+Les cellules sont par ailleurs séparées physiquement pour éviter les effets de contamination
+
+Diapositive 12 : Les données Un premier recensement de tous les individus vivant dans ces zones
+Enregistrement selon une périodicité de six mois, les événements survenus dans chacun des ménages du SSD (mariages, naissances, migrations et décès).
+Enquête de base sur le niveau de vie, les conditions de logement, l’état de santé, et les pratiques en matière de santé (la toute prochaine étape).
+
+Diapositive 13 : Les données Données longitudinales au niveau des individus et des ménages collectées par le SSDO pas suffisantes pour comprendre les processus sociaux complexes à l'étude.
+Collecte de données additionnelles au niveau des quartiers pour contextualiser les différents événements individuels, les pratiques et les  caractéristiques observées dans le SSDO
+Collecte de données sur les facteurs de risque pour la santé liés à l'environnement dans chaque zone du SSDO.
+
+Diapositive 14 : Les données Une équipe chargée des aspects qualitatifs est chargée de la caractérisation des quartiers abritant les zones du SSD.
+
+Diapositive 15 : Les données Une autre équipe en charge du volet spatial travaille à géo-référencer toutes les unités d’habitations, et un certain nombre de repères dans chaque voisinage.
+
+Elle actualise une base de données spatialisées contenant toutes les structures de santé, privées et publiques, de la ville de Ouagadougou,  base initialement constituée en 2002 par une équipe de l’IRD Ouagadougou
+
+Diapositive 16 : Collecte des données Stratégie de collecte sur le terrain du R0 dite «de balayage » développée pendant la phase pilote
+Même partie de la zone couverte avec l'équipe entière des agents (conduite chaque matin sur le site avec un minibus). Cette stratégie facilite la supervision et le déplacement.
+
+Diapositive 17 : Collecte des données Recrutement des informateurs clés communautaires pour collecter l'information sur les naissances et les décès survenant  dans l’ensemble du SSDO
+Après la fin d’un passage dans un quartier, les contrôleurs comparent décès et naissances enregistrés par les agents de terrain avec les événements collectés par les informateurs clés, et résolution des cas de divergence
+
+Diapositive 18 : Collecte des données Contrôleurs  formés aux interviews d’autopsie verbale
+Diagnostic par deux médecins et éventuellement un troisième
+Utilisation également du logiciel développé par le réseau INDEPTH en vue de la détermination des causes de décès.
+
+Diapositive 19 : Division des tâches Un conseil scientifique composé de six membres (Philipe Antoine, James Brown, Valérie Delaunay, Jim Philips, Pierre Ngom, Bocar Kouyaté) a été mis en place pour conseiller l’équipe de recherche et veiller à une bonne conduite des travaux scientifiques.
+Réunion du Conseil scientifique une fois par an.
+
+Diapositive 20 : Division des tâches Réunion également annuelle de l’ensemble des intervenants dans le projet (chercheurs et staff) afin de passer en revue les activités réalisées au cours de l’année écoulée et préparer les activités de l’année à venir
+Équipe de coordination composée des quatre porteurs du projet (B. Baya, C. Rossier, Y. Zourkaleini, S. Kouanda et S. Randall) est chargée de la coordination au jour le jour de l’ensemble des travaux du projet..
+
+Diapositive 21 : Division des tâches Collecte de données du SSDO gérée par un groupe qui se compose d'un informaticien, d’un assistant informaticien et d'un statisticien dirigeant 24 agents de terrain (dont 4 contrôleurs)
+Groupe est dirigé par un DSS manager (Abdramane Soura dès juin 2009).
+
+Diapositive 22 : Division des tâches Un deuxième groupe, coordonné par Clémentine Rossier est chargé de la valorisation scientifique de l’OPO.
+Chacun des neuf objectifs scientifiques relevant de ce groupe est placé sous la responsabilité d’un chercheur pour la coordination des travaux scientifiques (publications et présentations dans les conférences régionales et internationales importantes). Groupe compte 22 chercheurs
+
+Diapositive 23 : Division des tâches Troisième groupe  responsable de la planification de santé publique et des interventions.
+Dirigé par Seni Kouanda. Ce groupe de travail répondra aux objectifs de politique du programme de recherche, et ses résultats seront partagés avec l’ensemble des planificateurs de santé de la ville en particulier et de la région africaine en général.
+
+Diapositive 24 : Division des tâches Il se compose d'un certain nombre de professionnels responsables des services de santé publique dans la ville, d’ONG et d’autres organismes intéressés
+Groupe emploiera les résultats scientifiques de cette recherche pour concevoir ou accueillir des programmes innovateurs de santé, rechercher des fonds pour les mettre en application dans l'aire du SSDO, et partager leur travail avec les planificateurs urbains dans la région entière
+
+Diapositive 25 : Division des tâches Autre groupe de travail à créer avec les principaux acteurs des statistiques d’état civil de la ville
+L’objectif est que les données collectées dans le SSDO puissent contribuer à améliorer le système d'état-civil géré par la ville et pour la ville entière.
+
+Diapositive 26 : Merci de votre aimable attention

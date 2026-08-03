@@ -1,0 +1,22 @@
+Table: TSocialgp_head
+
+Titre: Table TSocialgp_head
+Description: Table Socialgp_Head
+
+Variable episodeid (table TSocialgp_head) : EPISODE OF HEADSHIP ID. Type: Identifiant.
+
+Variable episodeid_res (table TSocialgp_head) : EPISODE OF RESIDENCE ID. Type: Texte / Numérique.
+
+Variable headid (table TSocialgp_head) : INDIVIDUAL ID (HEAD ID). Type: Identifiant.
+
+Variable sobserveid (table TSocialgp_head) : Observation at the beginning of the headship. Type: Identifiant.
+
+Variable sdate (table TSocialgp_head) : Date at the beginning of the headship. Type: Date.
+
+Variable eobserveid (table TSocialgp_head) : Observation at the end of the headship. Type: Identifiant.
+
+Variable edate (table TSocialgp_head) : Date at the end of the headship. Type: Date.
+
+Variable eeventtype (table TSocialgp_head) : Reason of ending headship. Type: Catégorielle (codes). Modalites/valeurs codees: 1 or 3 Migrations out 1 or 4 Deaths.
+
+Variable entry_date (table TSocialgp_head) : Date of Interview. Type: Date.

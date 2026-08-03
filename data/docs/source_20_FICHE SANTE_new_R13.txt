@@ -1,0 +1,142 @@
+Document: 20_FICHE SANTE_new_R13
+
+Module santé (répondant de 15 ans et plus) 				Numéro de fiche : |__|__|__|__|
+
+ROUND N°........
+
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant:
+
+Identification de la personne concernée
+
+Nom et Prénoms.............................................................
+
+S1. En général, comment considérez-vous votre santé aujourd’hui ?
+
+S2. Est-ce qu’un médecin ou une infirmière vous a déjà dit que vous avez une des maladies suivantes (lire la liste) (au cours de votre vie) ?
+
+S4. Etat de santé mentale
+
+S5. Pour les femmes âgées de 15 à 49 ans
+
+Quel âge aviez-vous quand vous avez eu vos premières règles ?  |___|___|
+
+Utilisation Internet
+
+S6. Au cours des 12 derniers mois, à quelle fréquence, le cas échéant, avez-vous généralement utilisé l'internet sur n'importe quel appareil, que ce soit à des fins professionnelles ou personnelles ? Si vous n'êtes pas sûr de votre utilisation, veuillez sélectionner la réponse qui se rapproche le plus de votre utilisation ?
+
+1 = Presque tout le temps
+
+2 = Plusieurs fois par jour
+
+3 = Une fois par jour
+
+4 = Plusieurs fois par semaine
+
+5 = Plusieurs fois par mois
+
+6 = Moins souvent
+
+7 = Jamais
+
+S7. À quelle fréquence, le cas échéant, utilisez-vous habituellement l'internet sur n'importe quel appareil dans les lieux suivants, pour quelque raison que ce soit ?
+
+|____|____|____|____|____|____| | |___|___|  |___|___|___|___| | |____|____|____|___I . |___|___|___|
+
+   x       x        β     x       x        x |     β    β       x      x     x     x |     H       x        x     x          x    x     x
+
+|____|____|____|____|____|____| | |___|___|  |___|___|___|___| | |____|____|____|___I . |___|___|___|
+
+   x       x        β     x       x        x |     β    β       x      x     x     x |     H       x        x     x          x    x     x
+
+1. Très bonne | 2. Bonne | 3. Moyenne | 4. Mauvaise | 5. Très mauvaise | 6. Ne peut choisir
+
+ |  | 1 Oui | 2 Non | 3 Ne sais pas | 4 Refus
+
+A | Est-ce qu’un médecin ou une infirmière vous a déjà dit que vous aviez une haute tension artérielle ou souffriez d’hypertension ? |  |  |  |
+
+B | Est-ce qu’un médecin ou une infirmière vous a déjà dit que vous souffriez de diabète, c'est-à-dire, d’un niveau élevé de sucre dans le sang ? |  |  |  |
+
+C | Est-ce qu’un médecin ou une infirmière vous a déjà dit que vous souffriez d’un cancer ou d’une tumeur maligne, en excluant les tumeurs bénignes ? |  |  |  |
+
+No | Questions  | Codes des modalités
+
+1 | Durant les 30 derniers jours à quelle fréquence vous êtes-vous senti(e) fatigué(e) sans raison valable ?
+ | 1 Jamais
+2 Quelques jours
+3 La moitié du temps
+4 Plus de la moitié du temps
+5 Presque tous les jours
+
+2 | Durant les 30 derniers jours à quelle fréquence vous êtes-vous senti(e) nerveux(se) ?
+ | 1 Jamais
+2 Quelques jours
+3 La moitié du temps
+4 Plus de la moitié du temps
+5 Presque tous les jours
+
+3 | Durant les 30 derniers jours combien de fois t'es-tu senti si nerveux que rien ne pouvait te calmer ? | 1 Jamais
+2 Quelques jours
+3 La moitié du temps
+4 Plus de la moitié du temps
+5 Presque tous les jours
+
+4 | Durant les 30 derniers jours à quelle fréquence vous êtes-vous senti désespéré ?
+ | 1 Jamais
+2 Quelques jours
+3 La moitié du temps
+4 Plus de la moitié du temps
+5 Presque tous les jours
+
+5 | Durant les 30 derniers jours à quelle fréquence vous êtes-vous senti(e) agité(e) ou nerveux(se) ?
+ | 1 Jamais
+2 Quelques jours
+3 La moitié du temps
+4 Plus de la moitié du temps
+5 Presque tous les jours
+
+6 | Durant les 30 derniers jours combien de fois vous êtes-vous senti si agité que vous ne pouviez pas rester assis ?
+ | 1 Jamais
+2 Quelques jours
+3 La moitié du temps
+4 Plus de la moitié du temps
+5 Presque tous les jours
+
+7 | Durant les 30 derniers jours à quelle fréquence vous êtes-vous senti(e) déprimé(e) ?
+ | 1 Jamais
+2 Quelques jours
+3 La moitié du temps
+4 Plus de la moitié du temps
+5 Presque tous les jours
+
+8 | Durant les 30 derniers jours à quelle fréquence avez-vous eu l'impression que tout était un effort ?
+ | 1 Jamais
+2 Quelques jours
+3 La moitié du temps
+4 Plus de la moitié du temps
+5 Presque tous les jours
+
+9 | Durant les 30 derniers jours combien de fois t'es-tu senti si triste que rien ne pouvait te remonter le moral ?
+ | 1 Jamais
+2 Quelques jours
+3 La moitié du temps
+4 Plus de la moitié du temps
+5 Presque tous les jours
+
+10 | Durant les 30 derniers jours combien de fois vous êtes-vous senti inutile ?
+ | 1 Jamais
+2 Quelques jours
+3 La moitié du temps
+4 Plus de la moitié du temps
+5 Presque tous les jours
+
+ | Toujours | Plusieurs fois | Quelques fois | Juste 1 ou 2 fois | Jamais  | Ne sait pas [Ne pas lire]
+
+A la maison |  |  |  |  |  |
+
+ Au lieu de travail/ à l’école ou à l’université |  |  |  |  |  |
+
+Dans un espace public ? |  |  |  |  |  |

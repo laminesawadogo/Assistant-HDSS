@@ -1,0 +1,30 @@
+# Comptes de l'equipe OPO autorises a utiliser l'assistant.
+#
+# IMPORTANT - A FAIRE AVANT TOUT DEPLOIEMENT :
+#   1. Remplacer les comptes d'exemple ci-dessous par les vrais comptes de l'equipe.
+#   2. Changer les mots de passe (ils sont hashes automatiquement au premier lancement).
+#   3. Remplacer la valeur de "key" sous cookie par une chaine aleatoire secrete a vous
+#      (ex: python -c "import secrets; print(secrets.token_hex(32))").
+#   4. Ne jamais partager ce fichier ni le committer dans un depot public
+#      (l'ajouter a .gitignore si vous utilisez Git).
+#
+# role : "correction" (acces complet, y compris revue des incoherences a valider)
+#        ou "consultation" (indicateurs, echantillons, syntaxes uniquement).
+
+credentials:
+  usernames:
+    admin:
+      name: "Administrateur OPO"
+      email: "admin@opo.example.org"
+      password: "ChangezMoi123!"
+      role: "correction"
+    analyste1:
+      name: "Analyste OPO"
+      email: "analyste1@opo.example.org"
+      password: "ChangezMoiAussi123!"
+      role: "consultation"
+
+cookie:
+  name: "opo_auth_cookie"
+  key: "REMPLACER_PAR_UNE_CLE_SECRETE_ALEATOIRE"
+  expiry_days: 7

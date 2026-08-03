@@ -1,0 +1,20 @@
+Table: TSocialgp_rltn
+
+Titre: Table TSocialgp_rltn
+Description: Table Socialgp_Relation
+
+Variable eventid (table TSocialgp_rltn) : EVENT ID. Type: Identifiant.
+
+Variable episodeid_head (table TSocialgp_rltn) : EPISODE OF HEADSHIP ID. Type: Texte / Numérique.
+
+Variable episodeid_res (table TSocialgp_rltn) : EPISODE RESIDENCE ID. Type: Texte / Numérique.
+
+Variable individid (table TSocialgp_rltn) : INDIVIDUAL ID. Type: Identifiant.
+
+Variable observeid (table TSocialgp_rltn) : Observation ID for the relationship. Type: Identifiant.
+
+Variable evtdate (table TSocialgp_rltn) : Date at the beginning of the relationship. Type: Date.
+
+Variable rltn_head (table TSocialgp_rltn) : Date of Interview. Type: Catégorielle (codes). Modalites/valeurs codees: 1 Socialgp head 2 Wife / husband 3 Son / daughter 4 Undefined / stepdaughter 5 Grandson / granddaughter 6 Father / mother 7 Stepfather / stepmother 8 Brother / sister 9 Nephew / niece 10 No kinship 11 Another parent 12 Don’t know.
+
+Variable entry_date (table TSocialgp_rltn) : Date of Interview. Type: Date.

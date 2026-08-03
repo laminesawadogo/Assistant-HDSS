@@ -1,0 +1,60 @@
+Table: TBase_Educ
+
+Titre: Table TBase_Educ
+Description: Education_Employment Table
+
+Variable Observeid (table TBase_Educ) : OBSERVATION ID. Type: Identifiant.
+
+Variable Individid (table TBase_Educ) : INDIVIDUAL ID. Type: Identifiant.
+
+Variable Socialgpid (table TBase_Educ) : HOUSEHOLD ID. Type: Identifiant.
+
+Variable school_train (table TBase_Educ) : school attendance. Type: Catégorielle (codes). Modalites/valeurs codees: Goes to school Has already gone to school Has never gone to school | 99=Don’t known or Missing value.
+
+Variable school_code (table TBase_Educ) : School code. Type: Texte / Numérique.
+
+Variable class_code (table TBase_Educ) : class code. Type: Catégorielle (codes). Modalites/valeurs codees: 0=Not concerned | 1=Preschool 11 CP1 12 CP2 13 CE1 14 CE2 15 CM1 16 CM2 6ème 5ème 4ème 3ème 2nd 1ère Tle SUP1 SUP2 SUP3 SUP4 SUP5 SUP6 SUP7+ | 99=Don’t known or Missing value.
+
+Variable class_type (table TBase_Educ) : class type. Type: Catégorielle (codes). Modalites/valeurs codees: Morning class Evening class | 99=Don’t known or Missing value | 0=Not concerned.
+
+Variable alph_train (table TBase_Educ) : Has done literacy training. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable prof_train (table TBase_Educ) : Has done professional training. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable relig_train (table TBase_Educ) : Has done religious training. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable activity (table TBase_Educ) : Had activity during last 7 days. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned.
+
+Variable activity_code (table TBase_Educ) : activity code. Type: Texte / Numérique.
+
+Variable activity_desc (table TBase_Educ) : activity description. Type: Texte / Numérique.
+
+Variable activity_type (table TBase_Educ) : activity type. Type: Catégorielle (codes). Modalites/valeurs codees: freelance Public wage earners private wage earners employer mother's helper apprentice/ professional training voluntary | 99=Don’t known or Missing value | 0=Not concerned.
+
+Variable activity_domain (table TBase_Educ) : activity field. Type: Catégorielle (codes). Modalites/valeurs codees: Farmer/hunting/ forestry fishing/ fish farming/ aquaculture Extractive activities Manufacture Electricity/gas/water production and distribution House building Trade/car repairing Hotel/restaurant Transport and communication Financial activities Real-estate/renting out Public service Education Health activity/social services Collective or individual activity Domestic staff employer Extra-territorial organizations activity | 99=Don’t known or Missing value | 0=Not concerned.
+
+Variable activity_sect (table TBase_Educ) : District number where activity is carried out. Type: Numérique.
+
+Variable job_search (table TBase_Educ) : Has looked for job during last 7 days. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned.
+
+Variable helper (table TBase_Educ) : extra activity as domestic helper. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned.
+
+Variable apprentice (table TBase_Educ) : extra activity as apprentice. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable activ_paid (table TBase_Educ) : paid extra activity. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned.
+
+Variable readwrite (table TBase_Educ) : literacy. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned.
+
+Variable moore (table TBase_Educ) : literacy in mooré. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned.
+
+Variable dioula (table TBase_Educ) : literacy in dioula. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned.
+
+Variable fulfulde (table TBase_Educ) : literacy in fulfuldé. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable french (table TBase_Educ) : literacy in french. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned.
+
+Variable other_natlang (table TBase_Educ) : literacy in other national language. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned.
+
+Variable other_intlang (table TBase_Educ) : literacy in other international language. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned.
+
+Variable entry_date (table TBase_Educ) : Interview date. Type: Date.

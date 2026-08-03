@@ -1,0 +1,22 @@
+Table: TDeath
+
+Titre: Table TDeath
+Description: Death Table
+
+Variable eventid (table TDeath) : EVENT ID. Type: Identifiant.
+
+Variable observeid (table TDeath) : OBSERVATION ID. Type: Identifiant.
+
+Variable individid (table TDeath) : INDIVIDUAL DIED. Type: Identifiant.
+
+Variable evtdate (table TDeath) : Date of death. Type: Date.
+
+Variable diedinhs (table TDeath) : Died in a health structure. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable died_struct_code (table TDeath) : Code of health structure. Type: Catégorielle (codes). Modalites/valeurs codees: 0. Not concerned.
+
+Variable gonetohs (table TDeath) : Gone to a health structure before died. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=No | 99=Don’t known or Missing value.
+
+Variable gone_struct_code (table TDeath) : Code of health structure he has gone before died. Type: Catégorielle (codes). Modalites/valeurs codees: 0. Not concerned.
+
+Variable entry_date (table TDeath) : Interview date. Type: Date.

@@ -1,0 +1,274 @@
+Document: 24_Manuel_R14
+
+﻿
+
+SSD DE OUAGADOUGOU
+
+Manuel de l'agent de terrain
+R13
+Dernière mise à jour : 26/02/2025
+
+DEFINITION DES EVENEMENTS DEMOGRAPHIQUES SUIVI DANS LE SYSTEME
+
+Grossesse
+La grossesse est le fait pour une femme d’être enceinte. La grossesse se manifeste par un ensemble de phénomènes touchant la femme entre la fécondation et l’accouchement.
+Issue de la grossesse
+Elle est soit un avortement (spontané ou provoqué), soit un accouchement.
+Avortement
+C’est l’expulsion spontanée ou provoquée d’un produit de conception avant qu’il soit viable (avant la 28ème semaine). On distingue l’avortement spontané, aussi appelé fausse couche, dû à une maladie ou sans cause connue, et l’avortement provoqué et pratiqué soit pour des raisons thérapeutiques, soit pour des raisons volontaires et appelé IVG1.
+Accouchement
+C’est l’expulsion ou l’extraction complète du corps de la mère d’un produit de conception à la fin de la grossesse. Une femme peut accoucher soit d’un enfant vivant, soit d’un mort-né (enfant né décédé d'une grossesse ayant atteint au moins 28e semaine).
+Naissance
+Nous entendons par naissance, la naissance vivante à laquelle nous donnons la définition suivante recommandée par les Nations Unies en 1950 : une naissance est l’expulsion ou l’extraction complète du corps de la mère, indépendamment de la durée de gestation, d’un produit de conception qui, après cette séparation, respire ou manifeste tout autre signe de vie (battement de cœur, respiration, pulsation de cordon ombilical, contraction de muscle soumis à l’action de la volonté).
+Jamais en union
+Une personne jamais en union est une personne qui n’a jamais cohabité avec un conjoint ni fait aucune cérémonie de mariage.
+Union
+Une personne en union est une personne qui cohabite avec un conjoint et/ou qui a fait une ou plusieurs cérémonies de mariage.
+Divorcé / séparé
+Personne dont la dernière union a connu une rupture définitive pour une raison autre que le décès du conjoint.
+Veuf/veuve
+Personne dont la dernière union a connu une rupture définitive à cause du décès du conjoint.
+
+Arrivée
+L’enregistrement des arrivées dans une UCH se fait en deux temps. Tout d’abord, lorsqu’une personne qui n’est ni résidente présente ni résidente absente (mais elle peut être un résident retiré) est repérée nouvellement lors d’un passage R t pour avoir dormi la nuit passée dans l’UCH (par définition, elle est alors là depuis moins de 6 mois), cette personne est enregistrée comme un visiteur. S’il est constaté au passage suivant R t+ 1 que ce visiteur (qu’il ait dormi ou non) a habité plus de 6 mois, il devient résident (absent ou présent). Si on constate au passage R t+ 1 que le visiteur n’a pas habité au moins 6 mois mais a dormi la nuit passée, il reste visiteur.
+
+Départs
+L’enregistrement des départs d’une UCH se fait en deux temps. Tout d’abord, lorsqu’on constate à un passage R t qu’une personne résidente (présente ou absente) au dernier passage R t-1 n’a pas dormi la nuit passée et est partie depuis moins de 6 mois de l’UCH, on enregistre cette personne comme résidante absente. Si au passage suivant R t+ 1, on constate que la personne résidente absente au R t est partie depuis plus de 6 mois (même si elle a dormi la nuit passé) cette personne devient un résident retiré.
+
+A noter que les personnes qui changent de ménage au sein d’une même UCH ne sont pas considérées comme des arrivées / départs. Par contre, les personnes qui viendraient d’une autre UCH suivie sont considérées comme des arrivées / départs. L’unité géographique par rapport à laquelle se définit la résidence et les arrivées / départs est l’UCH.
+Décès
+Personne qui a cessé de vivre.
+PRESENTATION DES FICHES A PASSAGE SEMESTRIEL
+
+Fiche présence
+Administrée pour toute personne du ménage qui avait le statut de résident (absent ou présent) ou de visiteur au passage précédant, sauf les personnes décédées entre les deux passages, la fiche présence sert à renseigner les informations sur la présence de ces individus dans l'UCH durant les six derniers mois. Pour chaque individu, le pocket PC affiche son statut au round précédent qui est soit résident présent, résident absent avec sa date de départ, visiteur avec sa date d’arrivée.
+Pour chacune de ces personnes, l’agent de terrain demande si elle a passé la nuit précédent son passage dans l’UCH oui ou non.
+Si l’enquêté n’a pas dormi la nuit précédent le passage de l’agent de terrain, celui-ci demande la date de son dernier départ et suivre l’algorithme suivant :
+    • S’il s’agissait d’un résident absent au round précédent, cela revient à actualiser la date de son dernier départ. Cette date peut être postérieure à la date de départ mentionnée au round précédent. L’enquêté pouvant entre temps réintégré l’UCH et repartir. Une fois la date de départ actualisée et si celle-ci est supérieure à 6 mois, le résident absent devient un retiré et on remplit une fiche départ pour ce dernier. Dans le cas contraire (date inférieure à 6 mois) le résident absent reste résident absent.
+    • S’il s’agissait d’un résident présent au round précédent, l’agent de terrain demande   la date de son dernier départ. Si celle-ci est supérieure à 6 mois, le résident présent devient un retiré et on remplit une fiche départ pour ce dernier.
+    • S’il s’agissait d’un visiteur au round précédent, on prend la date de son dernier départ et deux cas peuvent se présenter. Si la différence entre la date d’arrivée du visiteur dans l’UCH et la date de son dernier départ est supérieure à 6 mois, ce visiteur devient un résident absent et on remplit une fiche arrivée pour ce dernier. En revanche, si la date de son dernier départ reste inférieure à 6 mois, ce visiteur devient retiré.
+Si l’enquêté a dormi la nuit précédent le passage de l’agent de terrain, celui-ci suit l’algorithme suivant pour la détermination du statut au round en cours :
+    • S’il s’agissait d’un résident absent, ce qui signifie qu’il a une date de départ enregistrée au round précédent, l’agent de terrain demande la date de la dernière arrivée. Si la différence entre la date de la dernière arrivée et la date de départ du round précédent est supérieure à 6 mois, alors ce résident absent est à ce round un visiteur. Ce qui signifie qu’il est d’abord passé de résident absent à retiré (puisqu’il a fait plus de 6 mois à l’extérieur de l’UCH) avant de devenir visiteur. Pour ce dernier, on remplit d’abord une fiche départ avant de remplir une fiche nouveau visiteur (en reprenant son ID et en actualisant ses données socio-démographiques). Si par contre la différence entre la date de la dernière arrivée et la date de départ du round précédent est inférieure à 6 mois, ce résident absent devient résident présent.
+    • S’il s’agissait d’un résident présent, alors il reste résident présent.
+    • S’il s’agissait d’un visiteur, alors il a une date d’arrivée enregistrée au round précédent. L’agent de terrain note la date de la dernière arrivée. Cette date peut être postérieure à la première date (l’enquêté pouvant entre temps quitter l’UCH et la réintégrer après). Si la date de la dernière arrivée est supérieure à 6 mois, l’enquêté devient un résident présent. Et l’agent de terrain remplit une fiche arrivée pour ce dernier. Si par contre la date de la dernière arrivée est inférieure à 6 mois, ce visiteur reste visiteur.
+En résumé :
+Statut R t-1	A dormi nuit passée R t ?	Dates à collecter / actualiser	Statut R t	fiches
+RA (date départ)	Non	Date dernier départ	Si départ > 6 mois : RR
+	Fiche départ
+			Si départ < 6 mois : RA
+	Oui	Date dernière arrivée	Si différence entre date départ et date arrivée > 6 mois : V	Fiche départ+ fiche nouveau visiteur
+			Si différence < 6 mois : RP
+RP	Oui		RP
+	Non	Date dernier départ	Si départ > 6 mois : RR	Si départ < 6 mois : RA
+	Fiche départ si RR	V (date arrivée)	Oui	Date dernière arrivée
+Si arrivée > 6 mois : RP	Fiche arrivée
+Si arrivée < 6 mois : V			Non	Date dernier départ
+Si différence date arrivée et date départ > 6 mois : RA	Fiche arrivée
+Si différence < 6 mois : VR		Pour tous les résidents (présent ou absent) dont la date de départ (absence continue) remonte à plus de 6 mois, remplir une fiche départ.	Pour tous les résidents absents qui ont dormi et qui ont séjourné plus de 6 mois hors de l’UCH, remplir une fiche départ et une fiche nouveau visiteur
+Pour tous les visiteurs au passage précédant devenu résident (présent ou absent), remplir une fiche arrivée.	Pour les nouveaux visiteurs qui sont là depuis plus de 6 mois (problème du round trop long), remplir la fiche nouveau visiteur, ensuite la fiche présence, puis la fiche arrivée.		Fiche départ	Elle est administrée à tout résident qui a passé plus de 6 mois hors de l’UCH. L’agent de terrain renseigne le lieu de destination de l’enquêté, la date de départ et la raison principale du départ. Les raisons de départ sont classées en 10 grandes catégories. Choisir une seule raison parmi ces modalités (la raison principale).
+01 S’est marié : la mise en union d’un membre du ménage	02 A déménagé avec sa famille / des parents : l’accompagnement d’un membre de la famille ou le suivi de l’ensemble du ménage	03 A divorcé / est devenu veuf / s’est séparé : la rupture de l’union 	04 Autres raisons familiales : Pour toutes les autres raisons ayant un lien direct avec la famille, alors choisir la modalité autre.	05 A emménagé dans sa propre maison : concerne le cas où la famille ou l’individu d’un aménage dans un nouveau logement ailleurs en dehors de l’UCH
+06 Autre raison liée à l’habitat : concerne toute raison autre la modalité 05 liée aux caractéristiques du logement	07 Pour raison professionnelle : Elles sont en relation avec l’accès ou l’exercice d’un emploi rémunéré. Il peut donc s’agir entre autres d’un déplacement pour prendre un nouvel emploi, d’un déplacement à la suite d’une perte d’emploi, parce que le lieu quitté offre peu de perspectives d’emploi, ou pour se rapprocher de son lieu de travail ou encore pour un manque de terre cultivable. 	08 Pour faire une formation : Toutes les raisons liées à la fréquentation scolaire de l’individu soit au début du cycle (primaire ou secondaire d’une part, université ou apprentissage ou école professionnelle d’autre part) soit à la fin d’un cycle ou toute autre raison lié à sa scolarisation ou à la formation.	09 Déplacement en raison catastrophe ou d'une crise (Préciser) : Ce son sont des qui peuvent représente un danger pour la vie et les bien de l’individu concernant le lieu quitté. Ce danger peut être une catastrophe naturelle, une raison sécuritaire ou le terrorisme ou toute autre cause d’un autre conflit	10 Autre, préciser : Toutes les raisons qui ne peuvent être classées dans l’une des neuf catégories ci-dessus. Parmi les individus on distinguera ceux dont on dit qu’ils sont partis juste pour changer, ainsi que les gens dont on ne connait pas la cause de départ.
+	Fiche arrivée	Cette fiche est administrée aux individus qui étaient visiteurs au passage précédent et sont devenus résidents absent ou présent (RA ou RP). Cette fiche ne doit pas être administrée au R1 car les informations sur les nouveaux résidents au R1 seront collectées à l’enquête de base (enquête ménage), en même temps que l’information sur les résidents au R0.	Pour les personnes qui étaient visiteur avec une nouvelle ID au passage précédant et qui sont devenues résidentes, l’agent de terrain remplit toute la fiche.	Pour les personnes qui étaient visiteur avec une ID venant directement d’une autre UCH de l’OPO au passage précédant et qui sont devenu résidentes, l’agent de terrain ne remplit que la partie CIRCONSTANCES DE LA VENUE DANS L’UCH ; pour les visiteurs qui avaient une ID mais ne sont pas venus directement d’une autre UCH du système, le Pocket PC affiche aussi les histoires matrimoniales, génésiques et migratoires, à actualiser.
+				Histoire matrimoniale
+Les questions K1 à K4 doivent être remplies pour toutes les personnes nouvellement résidentes dans le ménage de 12 ans ou plus pour les femmes, de 15 ans ou plus pour les hommes. On connaît déjà le statut matrimonial actuel de toutes ces personnes ; elles sont actuellement soit célibataire, soit en union, soit séparé/ divorcé, soit veuf / veuve. On veut ici savoir en plus pour chaque membre combien d’unions (au sens OPO du terme, c'est-à-dire soit une cérémonie, soir une mise en cohabitation) ils ont connu en tout dans leur vie et la date de la séparation pour les séparés / divorcés. Si le répondant ne peut pas répondre, interroger directement la personne, au besoin en revenant dans le ménage. Si la personne est absente, utiliser le code « donnée manquante » : ces informations devront être collectées au passage suivant.		K1	Pour cela, on commence par poser une question filtre : est-ce que (NOM) a déjà connu une union qui s’est terminée ? Pour les séparé/ divorcé et veuf/ veuve, ne pas poser la question et cocher « oui » d’office. Par contre poser la question pour tous les individus en union ainsi que les individus célibataires ; ces derniers peuvent avoir connu une union et s’être déclaré (avoir été déclaré) toutefois célibataire.
+K2	Pour tous les membres du ménage qui ont connu une union qui s’est terminée, noter le nombre total d’union, y compris la ou les unions actuelles.		K3	Noter ensuite l’âge du membre du ménage au moment du début de sa première union, sauf s’il s’agit d’une union actuelle, auquel cas nous avons déjà l’information.
+	Par exemple, un homme qui aurait épousé une première femme, ensuite une deuxième, puis une troisième, et dont la deuxième serait décédée, puis qui aurait épousé une quatrième femme qui serait partie rapidement, tout cela avant le R0, serait enregistré de la manière suivante. Il aurait été enregistré au R0 comme étant actuellement marié avec deux épouses. Il répondra « oui » à la question K1, et son nombre total d’union serait 4. On n’enregistrera pas l’âge à la première union, puisqu’il est toujours marié à sa première femme (on a déjà la date de sa première union).		K4	Enfin, demander pour chaque personne séparée / divorcée la date de la rupture de sa dernière union.
+	Religion	Demander pour chaque personne adulte (15 ans et plus ) résidant dans le ménage quelle est sa religion. Une seule réponse possible. Il s’agit de la religion actuelle. Pour les femmes, ne pas supposer qu’elles ont forcément la religion de leur mari, poser la question. De même, il faut poser la question de la religion pour tous les membres adultes du ménage, ne pas se fier au prénom.
+Histoire génésique	Pour remplir cette partie du questionnaire (qui concerne les femmes de 12 à 49 ans), l’agent doit obligatoirement s’entretenir avec chaque femme nouvellement résidente du ménage de 15 à 49 ans ; si la femme est absente, et ne peut pas être jointe en revenant à un autre moment dans le ménage, utiliser le code « données manquantes »: ces informations manquantes devront être récoltées au passage suivant. Si le ménage comprend des jeunes filles de 12, 13 ou 14 ans, demandez à un répondant adulte si elles ont déjà accouché. Dans l’affirmative, entretenez vous avec ces jeunes filles et remplissez leur histoire génésique. Dans la négative, remplissez vous-même « non » dans les champs appropriés.		Demander d’abord à chaque femme nouvellement résidante dans l’UCH, si elle a déjà accouché et combien de naissances vivantes a eu. Il s’agit de répertorier toutes les naissances vivantes de chaque femme nouvellement résidante dans l’UCH, c'est-à-dire tous les enfants nés vivants, même s’ils sont décédés peu de temps après la naissance. Par contre, on ne répertorie pas les morts nés. Par suite, l’agent renseigne les informations suivantes : le nombre d’enfants encore en vie et le nombre d’enfants décédés.
+Histoire migratoire
+Ce module concerne tous les nouveaux résidents âgés 15 ans et plus. Est considéré comme lieu de résidence une localité ou l’individu a habité pendant au moins 6 mois.
+
+Q1 Pour les personnes nées au Burkina mais hors de Ouagadougou demandez si le lieu de naissance est une ville ou un village. Pour les personnes nées hors du Burkina demandez s’il s’agit de la Côte d’Ivoire, d’un autre pays africain ou hors de l’Afrique ; selon la réponse de l’enquêté choisissez le code correspondant.
+
+Q2 Si la personne n’est pas née à Ouagadougou, demandez en quelle année elle est venue pour la première fois résider à Ouagadougou (attention, seulement les séjours de six mois et plus sont pris en considération).
+
+Q3 C’est le lieu de départ avant l’arrivée à Ouagadougou pour la première fois. Pour ceux qui ont effectué plusieurs migrations avant leur arrivée il s’agit du dernier lieu d’habitation avant l’installation à Ouagadougou. Procédez de la même manière qu’en Q1 pour savoir si l’individu provient d’un village ou d’une ville du Burkina, de la Côte d’Ivoire, d’un autre pays africain ou d’un pays non africain.
+
+Q4 Demander si l’individu est retourné l’année précédente pour un séjour de plus de 3 mois dans une des résidences antérieures à Ouagadougou
+
+Q5 Donnez l’année d’installation de l’individu dans l’UCH
+
+Circonstances de la venue dans l’UCH
+Précisez la raison principale pour lesquelles l’individu à quitté l’endroit précédant (cf fiche départ). Précisez ensuite la raison principale pour laquelle l’individu est venu résider dans l’UCH : cocher la réponse dans la case appropriée. Il s’agit des mêmes modalités de réponse pour la raison du départ. Normalement, on ne devrait pas avoir la même cause de départ du lieu précédant et raison d’arrivée dans le lieu actuel.
+
+Education
+Ce module concerne tous les nouveaux résidents, quel que soit leur âge. Est considéré comme lieu de résidence une localité ou l’individu a habité pendant au moins 6 mois.
+
+Fiche création de ménage
+La fiche création de ménage est administrée pour chaque nouveau ménage de l’UCH que le ménage vienne d'ailleurs ou qu’il soit constitué de résidents de l'UCH. L’enquêteur identifie ces ménages soit à partir des nouveaux visiteurs ou des changements de ménage dans l’UCH signalé au cours de l’entretien avec un ménage existant, soit après avoir parcouru tous les ménages inscrits au round précédent et en constatant un nouveau ménage. Le remplissage de cette fiche commence par l’identification du ménage. L’agent de terrain cherche d’abord à savoir s’il s’agit d’un déménagement en entier ou partiel d’un ménage. On entend par déménagement en entier d’un ménage, le déménagement (d’une UCH à une autre) d’exactement tous les membres de ce ménage. Le déménagement partiel s’entend par le déménagement d’au moins un des membres du ménage.
+Dans l’affirmative (si la réponse est OUI), l’agent de terrain renseigne si ce ménage a déjà été suivi dans le cadre de l’OPO (à la connaissance du répondant) et si le ménage a habité après octobre 2008 un des quartiers de Nioko 2 / Niokwarbin, Polesgo / Toudbweogo ou Thanghin. Si la réponse à l’une de ces questions est OUI ou NSP alors l’agent de terrain active la recherche de ce ménage en spécifiant les informations suivantes :
+    • Nom et prénoms du chef du ménage
+    • Nom de la Personne de référence
+    • Nom et prénoms d’un membre du ménage
+    • Ethnie du chef du ménage
+    • Numéro du secteur que le ménage a quitté
+    • Noms de jusqu’à trois autres individus du ménage
+(A noter que si le répondant présente à l’agent sa fiche de consentement, ce dernier a la possibilité de rentrer directement l’identifiant du ménage dans le Pocket). Si le système retrouve l’identifiant du ménage, alors l’agent de terrain vérifie la liste des membres du ménage retrouvé. Il sélectionne les membres retrouvés et qui habitent toujours avec le ménage. Ensuite, il remplit une fiche nouveau visiteur pour chacun, ainsi que les éventuels visiteurs du ménage. Ce remplissage commence par la partie A de la fiche nouveau visiteur. (Cf. fiche nouveau visiteur). Il remplit une fiche nouveau visiteur pour tout membre actuel du ménage retrouvé ou visiteur qui ne figure pas sur la liste affichée des membres. Ce remplissage commence au point B sur la fiche nouveau visiteur (Cf. fiche nouveau visiteur).
+Si le système ne retrouve pas le ménage alors un nouveau ménage sera créé avec un nouvel identifiant en renseignant les informations suivantes :
+    • N° provisoire du ménage si le ménage est non enregistré
+    • Nom et Prénom du chef de ménage
+    • Langue utilisée (Dioula, Français, Mooré, autre)
+    • Ethnie du chef de ménage (voir liste Ethnie)
+    • Date d’arrivée dans l’UCH
+    • Statut du questionnaire (Complet / Incomplet) et si incomplet, renseigner la raison
+
+Ensuite, l’agent dresse la liste de tous les membres de ce ménage (les personnes qui ont habité avec le ménage depuis plus de 6 mois et sont parties depuis moins de 6 mois ainsi que les visiteurs), en demandant pour chacun s’il est venu d’un autre ménage de l’UCH ou de l’extérieur de l’UCH. En fonction des réponses, il remplit une fiche « nouveau visiteur » (commencer au point B) ou une fiche changement de ménage.
+
+Fiche nouveau visiteur
+Elle est administrée à tout nouveau visiteur constaté lors d’un round. Il s’agit d’individus qui ne figuraient pas sur la liste des ménages de l’UCH au round précédent mais qui ont passé la nuit précédant votre passage dans le ménage, ou des membres des nouveaux ménages constatés qui ne résidaient pas déjà dans un autre ménage de l’UCH avant.
+La fiche nouveau visiteur sera aussi administrée aux résidants qui ont fait plus de 6 mois hors de l’UCH depuis le dernier passage et qui ont dormi la nuit de référence.
+Deux cas peuvent se présenter (A et B) :
+A. Soit l’individu est arrivé par déménagement d’un ancien ménage du système. Dans ce cas, après avoir rempli la fiche création de ménage, le pocket PC affiche la liste de tous les individus du ménage en question et la dernière UCH habitée par ces derniers. Pour chaque individu, l’agent de terrain cherche à savoir s’il vient directement de cette UCH sans avoir à habité ailleurs entre temps. Quel que soit la réponse, le Pocket PC affiche les caractéristiques de base (date de naissance, sexe, ethnie survie et résidence des parents, le lien de parenté avec le chef du ménage, statut matrimonial, dates de début d’union, résidence du conjoint) de la personne, que l’agent actualise ; il prend en plus la date d’arrivée de la personne dans l’UCH.
+B. Soit il s’agit d’une nouvelle personne qui vient d’arriver dans un nouveau ou ancien ménage (pas dans le cadre d’un déménagement d’un ancien ménage du système). La partie B de la fiche nouveau visiteur sera administrée aussi aux résidants présent du round passé qui ont fait plus de 6 mois hors de l’UCH. Dans ce cas, l’agent de terrain renseigne si cet individu a déjà été suivi dans le cadre de l’OPO à la connaissance du répondant et s’il a habité après octobre 2008 un des quartiers de Nioko 2 / Niokwardin, Polesgo / Toudbweogo ouThanghin.
+Si la réponse à l’une de ces questions est OUI ou NSP alors l’agent de terrain active la recherche de cet individu en spécifiant les informations suivantes :
+Nom et prénoms de l’individu
+Nom et prénoms du chef du ménage
+Ethnie du chef du ménage
+Numéro du secteur que le ménage a quitté
+Noms de jusqu’à trois autres individus du ménage
+Si le programme retrouve l’individu en question, on se retrouve au même cas que précédemment à savoir un individu déjà suivi dans le système. L’agent de terrain actualise les informations sociodémographiques affichées par le pocket PC et prend sa date d’arrivée dans l’UCH. Si par contre le programme ne retrouve pas l’individu, alors un nouvel identifiant sera créé et l’agent de terrain prend les caractéristiques démographiques de l’individu et sa date d’arrivée dans l’UCH.
+Si l’on déclare que cet individu n’a jamais été suivi dans le cadre de l’OPO et qu’il n’a pas habité après octobre 2008 un des quartiers de Nioko 2 / Niokwardin, Polesgo / Toudbweogo ou Thanghin, alors il s’agit également d’un nouvel individu dans le système et l’interview continue par les informations sur les caractéristiques démographiques et la date d’arrivée dans l’UCH.
+
+Caractéristiques sociodémographiques
+Il s’agit de renseigner le sexe, la date de naissance et l’ethnie de l’enquêté et le lien de parenté avec le chef de ménage. L’agent de terrain saisit la date de naissance de chaque individu recensé (attention, ne pas demander l’âge mais bien la date de naissance). Pour cela, il peut s’adresser alors aux gens susceptibles de lui fournir cette information. Il peut arriver parfois que l'enquêté ne connaisse pas exactement sa date de naissance (jour, mois, année). S'il connaissait le mois, l'agent de terrain note le 15 dudit mois. S'il connaissait seulement l'année (né en ou né vers...), l'agent de terrain note le 30 juin de ladite année. Si la personne ne connaît pas sa date de naissance, on demande à voir des papiers, et à défaut, on estime son âge à partir de l’âge à la naissance des enfants et de l’âge des enfants pour les femmes, ou en estimant par rapport à d’autres membres du ménage. Il est impossible de ne pas remplir ce champ.
+
+Survie des parents
+Cette partie renseigne sur la survie du père et de la mère biologique de l’enquêté. Si ces derniers sont en vie et habitent l’UCH, l’agent de terrain renseigne sur le N° du ménage duquel ils font ainsi que le N° de ligne dans le ménage. Il est possible dans des rares cas de choisir l’option NSP.
+Numéro de téléphone du CM
+
+Statut matrimonial
+Pour les visiteurs hommes de 15 ans et plus, et les visiteurs femmes de 12 ans et plus, renseigner leur statut matrimonial actuel (jamais en union, en union, séparé/ divorcé, veuf / veuve).
+
+Date d’arrivée dans l’UCH
+Il s’agit de la date de la dernière arrivée dans l’UCH.
+NB : Pour les individus et ménages qui prétendent être présents depuis le round passé, il faut les administrer une fiche nouveau visiteur en leur donnant une date d’arrivée arbitraire de 7 mois avant l’enquête.
+
+Fiche grossesse
+Elle est administrée à toute femme résidente âgée de 15 à 49 ans qui a contracté une grossesse durant les six derniers mois2 ou plus mais qui n’avait pas rempli de fiche grossesse au passage précédant. Cette fiche grossesse est à administrer, dans la mesure du possible, directement à la femme concernée.
+Sur cette fiche, l’agent de terrain note l’estimation du début de la grossesse. Pour les femmes qui au moment du passage ont déjà accouché depuis le dernier passage alors que la grossesse n’était pas signalée, l’agent de terrain utilisera la date d’accouchement pour estimer la date du début de grossesse Les fiches grossesses récoltées à un passage donnée seront utilisées au passage suivant pour s’enquérir des issues de ces grossesses si les issues ne sont pas signalées spontanément. Ces fiches permettent ainsi de repérer des fausses couches et des morts-nés supplémentaires, mais surtout, d’essayer de capturer les naissances vivantes suivies d’un décès précoce (leur non-déclaration induit une sous-estimation de la mortalité infantile).
+
+Fiche issue de grossesse
+Elle est administrée à toute femme âgée de 15 à 49 ans ayant déjà une fiche grossesse. Cette fiche comme son nom l’indique sert à renseigner l’issue de la grossesse. Sur cette fiche, l’agent de terrain renseigne l’issue de la grossesse qui peut être soit un avortement (provoqué ou spontané) soit un accouchement. Le produit de l’accouchement peut être soit un enfant mort né ou né vivant. L’agent de terrain note ensuite la date de l’issue. En plus il demande à la femme si elle a eu des consultations prénatales. Si oui l’enquêteur note le nombre et enregistre les dates des différents CPN. Il se refera au carnet de santé de la femme pour renseigner les dates. Si le carnet n’est pas disponible l’agent de terrain pourra procéder à des estimations avec l’aide de la femme.
+Si l’issue de grossesse est un accouchement, il renseigne le lieu de l’accouchement qui peut être dans une formation sanitaire en précisant le type de formation sanitaire, le domicile du prestataire, dans un domicile autre que celui du prestataire, ou un autre endroit. Il renseigne ensuite le type d’accouchement. L’accouchement peut en effet être un accouchement normal (par voie basse) ou par césarienne ou autre (c'est-à-dire avec des forceps etc.). A la suite du type d’accouchement, l’agent de terrain renseigne sur le type de personnel qui ayant servi d’assistance à l’accouchement. On distingue le personnel de santé (médecins, infirmiers, sage femme, accoucheuse auxiliaire…) les accoucheuses traditionnelles, ou autre personnel.
+Il renseigne ensuite le nombre d'enfants nés de cet accouchement (sortis du ventre, y compris nés vivants et morts nés), le nombre d'enfants nés vivants de cet accouchement et le nombre d'enfants de cet accouchement encore en vie. Si le nombre d’enfant né vivant est différent du nombre d’enfant encore en vie, l’agent de terrain renseigne une fiche décès pour tous les enfants de cet accouchement qui ne sont plus en vie.
+Pour tous les enfants nés vivant de cet accouchement, l’agent de terrain renseigne le nom et prénom du père, l’ID du père s’il est connu du système et son ethnie s’il est inconnu du système. Il renseigne ensuite le lien de parenté de/des enfants avec le chef de ménage et cherche à savoir si cet/ces enfants ont été inscrits à l’état civil. Pour chaque enfant, il note le nom et prénom et le lieu de naissance. Pour finir avec les enfants nés vivants, l’agent de terrain note le poids et la taille de chaque enfant. Ces informations sont à lire sur le carnet de naissance de l’enfant. Il renseigne enfin sur l’intention de la femme de tomber enceinte ou non au moment du début de la grossesse, à savoir, si elle voulait tomber enceinte en ce moment ou si elle le voulait mais plus tard ou encore si elle ne le voulait pas du tout (ou NSP).
+
+Fiche accouchement
+La fiche accouchement liste une série de questions qui permettront de mieux saisir les issues de grossesse. Elle est destinée aux femmes résidentes de l’OPO en âge de procréer (15-49 ans). On commence à demander à l’enquêtée si elle a accouché depuis le passage précédent. Dans l’affirmative, l’agent de terrain remplit une fiche grossesse et issue de grossesse. Ensuite, il relance la femme pour s’assurer qu’elle n’a pas eu une autre issue de grossesse en plus de celle qui a été déclaré. Au cas échéant, l’agent remplit encore une fiche grossesse et issue de grossesse.
+On demande aussi à la femme si elle a eu grossesse qui n’a pas aboutit. Cette question permettra de capter les morts nés et les enfants décédés quelques temps après la naissance. On termine en demandant à la femme si elle est enceinte actuellement.
+
+Fiche suivi des unions
+Cette fiche sert aussi bien à recenser les nouvelles unions qu’à suivre l’évolution des unions déjà contractés par les enquêtés. L’agent de terrain commence par renseigner s’il y a eu une mise en cohabitation ou une cérémonie de mariage dans le ménage depuis le dernier passage. Il demande ensuite s’il s’agit d’une nouvelle union ou d’une évolution d’une union existante en répondant tout simplement par oui ou non à la question : s’agit-il d’une nouvelle union ?
+
+Nouvelle union
+Dans le cas d’une nouvelle union, l’agent de terrain renseigne le nom et prénom du conjoint et l’ID du conjoint si celui-ci est dans l’UCH. Pour chaque union, il renseigne aussi le type de célébration effectué (traditionnel, civil, religieux), leur date ainsi que la date de début de cohabitation. A noter qu’il faut remplir plusieurs fiches nouvelles unions pour un homme qui épouserait plus d’une femme entre deux passages.
+
+Evolution d’une union existante
+Cette évolution peut se présenter deux manières : soit une rupture, soit une nouvelle célébration (réalisation soit du mariage civil, coutumier ou religieux) ou le début de la cohabitation pour une union qui n’aurait été scellée jusqu’ici que par une cérémonie. Dans le cas d’une rupture, l’agent de terrain renseigne le motif à l’origine de la rupture. Ce motif peut être soit la séparation/divorce ou le décès du conjoint. Il note ensuite la date de la rupture. Dans le cas d’une nouvelle célébration, l’agent de terrain se renseigne sur son type (civil, religieux, coutumier) renseigne la date de cette célébration. Il fait de même s’il s’agit du début de la cohabitation. Le renseignement du début de la cohabitation comme évolution de l’union suppose que les conjoints étaient mariés et n’ont jamais cohabités (même pas une fois).
+
+Fiche décès
+Elle est administrée quand un membre du ménage est décédé depuis le dernier passage. L’enquêteur y note la date de décès, le lieu de décès. En ce qui concerne le lieu du décès, on cherche à savoir si l’enquêté est décédé dans une formation sanitaire ou pas. Si c’est le cas, l’agent de terrain renseigne le type de formation sanitaire. Si le concerné n’est pas décédé dans une formation sanitaire, l’agent de terrain demande si celui-ci s’est rendu dans une formation sanitaire avant son décès. Dans l’affirmative, l’agent de terrain demande de préciser le type de formation sanitaire de la dernière formation sanitaire dans laquelle l’enquêté s’est rendu avant son décès. Si le défunt était chef de ménage, l'enquêteur doit obligatoirement remplir une fiche changement de chef de ménage. Une enquête d’autopsie verbale sera effectuée dans le ménage au cours du round.
+
+Fiche UCH
+La fiche UCH a été conçue pour recenser toutes les unités d'habitation. Il s’agit d’une fiche d’une page utilisée aussi bien au recensement de base pour identifier toutes les UCH au départ que dans les rounds suivants pour les nouvelles UCH.
+Elle commence par l’identification de l’UCH où l'agent de terrain saisit l'ID de la ZD d'enquête, l’ID du bloc, l’ID de l'UCH qu'il interroge (concaténation de l’ID du Bloc et du numéro de l’UCH dans le bloc), la localisation de la zone, le type de zone qui est soit lotie ou non lotie, les coordonnées géographiques de l’UCH (qui peuvent être prise à la fin des enquêtes ménages, car l’enregistrement de ces données peut prendre du temps, expliquer ce que l’on fait), le nom et prénoms de la personne de référence de l'UCH (le propriétaire ou un autre nom qui permet de retrouver l’UCH en cas de besoin) qui peut ne pas résider dans l’UCH. Lorsque la personne de référence réside dans l’UCH, l’agent de terrain renseigne son numéro de ménage et son numéro de ligne dans le ménage (après avoir passé les questionnaires ménages). L’agent de terrain renseigne ensuite sur la présence ou non d’une clôture et d’habitants dans l’UCH. Il prend ensuite le nombre de ménages et de bâtiments dans l’UCH (le nombre de bâtiments seulement pour les UCH sans clôture).
+Une fois l’identification de l’UCH faite, l’agent de terrain s’identifie par son nom et prénom, la date de l’enquête, le statut de l’entretien qui peut être complet ou incomplet. Dans le cas où les informations sont incomplètes, l’agent de terrain est tenu de renseigner la raison (vide, habité mais absent, refus).
+L’entretien sur l’UCH se termine par les remarques sur son déroulement. Dans le cas d’un refus, cette partie doit impérativement documenter les causes de ce refus.
+
+Définition du bâtiment : Le bâtiment fait référence à toute construction qui a un toit et des murs sur tous les côtés et une (des) ouverture(s) (avec ou sans fermeture(s)), à hauteur d’homme, quel que soit la nature des murs et du toit (sauf la paille), et quelques soit la fonction du bâtiment (toilette, animaux, etc…). Si aucun des bâtiments n’est habité pour l’instant, l’UCH sera considérée comme Vide.
+Toutes les UCH vides (bâtiments d’habitation dont la construction est terminée et qui pourraient être loués mais qui ne sont pas habités au moment du passage de l’enquêteur) feront aussi l’objet d’un recensement.
+Remarque : nous ne recenserons pas les cours où aucun bâtiment n’est habité ou ne pourrait être loué pour habitation (exemple de non-recensement : une école, une parcelle avec une maison en construction).
+
+Fiche changement de ménage
+Elle est administrée à tout membre qui a changé de ménage depuis le passage précédent mais qui reste résident de la même UCH (remplir le statut de résidence de l’individu qui a changé de ménage sur la fiche présence de son ancien ménage). L’agent de terrain note la date du changement de ménage et cherche à savoir si le ménage de destination est un nouveau ménage ou pas. S’il s’agit d’un ancien ménage, il sélectionne le ménage en question et renseigne le lien de parenté avec le chef de ménage. S’il s’agit d’un nouveau ménage, il s’assure que le ménage a déjà été créé et prend l’identifiant du ménage créé et la relation avec le chef de ménage.
+
+Fiche changement de chef de ménage
+Elle s'applique lorsque le ménage a changé de chef. L’ancien chef peut être décédé, ou avoir quitté le système (devenu retiré) ou alors une nouvelle personne peut arriver et qui devient le chef de ménage au moment où il devient résident. Sur cette fiche on saisit la date du changement, le motif (départ, arrivée, décès), et on identifie l'ancien et le nouveau chef, ainsi que le lien de parenté de chaque membre avec le nouveau chef.
+
+Fiche destruction d’UCH
+Cette fiche sert à supprimer toutes les UCH détruites. Une UCH est détruite quant tous les bâtiments composant cette UCH sont détruits. Sur cette fiche, l’agent de terrain mentionne la date de destruction de l’UCH.
+Fiche changement générique
+Cette fiche a été conçue dans le but de répertorier tous les autres changements à effectuer sur un individu, un ménage ou même sur l’UCH. Il s’agit essentiellement des corrections à effectuer sur un individu, un ménage ou une UCH. Sur cette fiche, vous mentionner l’identifiant de l’entité sur laquelle porte le changement, la variable à modifier, l’ancienne valeur de cette variable (cette valeur erronée) et enfin la nouvelle valeur à prendre en compte (valeur corrigée).
+Exemple si au round 1 l’agent de terrain constate qu’une erreur s’est produite au R0 sur la date de naissance d’un individu, sur cette fiche doivent apparaitre l’ID de l’individu, son nom et prénom, la mention « date de naissance » comme variable à corriger, la date de naissance de l’individu in inscrite au R0 et la date de naissance corrigée.
+
+Fiche Education
+Elle est administrée à tous les résidents de 5 à 34 ans.
+G1 : Il s'agit de savoir si l’enquêté(e) fréquente actuellement l’école, ou s’il a déjà fréquenté l'école (mais ne fréquente plus au moment de l’enquête) ou alors s’il n’a jamais fréquenté l’école.
+
+Notez bien que par école on entend l’école formelle qui comprend l’école classique française, le franco-arabe encore appelé Médersa, ainsi que les cours du soir.
+
+G2 : Pour ceux qui fréquentent actuellement préciser la classe suivie (Voir codes classes) et pour ceux qui ont déjà fréquenté l’école, préciser la dernière classe achevée (Voir codes classes).
+
+Fiche emploi
+Cette fiche est administrée à tous les résidents de 15 ans et plus.
+Par activité ou activité économique, on entend toute activité rémunérée ou rémunératrice menée par l’enquêté actuellement.
+
+E1 : E1. Dans quelle situation (NOM) se trouve vis-à-vis du travail ? Si vous avez coché 1 ou 2 et renseigner E2
+Une personne est dite « au foyer », c’est-à-dire qui n’exerce pas une activité rémunérée ou rémunératrice hors du domicile, MAIS qui vend des beignets le soir ou des cacahuètes à la porte est bien considérée comme active et vous devez donc cocher 4.
+
+Est handicapé-e ou en incapacité permanente de travailler : concerne les personnes qui ne peuvent pas exercer une activité économique
+
+Est en cours de formation (en étude, en apprentissage ou en stage) : il s’agit d’un élève, d’un étudiant ou tout autre personne en formation ou apprentissage. Par contre, les professionnels en formation qui vont immédiatement prendre services ou travailler sont considérés
+
+Apprenti : toute personne qui apprend un métier sans percevoir de salaire.
+
+E2 : Préciser la situation de l’enquêté (e) dans l’activité.
+Indépendant : toute personne qui travaille pour son propre compte dans une entreprise individuelle. Elle n'emploie aucun salarié mais peut être aidée par des aides familiaux et des apprentis non rémunérés ou par des manœuvres de façon temporaire. Un démarcheur qui rabat des clients sur un boutique est considéré comme indépendant.
+
+NB : Les marabouts, les prêtres, les pasteurs, etc. seront considérés comme des indépendants.
+
+Salarié : tout individu touchant un salaire (le plus souvent) régulier de la part d'un employeur public (Salarié secteur public) ou privé (salarié secteur privé) en contrepartie du travail effectué. Un apprenti qui est rémunéré est considéré comme un salarié. Un manœuvre qui se loue au jour est considéré comme un salarié.
+
+Employeur : toute personne qui exploite sa propre entreprise ou qui exerce pour son propre compte une profession ou un métier et qui emploie au moins un salarié travaillant régulièrement.
+
+Aide familial : toute personne qui travaille pour le compte d'une entreprise ou d'une exploitation appartenant à un membre de sa famille ou au ménage dont il fait partie. L'aide familial ne reçoit pas de salaire, mais en contrepartie il est logé et nourrit.
+
+Bénévole : Personne qui exerce une activité, généralement de façon volontaire pour une cause à laquelle elle adhère, sans aucune compensation quelconque et qui n’est pas dans une démarche d’apprentissage.
+
+Fiche santé
+L’agent enquêteur/trice administre cette fiche aux répondants adultes (15 ans et plus) du ménage.
+S1 : santé subjective
+L'enquêté(e) devrait répondre en fonction de la façon dont il / elle considère que sa santé est, et donner sa meilleure estimation. La santé physique et mentale doit être prise en considération.
+S2 : maladies diagnostiquées par un agent de sante
+L’objet de cette question est d'identifier les individus avec un cas diagnostiqué de maladie par un médecin ou personnel de santé qualifié.
+Lisez la liste des maladies et enregistrez la réponse appropriée. Vous trouverez ci-dessous, les définitions des principales affections citées.
+Hypertension : On considère qu’une personne souffre d’hypertension lorsqu’on constate à deux reprises, et pas le même jour, une tension artérielle systolique supérieure ou égale à 140 mmHg et/ou une tension artérielle diastolique supérieure ou égale à 90 mmHg.
+Diabète : c’est une maladie chronique qui apparaît lorsque le pancréas ne produit pas suffisamment d'insuline ou que l'organisme n'utilise pas correctement l'insuline qu'il produit. L'insuline est une hormone qui régule la concentration de sucre dans le sang.
+Cancer et tumeur maligne : est un terme générique désignant un large groupe de maladies pouvant toucher n’importe quelle partie de l’organisme. On parle aussi de tumeurs malignes et de néoplasmes. L’un des traits caractéristiques du cancer est la multiplication rapide de cellules anormales à la croissance inhabituelle, qui peuvent ensuite envahir des parties voisines de l’organisme, puis migrer vers d’autres organes. On parle alors de métastases. La présence de métastases étendues est la principale cause de décès par cancer.
+S3 : Santé mentale3
+Ce sous-module utilise l'échelle de détresse psychologique de Kessler (K10). Il s’agit d’une échelle de détresse psychologique non spécifique. Elle a été développée comme une mesure courte de la détresse psychologique non spécifique dans le spectre anxiété-dépression, utilisée dans le National Health Interview Survey aux États-Unis. Le questionnaire de 10 items permet de mesurer la détresse psychologique en fonction des états émotionnels négatifs (avec différents degrés de gravité) ressentis au cours des 4 semaines précédant l'entretien. Pour chaque item, il existe une échelle de réponse à cinq niveaux basés sur la fréquence à laquelle le répondant a éprouvé ces sentiments particuliers. Les options de réponse sont les suivantes :
+    • Jamais
+    • Quelques jours
+    • La moitié du temps
+    • Plus de la moitié du temps
+    • Presque tous les jours
+Chacun des 10 items est noté de 1 pour « jamais » à 5 pour « tout le temps ». Les notes des dix éléments sont additionnées, ce qui donne une note minimale possible de 10 et une note maximale possible de 50, les notes faibles indiquant de faibles niveaux de détresse psychologique et les notes élevées indiquant des niveaux élevés de détresse psychologique.
+
+Fiche omission
+Elle est administrée à toute personne qui a été omise, c'est-à-dire qui dit avoir été présente à un passage précédant mais qui n’a pas été enregistrée à ce moment A un round t, ne peut être considéré comme personnes omises que les enquêtés qui dorment habituellement dans le ménage depuis le round t-1 ou le round t-2. Au-delà, ces personnes sont considérées comme des visiteurs avec pour date d’arrivée le milieu du round précédent (en effet, il n’est pas plausible qu’une personne ait été omises au cours de deux rounds de suite, même si elle prétend habiter dans le ménage depuis 5 ans ; c’est pour cela que ces personnes sont traitées comme des nouveaux visiteurs).
+Pour ces personnes omises, il s’agira de remplir une fiche nouveau visiteur et une fiche arrivée pour le premier round omis, et les fiches présences du deuxième round d’omission jusqu’au dernier doivent être administrées, ainsi que toutes les fiches événements qui l’on concerné durant cette période (suivi des unions, grossesses, issues de grossesse). Rassurez-vous qu'il s’agît bien d'une omission et n'ont pas d'un résident qui aurait été retiré du système. Dans ce cas, l’agent de terrain considère la personne comme un nouveau visiteur, retrouve son ID, et actualise ses informations sur la fiche nouveau visiteur.
+Enfin pour prendre en compte certaines omissions pas si évidentes à cerner, l’agent de terrain demande si une personne dort habituellement dans le ménage depuis plus de 6 mois, que nous n’avons pas listées jusqu’ici, et qui n’a pas dormi ici la nuit passée ? Dans l’affirmatif, il note le nombre de résidents absents omis (après s’être assuré qu’ils sont effectivement dans le ménage depuis plus de 6 mois) et rempli une fiche omission pour chacun.
+Les informaticiens indiqueront comment traiter les ménages omis.
+
+Pour qui remplir les fiches ?
+
+Le relevé des événements démographiques (suivi des unions, grossesse, issue de grossesse, décès) concerne toutes les personnes listées au passage précédant, ainsi que toutes les personnes nouvellement listées au passage en cours. Pour les visiteurs répertoriés, il s’agira de prendre les modifications de statut matrimonial, les grossesses, les issues de grossesse et les décès seulement pendant leur temps de présence dans l’UCH ou alors, si ces événements ont suivi directement leur départ de l’UCH (ainsi, on remplira une fiche décès pour un visiteur répertorié au round précédant qui a quitté l’UCH pour aller décéder à l’hôpital). Si un événement a précédé directement la venue d’un visiteur, on ne l’enregistre pas. Pour les résidants (présent ou absents), il faut prendre tous leurs événements démographiques entre les deux passages, quelque soit le lieu exact où a eu lieu l’événement.
+
+Par exemple, une jeune fille résidante de l’UCH A part le jour de son mariage et va habiter dans l’UCH B. on remplira les fiches suivantes : « suivi des unions » dans l’UCH A en tant que résidante absente, « nouveau visiteur » dans l’UCH B (où elle sera inscrite en tant que mariée) et « suivi des unions » pour son conjoint dans l’UCH B.
+
+Ordre de remplissage des fiches
+
+L’agent entre dans l’unité collective d’habitation (UCH) avec une liste de tous les ménages enregistrés lors de passage précédant.
+
+Pour chaque ménage
+Pour chacun de ces ménages, l’agent passe la « fiche présence » qui reprend la liste des résidents et visiteurs du round précédant, et actualise leur statut de résidence.
+Cette fiche peut entrainer le remplissage de la fiche :
+	arrivée (cas d’un visiteur devenu résidant)
+	nouveau visiteur (cas d’un résident absent ayant fait plus de 6 mois à l’extérieur de l’UCH et présent au moment du passage).
+               départ (cas d’un résident ayant fait plus de 6 mois à l’extérieur de l’UCH)
+               cette fiche départ peut entrainer le remplissage de la fiche changement de chef de ménage (si le résident était le CM)
+L’agent de terrain remplit ensuite la fiche grossesse et issue de grossesse pour les femmes concernées. La fiche issue de grossesse peut entrainer le remplissage de la fiche décès si l’issue de la grossesse est une naissance suivie de décès.
+Ensuite suivent les fiches, suivi des unions, changement de ménage et décès.
+Le remplissage de la fiche décès peut elle aussi entrainer celui de la fiche changement de chef de ménage si le regretté était le chef de ménage.
+Une fois tous les évènements concernant les membres du ménage répertoriés au round précédent renseignés, l’agent de terrain remplit une fiche nouveau visiteur pour tout individu qui vient d’arrivé dans le ménage en question, puis il remplit les fiches événements pour ces nouveaux visiteurs.
+Lorsque tous les ménages de l’UCH ont été enquêtés, l’agent remplit une fiche création de ménage pour tout autre nouveau ménage créé.

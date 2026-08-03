@@ -1,0 +1,60 @@
+Document: Correspondance_Tables_BD_OPO
+
+﻿
+
+Avant propos
+Il est impératif de connaître les différentes tables de la base de données mises en œuvres dans le cadre du Système de Surveillance Démographique (SSD-O).
+Le présent document présente les différentes tables de la base de données et leurs correspondances respectives mises en place dans ce cadre.
+
+Les unités suivies	3
+Les évènements	4
+Les baselines	5
+Les diagrammes	6
+
+Les unités suivies
+Il s’agit des unités collectives d’habitation (UCH), des ménages et des individus :
+
+Tables	Correspondances
+TLocation	Table des UCH
+TSocialgp	Table des ménages
+TIndividual	Table des individus
+TVisitor	Table des nouveaux visiteurs
+
+Les épisodes
+Ils concernent  les unions, les épisodes de chefferies, les épisodes de résidence et les épisodes d’appartenance à un ménage.
+
+Tables	Correspondances
+TRelationship	Table des unions
+TUpdRelationship	Table de suivie des unions
+TSocialgp_head	Table des épisodes de chefferies
+TResidency	Table des épisodes de résidence
+TMembership	Table des épisodes d’appartenance à un ménage
+
+.
+
+Les évènements
+
+Il s’agit des décès, des grossesses, des issues de grossesses, des naissances, des présences,  des caractéristiques de l’UCH, des destructions d’UCH, des arrivées dans la zone et des départs de la zone.
+
+Tables	Correspondances
+TIndividual_charact	Table des caractéristiques des individus
+TDeath	Table des décès
+TPregnancy	Table des grossesses
+TPregoutcome	Table des issues de grossesse
+TBirth	Table des naissances
+TPresences	Table des présences
+TMigration_out	Table des départs de la zone
+
+Les baselines
+
+Il s’agit de l’éducation, de l’histoire génésique, de l’histoire migratoire, de l’histoire matrimoniale, de la vaccination et des biens du ménage.
+
+Tables	Correspondances
+TBase_educ	Table de l’éducation
+TBase_histgen	Table de l’histoire génésique
+TBase_histmig	Table de l’histoire migratoire
+TBase_histmat	Table de l’histoire matrimoniale
+TBase_vacc	Table de la vaccination
+TBase_socialgp	Table des biens du ménage
+
+Les diagrammes

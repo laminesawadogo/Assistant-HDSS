@@ -1,0 +1,98 @@
+Table: Tbase_Socialgp
+
+Titre: Table Tbase_Socialgp
+Description: Household characteristics (housing, assets, amenities)
+
+Variable tv_num (table Tbase_Socialgp) : number of televisions. Type: Numérique.
+
+Variable fixephone_num (table Tbase_Socialgp) : number of land phones. Type: Numérique.
+
+Variable mobphone_num (table Tbase_Socialgp) : number of mobile phones. Type: Numérique.
+
+Variable video_num (table Tbase_Socialgp) : number of videos. Type: Numérique.
+
+Variable ref_num (table Tbase_Socialgp) : number of refrigerators. Type: Numérique.
+
+Variable bic_num (table Tbase_Socialgp) : number of bicycles. Type: Numérique.
+
+Variable moto_num (table Tbase_Socialgp) : number of motorcycles. Type: Numérique.
+
+Variable auto_num (table Tbase_Socialgp) : number of cars. Type: Numérique.
+
+Variable big_ruminant_num (table Tbase_Socialgp) : number of big ruminants (cattle, dromedary, camel). Type: Numérique.
+
+Variable small_ruminant_num (table Tbase_Socialgp) : number of small ruminants (sheep, goat). Type: Numérique.
+
+Variable horse_num (table Tbase_Socialgp) : number of horses and donkeys. Type: Numérique.
+
+Variable pig_num (table Tbase_Socialgp) : number of pigs. Type: Numérique.
+
+Variable occ_status (table Tbase_Socialgp) : Home ownership status of the household head. Type: Catégorielle (codes). Modalites/valeurs codees: 1=owner | 2=co-owner | 3=tenant | 4=hosted | 99=Don't know or missing.
+
+Variable Owner (table Tbase_Socialgp) : Owner of the household’s house. Type: Catégorielle (codes). Modalites/valeurs codees: 0=not concerned | 1=a parent in the household | 2=a parent outside the household | 3=another person in the household | 4=another person outside the household | 99=Don't know or missing.
+
+Variable ownerid (table Tbase_Socialgp) : ID of the owner of the house. Type: Identifiant.
+
+Variable other_help (table Tbase_Socialgp) : Help regularly received by the household. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=no | 99=Don't know or missing.
+
+Variable help_nat_money (table Tbase_Socialgp) : Help in terms of money. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=no | 99=Don't know or missing | 0=Not concerned.
+
+Variable help_nat_food (table Tbase_Socialgp) : Help in terms of food. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=no | 99=Don't know or missing | 0=Not concerned.
+
+Variable help_nat_other (table Tbase_Socialgp) : Other kind of help. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=no | 99=Don't know or missing | 0=Not concerned.
+
+Variable help_level (table Tbase_Socialgp) : Level of help. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Insignificant | 2=Helps a little | 3=Helps a lot | 4=Crucial help | 99=Don't know or missing | 0=Not concerned.
+
+Variable father_read (table Tbase_Socialgp) : The father of the household's head is able to read. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Yes | 2=no | 3=don't know | 99=missing.
+
+Variable family_level (table Tbase_Socialgp) : Living standard of the household head’s origin family (at the age of 15). Type: Catégorielle (codes). Modalites/valeurs codees: 1=Poor | 2=Medium | 3=Rich | 4=don't know | 99=missing.
+
+Variable inhabitable_room_num (table Tbase_Socialgp) : number of inhabitable rooms. Type: Numérique.
+
+Variable toilet_nat (table Tbase_Socialgp) : Type of toilet. Type: Catégorielle (codes). Modalites/valeurs codees: 1=flushing | 2=simple latrine | 3=ventilated latrine | 4=no toilet (nature) | 5=Other | 99=Don't know or missing.
+
+Variable toilet_shar (table Tbase_Socialgp) : Toilet restricted or shared. Type: Catégorielle (codes). Modalites/valeurs codees: 0=not concerned | 1=Restricted to members of the household | 2=Shared with other households within the courtyard | 3=Common to other households outside the courtyard (neighbors) | 99=Don't know or missing.
+
+Variable throw_wastewater (table Tbase_Socialgp) : Evacuation of wastewater. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Septic pit | 2=Throws in the gutters | 3=Throws in the courtyard | 4=Throw in the street | 5=Throw in a sink | 6=Used for watering | 7=Other | 99=Don't know or missing.
+
+Variable throw_domwaste (table Tbase_Socialgp) : Evacuation of household garbage. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Garbage with collecting service | 2=Public tank with collecting service | 3=Pre-collection center | 4=Waste ground | 5=Street corner | 6=A heap of garbage in the courtyard | 7=Other | 99=Don't know or missing.
+
+Variable burn_waste (table Tbase_Socialgp) : The household burns its waste. Type: Catégorielle (codes). Modalites/valeurs codees: 0=Not concerned | 1=Never | 2=Everyday | 3=Every week | 4=Sometimes | 5=Other | 99=Don't know or missing.
+
+Variable water_in1 (table Tbase_Socialgp) : Main source of drinking water in the last 7 days. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Water tap inside accommodation | 2=Water tap outside accommodation | 3=Well | 4=Collective public fountain | 5=Drilling | 6=Manual water pump | 7=Water sellers | 8=Rain water | 9=River/lake/irrigation canal | 10=Other | 99=Don't know or missing.
+
+Variable water_in2 (table Tbase_Socialgp) : Secondary source of drinking water in the last 7 days. Type: Catégorielle (codes). Modalites/valeurs codees: 0=not concerned | 1=Water tap inside accommodation | 2=Water tap outside accommodation | 3=Well | 4=Collective public fountain | 5=drilling | 6=manual water pump | 7=water sellers | 8=rain water | 9=river/lake/irrigation canal | 10=Other | 99=Don't know or missing.
+
+Variable cooking_place (table Tbase_Socialgp) : Cooking place. Type: Catégorielle (codes). Modalites/valeurs codees: 0=not concerned | 1=Interior kitchen: restricted to cooking | 2=Interior kitchen: cooking associated with other activities | 3=External kitchen (detached house) | 4=Open-air in the courtyard | 5=Other | 99=Don't know or missing.
+
+Variable combust_cooking (table Tbase_Socialgp) : Main source of energy used for cooking. Type: Catégorielle (codes). Modalites/valeurs codees: 0=not concerned | 1=gas | 2=electricity | 3=firewood (simple format) | 4=firewood (improved format) | 5=coal (simple format) | 6=coal (improved format) | 7=other | 99=Don't know or missing.
+
+Variable light_mode (table Tbase_Socialgp) : Principal source of lighting. Type: Catégorielle (codes). Modalites/valeurs codees: 1=electricity from Sonabel | 2=electricity from a generator | 3=solar energy | 4=gas | 5=lamp with kerosene | 6=candle | 7=firewood | 8=Oil lamp | 9=Flashlight | 10=battery | 11=none | 99=Don't know or missing.
+
+Variable wall_nat (table Tbase_Socialgp) : Wall material. Type: Catégorielle (codes). Modalites/valeurs codees: 1=stone or brick made of cement | 2=wood | 3=local brick made with mud | 4=sheet metal | 5=other | 99=Don't know or missing.
+
+Variable roof_nat (table Tbase_Socialgp) : Roof material. Type: Catégorielle (codes). Modalites/valeurs codees: 1=sheet metal | 2=tile | 3=slab made with cement | 4=wood | 5=mud | 6=thatch/straw/leaves | 99=Don't know or missing.
+
+Variable floor_nat_int (table Tbase_Socialgp) : Floor material (inside the house). Type: Catégorielle (codes). Modalites/valeurs codees: 1=tile | 2=Cement | 3=Wood | 4=land | 5=other | 99=Don't know or missing.
+
+Variable floor_nat_ext (table Tbase_Socialgp) : Floor material (inside the yard). Type: Catégorielle (codes). Modalites/valeurs codees: 1=tile or cement | 2=pavements or gravel | 3=Land | 4=Mixed | 5=other | 99=Don't know or missing.
+
+Variable waste_in (table Tbase_Socialgp) : Presence of waste inside the yard. Type: Catégorielle (codes). Modalites/valeurs codees: 1=yes | 2=no | 99=Don't know or missing.
+
+Variable waste_ext (table Tbase_Socialgp) : Presence of waste nearby the yard. Type: Catégorielle (codes). Modalites/valeurs codees: 1=yes | 2=no | 99=Don't know or missing.
+
+Variable vegetable_garden (table Tbase_Socialgp) : Garden inside the yard. Type: Catégorielle (codes). Modalites/valeurs codees: 1=yes | 2=no | 99=Don't know or missing.
+
+Variable plant_ext (table Tbase_Socialgp) : Presence of plants inside the yard. Type: Catégorielle (codes). Modalites/valeurs codees: 1=yes | 2=no | 99=Don't know or missing.
+
+Variable burglary (table Tbase_Socialgp) : Victim of burglary in the last 12 months. Type: Catégorielle (codes). Modalites/valeurs codees: 1=yes | 2=no | 99=Don't know or missing.
+
+Variable burglary_money (table Tbase_Socialgp) : Victim of money burglary in the last 12 months. Type: Catégorielle (codes). Modalites/valeurs codees: 1=yes | 2=no | 99=Don't know or missing | 0=Not concerned.
+
+Variable burglary_ruminant (table Tbase_Socialgp) : Victim of ruminant burglary in the last 12 months. Type: Catégorielle (codes). Modalites/valeurs codees: 1=yes | 2=now | 99=Don't know or missing | 0=Not concerned.
+
+Variable burglary_fowl (table Tbase_Socialgp) : Victim of fowl burglary in the last 12 months. Type: Catégorielle (codes). Modalites/valeurs codees: 1=yes | 2=now | 99=Don't know or missing | 0=Not concerned.
+
+Variable burglary_harvest (table Tbase_Socialgp) : Victim of harvest burglary in the last 12 months. Type: Catégorielle (codes). Modalites/valeurs codees: 1=yes | 2=now | 99=Don't know or missing | 0=Not concerned.
+
+Variable burglary_equipment (table Tbase_Socialgp) : Victim of  equipement burglary in the last 12 months. Type: Catégorielle (codes). Modalites/valeurs codees: 1=yes | 2=now | 99=Don't know or missing | 0=Not concerned.

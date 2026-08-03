@@ -1,0 +1,28 @@
+Table: TMigration_out
+
+Titre: Table TMigration_out
+Description: Table Migration Out
+
+Variable eventid (table TMigration_out) : EVENT ID. Type: Identifiant.
+
+Variable individid (table TMigration_out) : INDIVIDUAL ID. Type: Identifiant.
+
+Variable episodeid_res (table TMigration_out) : RESIDENCY EPISODE ID. Type: Texte / Numérique.
+
+Variable locationid (table TMigration_out) : LOCATION ID. Type: Identifiant.
+
+Variable observeid (table TMigration_out) : OBSERVATION ID. Type: Identifiant.
+
+Variable destination (table TMigration_out) : Place of destination. Type: Catégorielle (codes). Modalites/valeurs codees: 1=Ouagadougou | 2=Other town in Burkina | 3=Rural area in Burkina | 4=Ivory Coast | 5=Other African country | 6=Other country (no Africa) 7 Don’t know | 99=Missing value.
+
+Variable depart_date (table TMigration_out) : Date of departure. Type: Date.
+
+Variable reason_outp (table TMigration_out) : Reasons for departure (By Categories). Type: Catégorielle (codes). Modalites/valeurs codees: 1 for family reasons 2 for security reasons 3 due to habitat characteristics 4 due to an employment 5 for cost reasons 6 for health reasons 7 for education reasons 8 due to a conflict 9 other reasons | 99=Don’t known or Missing value.
+
+Variable reason_outs (table TMigration_out) : Reasons for departure (Detailed). Type: Catégorielle (codes). Modalites/valeurs codees: 11=A member of the family or a friend has gone | 12=married | 13=moved with his family / parent | 14=divorced / separated or became widower | 15=took its independence from the family | 16=left in some body's care | 17=other family reasons 21 insecurity (crime, burglary) | 22=other security reason | 31=poor habitat(floor, wall, roof) | 32=poor conditions of toilet / bathroom / electricity 33 rooms / too small houses | 34=damaged house | 35=construction of a new home | 36=other reason related to habitat | 41=lost a job | 42=little employment prospects | 43=too far from the workplace | 44=no land to cultivate | 45=other reason related to employment | 51=rent too higth | 52=too expensive food | 53=health fees too high | 54=schooling fees too high | 55=other cost reasons | 61=poor health services | 62=dirty environment | 63=health other reason | 71=for schooling (primary or secondary) | 72=for schooling University / professional school | 73=finished school (primary or secondary) | 74=finished school (University / professional school) | 75=other reason linked to education | 81=conflict with a family member / friend | 82=civil conflict | 83=banished | 84=other reason related to a conflict | 91=just for changing | 92=other | 98=Don’t know | 99=Missing value.
+
+Variable entry_date (table TMigration_out) : Interview date. Type: Date.
+
+Variable field_wrkr (table TMigration_out) : None. Type: Texte / Numérique.
+
+Variable status_dat (table TMigration_out) : None. Type: Texte / Numérique.

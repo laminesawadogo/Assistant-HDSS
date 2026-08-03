@@ -1,0 +1,83 @@
+Document: 18_FICHE EDUCATION_R14
+
+FICHE EDUCATION 						Numéro de fiche : |__|__|__|__|
+
+Renseigner le niveau d’éducation des résidents du ménage âgés de 5 ans à 34 ans.
+
+ROUND N°........
+
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant:
+
+Identification de la personne concernée
+
+Nom et Prénoms.............................................................
+
+Les modalités de la question G2
+
+0 Not concerned
+
+10 MATERNELLE
+
+11 CP1
+
+12 CP2
+
+13 CE1
+
+14 CE2
+
+15 CM1
+
+16 CM2
+
+19 PRIMAIRE CLASSE INCONNUE
+
+21  6ème
+
+22  5ème
+
+23  4ème
+
+24  3ème
+
+25 2nd
+
+26 1ère
+
+27 Tle
+
+29 SECONDAIRE CLASSE INCONNUE
+
+31  SUP1
+
+32  SUP2
+
+33  SUP3
+
+34  SUP4
+
+35  SUP5 & +
+
+39 SUPERIEUR CLASSE INCONNUE
+
+|____|____|____|____|____|____| | |___|___|  |___|___|___|___| | |____|____|____|___I . |___|___|___|
+
+   x       x        β     x       x        x |     β    β       x      x     x     x |     H       x        x     x          x    x     x
+
+|____|____|____|____|____|____| | |___|___|  |___|___|___|___| | |____|____|____|___I . |___|___|___|
+
+   x       x        β     x       x        x |     β    β       x      x     x     x |     H       x        x     x          x    x     x
+
+Nom | Fréquentation scolaire | Classe
+
+1. Relever le nom et le n° de ligne de tous les membres du ménage | G1
+ Fréquente actuellement ?
+
+1. fréquente actuellement            =>G2
+2. déjà fréquenté                          =>G2
+3.jamais fréquenté     fin du questionnaire | G2
+Quelle est la classe suivie ou la dernière classe achevée ?

@@ -1,0 +1,51 @@
+Document: 05_FICHE ACCOUCHEMENT_R14
+
+FICHE ACCOUCHEMENT                   Numéro de fiche : |__|__|__|__|
+
+Module obligatoire pour les femmes résidentes en âge de procréer (12-49 ans)
+
+ROUND N°........
+
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant:
+
+Nom et prénom (s)………………………………………………..
+
+ID…………..
+
+1. Avez-vous accouché depuis le passage précédent ?    O/N
+
+Si oui remplir une fiche grossesse et une fiche issue de grossesse
+
+Après avoir rempli la fiche grossesse et issue de grossesse
+
+Si non passé à la troisième question
+
+2. En dehors de cette grossesse avez-vous eu une autre grossesse depuis le passage précédent ? O/N
+
+Si oui remplir une fiche grossesse et une fiche issue de grossesse
+
+Après avoir rempli la fiche grossesse et issue de grossesse
+
+Si non à la première ou à la deuxième question, passé à la troisième question
+
+3. Avez-vous eu une grossesse qui n’a pas abouti depuis le passage précédent ? O/N
+
+Si oui remplir une fiche grossesse et une fiche issue de grossesse
+
+Après avoir rempli la fiche grossesse et issue de grossesse
+
+4. Êtes-vous enceinte actuellement ? O/N
+
+Si oui remplir une fiche grossesse
+
+|____|____|____|____|____|____| | |___|___|  |___|___|___|___| | |____|____|____|___I . |___|___|___|
+
+   x       x        β     x       x        x |     β    β       x      x     x     x |     H       x        x     x          x    x     x
+
+|____|____|____|____|____|____| | |___|___|  |___|___|___|___| | |____|____|____|___I . |___|___|___|
+
+   x       x        β     x       x        x |     β    β       x      x     x     x |     H       x        x     x          x    x     x

@@ -1,0 +1,24 @@
+Table: TMembership
+
+Titre: Table TMembership
+Description: Table Membership
+
+Variable episodeid (table TMembership) : EPISODE OF MEMBERSHIP ID. Type: Identifiant.
+
+Variable episodeid_res (table TMembership) : EPISODE OF RESIDENCE ID. Type: Texte / Numérique.
+
+Variable socialgpid (table TMembership) : HOUSEHOLD ID. Type: Identifiant.
+
+Variable individid (table TMembership) : INDIVIDUAL ID. Type: Identifiant.
+
+Variable sobserveid (table TMembership) : Observation at the beginning of the membership. Type: Identifiant.
+
+Variable sdate (table TMembership) : date at the beginning of the membership. Type: Date.
+
+Variable eobserveid (table TMembership) : Observation at the end of the membership. Type: Identifiant.
+
+Variable edate (table TMembership) : date at the end of the membership. Type: Date.
+
+Variable eeventtype (table TMembership) : Reason of ending membership. Type: Catégorielle (codes). Modalites/valeurs codees: Migration out Death.
+
+Variable entry_date (table TMembership) : Date of Interview. Type: Date.

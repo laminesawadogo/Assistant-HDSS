@@ -1,0 +1,11 @@
+# Secrets - ne jamais pousser sur GitHub
+.env
+
+# Fichiers Python courants
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Fichiers temporaires de l'OS
+.DS_Store
+Thumbs.db

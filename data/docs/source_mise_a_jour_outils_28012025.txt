@@ -1,0 +1,51 @@
+Document: mise_a_jour_outils_28012025
+
+Diapositive 1 : Révision des outils de collecte pour le round 13 Souleymane Sanogo
+Au nom de l’équipe OPO 28 Janvier 2025
+FEME, Ouagadougou, Burkina Faso 1
+
+Diapositive 2 : Objectifs des mises à jour Rendre conforme les outils papiers à l’application de CAPI
+Réduire le temps de collecte, donc le coût de la routine
+Intégrer des nouvelles thématiques d’actualités
+
+Diapositive 3 : Les modifications conformes à l’application CAPI Fiche Présence
+Fiche arrivée
+Fiche nouveau visiteur
+Fiche suivi des unions
+Fiche changement de chef de ménage
+Fiche création de ménage
+Fiche destruction d’UCH
+Fiche changement de ménage
+Questionnaire ménage Modification : Identification, ajoute de question
+Fiche présence
+Numéro de téléphone si âge de 15 ans et plus (ajouté)
+
+Fiche nouveau visiteur : des infos du CM
+
+Fiche changement de chef de ménage
+Motif de départ du CM
+
+Diapositive 4 : Fiche arrivée Ajout de question : recensement des personnes avec handicap
+Question de recherche : la problématique de la prise en charge des dépendants ? (A supprimer)
+
+CIRCONSTANCES DE LA VENUE DANS OUAGADOUGOU (L’UCH)
+Lieu de provenance : (modalités : Ouaga (secteur),, autres villes Burkina (province),, rural Burkina (province),, Côte d’Ivoire, autre pays africains, autres pays
+
+Diapositive 5 : Raisons de migration OPO R0 à R11 Femme homme
+
+Diapositive 6 : Fiche arrivée & Fiche départ Raison pour laquelle la personne est venue Ouagadougou
+
+Raison pour lesquelles la personne a quitté l’endroit ou elle était
+
+Diapositive 7 : Fiche issue de grossesse Questions supprimées sur
+les vaccins BCG et Polio,
+Information sur le Père (décollectée dans fiche arrivée )
+
+Diapositive 8 : Fiche issue grossesse / fiche décès Modalité de lieu de naissance /décès si Formation sanitaire
+Liste des FS (non à jours)
+
+Diapositive 9 : Questionnaire ménage bien durable Questions supprimées : magnétoscope, phone fixe, possession des animaux.
+
+Des modalités supprimées
+
+Diapositive 10 : Questionnaire ménage pauvreté subjective Indicateur dynamique de niveau de vie

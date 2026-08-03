@@ -1,0 +1,71 @@
+Document: 01_FICHE PRESENCE_R13
+
+﻿FICHE PRESENCE		Numéro de fiche : |__|__|__|__|
+
+ROUND N°........
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant:
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|____| |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+Nom et prénoms ……………………………………………….
+
+ID………….
+
+Age …|___|___|
+
+Le Pocket PC affiche :
+Statut au passage précédent :
+
+Résident absent (date départ)
+Résident présent
+Visiteur (date arrivée)
+
+Pour chacune de ces personnes, demander :
+
+A dormi dans l’UCH la nuit dernière ?……………………… |___|
+
+Si n’a pas dormi la nuit passée :
+A quand remonte son dernier départ de l’UCH ? ……………|___|___| |___|___| |___|___|
+(Actualiser la date de dernier départ pour les RA et prendre pour RP au passage précédent)
+
+Si résident absent ou visiteur au dernier passage et a dormi la nuit passée :
+A quand remonte sa dernière arrivée dans l’UCH ? ……………|___|___| |___|___| |___|___|
+(Actualisation en ce qui concerne les visiteurs au passage précédent)
+
+Numéro de téléphone si âge de 15 ans et plus …|___|___| |___|___| |___|___| |___|___|
+
+Calculer et afficher le nouveau statut pour toutes ces personnes :
+
+Statut R t-1	A dormi nuit passée R t ?	Dates à collecter / actualiser	Statut R t	Fiches
+RA (date départ)	non	Date dernier départ	Si départ > 6 mois : RR
+Si départ < 6 mois : RA	Fiche départ si RR
+	oui	Date dernière arrivée	Si différence entre date départ et date arrivée > 6 mois : RR+ V
+Si différence < 6 mois : RP	Fiche départ pour RR + fiche nouveau visiteur
+RP	oui		RP
+	non	Date dernier départ	Si départ > 6 mois : RR
+Si départ < 6 mois : RA	Fiche départ si RR
+V (date arrivée)	oui	Date dernière arrivée	Si arrivée > 6 mois : RP
+Si arrivée < 6 mois : V	Fiche arrivée pour RP
+	non	Date dernier départ	Si différence date arrivée et date départ > 6 mois : RA
+Si différence < 6 mois : VR	Fiche arrivée pour RA
+
+Pour tous les résidents (absent ou présent) dont la date de départ (absence continue) remonte à plus de 6 mois, remplir une fiche départ
+
+Pour tous les résidents absent qui ont dormi et  qui ont séjourné plus de 6 mois dans l’UCH, remplir une fiche départ et une fiche nouveau visiteur
+
+Pour tous les visiteurs au passage précédant devenu résident (présent ou absent), remplir une fiche arrivée
+
+Après que la dernière fiche présence pour le ménage ait été remplie, on revient sur la page du ménage et on demande :
+
+Est-ce que d’autres personnes ont dormi la nuit passée dans l’UCH et sous l’autorité de votre chef de ménage qu’on n’a pas citées (et qui ne vient pas d’un autre ménage de l’UCH) ?
+Nombre de nouveaux visiteurs : …………………………………………….
+=> remplir une fiche nouveau visiteur pour chacun
+
+Est-ce qu’un résident d’un autre ménage de l’UCH a rejoint votre ménage depuis le dernier passage?
+Nombre de résident de l’UCH ayant rejoint ce ménage……………………
+    • remplir une fiche changement de ménage dans l’UCH pour chacun
+Après avoir enregistré tous les nouveaux visiteurs, il faut remplir la fiche présence des nouveaux visiteurs qui sont arrivés il y’a plus de 6 mois. Ensuite remplir leur fiche arrivée

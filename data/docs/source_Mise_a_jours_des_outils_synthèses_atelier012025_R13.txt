@@ -1,0 +1,76 @@
+Document: Mise_a_jours_des_outils_synthèses_atelier012025_R13
+
+Révision des outils de collecte
+
+Liste des fiches de routine de l’OPO, révisées et proposées pour le Round 13.
+
+Modifications demandées à l’atelier
+
+ | Nom de la fiche  | Population cible | Question modifié | Population cible modifiées | Version CAPI à corriger
+
+1 | Fiche présence | Tous les membres du ménage | Oui | Non |
+
+2 | Fiche arrivée | Tout visiteur devenu résident (absent ou présent) | Oui | Non | A Corriger sur la tablette, la question J6. Circonstance d’arrivée dans l’UCH
+
+3 | Fiche nouveau visiteur | Tout nouveau visiteur recensé dans l’OPO | Oui | Non |
+
+4 | Fiche départ | Personne résidente absente au moins 6 moins | Non | Non |
+
+5 | Fiche accouchement | Femme résidente de 12 ans et plus | Non | Non |
+
+6 | Fiche grossesse | Femme résidente de de 12 ans et 49 ans | Non | Non |
+
+7 | Fiche issue de grossesse | Femme résidente de de 12 ans et 49 ans | Oui | Non |
+
+8 | Fiche suivi des unions | Femme résidente de 12 et + et homme résident de 15 ans et + | Oui | Non |
+
+9 | Fiche décès | Personne résidente décédée | Oui | Non |
+
+10 | Fiche changement de chef de ménage | Ménage (lorsque le chef de ménage a changé) | Oui | Non |
+
+11 | Fiche création de ménage | Nouveau ménage | Oui | Non |
+
+12 | Fiche destruction d’UCH | Toute UCH détruite. | Oui | Non |
+
+13 | Fiche changement générique | Les autres changements à effectuer sur un individu, un ménage ou même sur l’UCH. | Non | Non |
+
+14 | Fiche Omission | Personne qui a été omise | Non | Non | Pas sur tablette, prise en compte dans la fiche mise à jour des informations de base
+
+15 | Fiche changement de ménage | Tout membre qui a changé de ménage depuis le passage précédent mais qui reste résident de la même UCH | Oui | Non |
+
+16 | FICHE HISTOIRE GNENSIQUE | Femme résidente de de 12 ans et plus | Non | Non |
+
+17 | Fiche UCH | Toute nouvelle unité d’habitation à recenser | Non | Non |
+
+18 | Fiche Education | Personne âgée de 5 ans à 34 ans | Non | Oui |
+
+19 | Fiche emploi  | Personne âgée de 15 ans et + | Nouvelle fiche | Non | Nouvelle fiche
+
+20 | Fiche santé | Répondant(e) âgée de 15 et plus | Nouvelle fiche |  | Nouvelle fiche
+
+21 | Questionnaire ménage de biens durables | Tout ménage sous surveillance | Oui | Non |
+
+22 | Questionnaire ménage pauvreté subjective | Tout ménage sous surveillance | Nouvelle fiche |  | Nouvelle fiche
+
+23 | Questionnaire AV | Tout décès enregistré dans la zone sous surveillance | Non |  | Oui mais non intégrée dans la routine
+
+Nom de la fiche | Observations à l’atelier | Propositions
+
+Fiche arrivée | Modalités pour Raison de migration | 01 S’est marié
+02 A déménagé avec sa famille / des parents
+03 A divorcé / est devenu veuf / s’est séparé
+04 Autres raisons familiales
+05 A emménagé dans sa propre maison
+06 Autre raison liée à l’habitat
+07 Pour raison professionnelle
+08 Pour faire une formation
+09 Déplacement en raison catastrophe ou d'une crise (Préciser)
+Catastrophe naturelle
+Raison sécuritaire / terrorisme
+A cause d’un autre conflit
+10 Autre, préciser
+98 NSP
+
+Fiche santé  | Ajout de questions sur l’utilisation de l’internet | OK, deux questions ajouter
+Source ISSP 2024 (Q1 et Q6)
+https://issp.org/wp-content/uploads/2023/12/ISSP2024_final-source-questionnaire.pdf

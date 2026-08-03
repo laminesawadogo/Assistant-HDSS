@@ -1,0 +1,101 @@
+Document: Schema relationnel de la base OPO - cles primaires et etrangeres
+
+Ce document decrit les relations entre les 23 tables de la base de suivi
+demographique de l'OPO, a partir du dictionnaire de donnees et du document
+de correspondance des tables. Trois entites centrales portent le schema :
+TIndividual (individu), TSocialgp (menage) et TLocation (concession/UCH).
+Les autres tables se rattachent a ces trois entites soit directement, soit
+via les tables d'episodes qui suivent les changements dans le temps.
+
+=== 1. Entites centrales (unites suivies) ===
+
+TIndividual : cle primaire individid. Auto-reference : fatherid, motherid
+(pointent vers un autre individid de la meme table).
+
+TSocialgp (menage) : cle primaire socialgpid. Cle etrangere locationid ->
+TLocation (le menage occupe une concession).
+
+TLocation (concession / UCH) : cle primaire locationid. Cle etrangere
+owner_id -> TIndividual (proprietaire de la concession).
+
+TVisitor (nouveau visiteur) : cle primaire individid. Cles etrangeres
+locationid -> TLocation, socialgpid -> TSocialgp, fatherid/motherid ->
+TIndividual.
+
+=== 2. Episodes (suivi dans le temps, table de liaison) ===
+
+C'est la couche qui relie les individus aux menages et aux localisations
+au fil du temps, chaque episode etant borne par des observations
+(sobserveid = observation de debut, eobserveid = observation de fin).
+
+TResidency (episode de residence) : cle primaire episodeid. Cles
+etrangeres locationid -> TLocation, individid -> TIndividual.
+
+TMembership (episode d'appartenance a un menage) : cle primaire episodeid.
+Cles etrangeres episodeid_res -> TResidency, socialgpid -> TSocialgp,
+individid -> TIndividual.
+
+TSocialgp_head (episode de chefferie de menage) : cle primaire episodeid.
+Cles etrangeres episodeid_res -> TResidency, headid -> TIndividual (le
+chef de menage).
+
+TSocialgp_rltn (relation au chef de menage) : cles etrangeres
+episodeid_head -> TSocialgp_head, episodeid_res -> TResidency,
+individid -> TIndividual.
+
+TRelationship (union/mariage) : cle primaire eventid. Cles etrangeres
+individid -> TIndividual, individid2 -> TIndividual (le conjoint).
+
+TUpdRelationship (suivi des unions) : cles etrangeres individid,
+individid2 -> TIndividual, locationid -> TLocation.
+
+=== 3. Evenements demographiques (ponctuels) ===
+
+TBirth (naissance) : cle primaire eventid. Cles etrangeres pregoutid ->
+TPregoutcome, individid -> TIndividual (l'enfant ne).
+
+TDeath (deces) : cle primaire eventid. Cle etrangere individid ->
+TIndividual (la personne decedee).
+
+TPregnancy (grossesse) : cle primaire eventid. Cle etrangere individid ->
+TIndividual (la femme enceinte).
+
+TPregoutcome (issue de grossesse) : cle primaire eventid. Cles etrangeres
+individid -> TIndividual (la femme), fatherid -> TIndividual (le pere de
+l'enfant), locationid -> TLocation.
+
+TPresences (presence) : cle primaire eventid. Cles etrangeres individid ->
+TIndividual, episodeid_res -> TResidency.
+
+TMigration_out (depart de la zone) : cle primaire eventid. Cles etrangeres
+individid -> TIndividual, episodeid_res -> TResidency, locationid ->
+TLocation.
+
+TIndividual_charact (caracteristiques mises a jour) : cle etrangere
+individid -> TIndividual, avec observeid (observation associee).
+
+=== 4. Historiques individuels (baselines, recueillies a l'inclusion) ===
+
+Toutes ces tables partagent le meme schema de cles : individid ->
+TIndividual, socialgpid -> TSocialgp, observeid (l'observation/le passage
+enqueteur qui a recueilli l'information).
+
+TBase_Educ (education/emploi), TBase_vacc (vaccination), TBase_HistMig
+(histoire migratoire), TBase_HistMat (histoire matrimoniale) suivent ce
+schema commun.
+
+TBase_HistGen (histoire genesique) : ajoute childid -> TIndividual (l'enfant
+concerne par l'evenement de fecondite recense).
+
+TBase_Socialgp (biens et caracteristiques du menage) : cle etrangere
+ownerid -> TIndividual (proprietaire du logement).
+
+=== Regle a retenir pour l'analyse de tables reelles ===
+
+Les tables exportees depuis la base reelle n'ont pas forcement exactement
+les memes noms de colonnes que ce dictionnaire (ex: "sex" peut apparaitre
+comme "gender", des colonnes operationnelles comme field_wrkr/status_dat/
+recID peuvent s'ajouter). Les cles individid/socialgpid/locationid/episodeid/
+eventid restent en revanche le fil conducteur pour comprendre comment relier
+les tables entre elles, quelle que soit la denomination exacte des autres
+colonnes.

@@ -1,0 +1,28 @@
+Document: 17_FICHE UCH_R13
+
+﻿Numéro du questionnaire : |__|__|__|__|
+
+FICHE UCH
+
+IDENTIFICATION UCH
+TYPE DE ZONE                                             lotie    |___1__|       non lotie  |__2___|
+LOCALISATION ZONE                               secteur 21   |___1__|     secteur 23  |__2___|
+ID ZD......................................................………………..........|_____|_____|_____|_____|_____|_____|
+ID UCH....................…………………………….................... |_____|_____||_____|_____|_____|____]
+COORDONNEES GEOGRAPHIQUES UCH
+Latitude (X)………………………………………………  Longitude (Y)…………………………………………
+NOM ET PRENOMS PERSONNE REFERENCE (PR) UCH……………………………………………………
+ID DE LA PR ……..|_____|_____|_____| ---- |_____|_____|
+CETTE UCH EST-ELLE ENTOUREE D’UNE CLOTURE?                                                                   O   /   N
+UCH VIDE ?                                                                                                              O   /   N
+NOMBRE DE MENAGES DANS L'UCH............................................................................[___]___]___]
+NOMBRE DE BATIMENTS DANS L'UCH.........................................................................[___]___]___]
+
+IDENTIFICATION ENQUETEUR
+DATE DE L’ENQUETE ……/……./ 202x
+NOM DE L’ENQUETEUR.....................................................................................................…
+Heure et minute du début de l'entretien………………………………………
+Heure et minute dE LA FIN de l'entretien……………………………………….
+LANGUE UTILISEE LORS DE L'ENTRETIEN……………………………………………..
+STATUT DU QUESTIONNAIRE: 1. Complet   2. Incomplet
+SI STATUT  EST INCOMPLET, POURQUOI?   1…UCH VIDE   2...UCH HABITE MAIS ABSENT    3….REFUS
