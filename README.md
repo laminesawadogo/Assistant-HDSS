@@ -2,11 +2,16 @@
 
 Agent qui répond aux questions sur le dictionnaire de données de l'Observatoire
 de Population de Ouagadougou (RAG), et calcule des indicateurs, échantillons
-et contrôles de cohérence sur une ou plusieurs tables déposées (CSV, Excel —
-y compris un classeur multi-feuilles — ou Stata), quelles que soient les
-colonnes réellement présentes dans le fichier. Quand plusieurs tables sont
-chargées, l'assistant détecte les colonnes qu'elles ont en commun et peut
-répondre à des questions de relation, ou les fusionner sur demande.
+et contrôles de cohérence sur une ou plusieurs tables (CSV, Excel — y compris
+un classeur multi-feuilles — ou Stata), quelles que soient les colonnes
+réellement présentes dans le fichier. Quand plusieurs tables sont chargées,
+l'assistant détecte les colonnes qu'elles ont en commun et peut répondre à
+des questions de relation, ou les fusionner sur demande.
+
+**Les tables sont chargées automatiquement depuis le dossier Google Drive de
+l'observatoire** (`opo_db_exports`), où un export de chaque table est déposé
+chaque jour — il n'y a plus de dépôt manuel de fichier dans l'application :
+voir la section [Connexion automatique à Google Drive](#connexion-automatique-à-google-drive-opo_db_exports).
 
 ## Installation
 
@@ -70,9 +75,79 @@ que ça ne passe pas inaperçu.
 `auth_config.yaml.exemple` en `auth_config.yaml`, remplace les comptes et la
 clé de cookie par de vraies valeurs.
 
-Le fichier temporaire créé lors du dépôt d'une table (le temps de la lire
-avec pandas) est maintenant systématiquement supprimé du disque du serveur
-juste après son chargement, y compris en cas d'erreur de lecture.
+Le fichier temporaire créé lors de la synchronisation d'une table depuis
+Google Drive (le temps de la lire avec pandas) est systématiquement supprimé
+du disque du serveur juste après son chargement, y compris en cas d'erreur
+de lecture — aucune donnée synchronisée ne reste sur le disque au-delà du
+strict temps de traitement.
+
+## Connexion automatique à Google Drive (`opo_db_exports`)
+
+Les tables ne se déposent plus manuellement dans l'application : un
+processus externe exporte chaque jour un fichier par table (CSV, Excel ou
+Stata, avec la date d'export dans le nom du fichier) dans le dossier Google
+Drive partagé `opo_db_exports`. À l'ouverture de l'application (et toutes les
+15 minutes ensuite, ou immédiatement via le bouton **🔄 Recharger depuis
+Google Drive maintenant** dans la barre latérale), l'assistant se connecte à
+ce dossier, ne garde que le **dernier export de chaque table** (plusieurs
+fichiers d'une même table peuvent coexister dans le dossier, un par jour —
+seul le plus récent, détecté par la date dans le nom du fichier, est utilisé)
+et les charge exactement comme un dépôt manuel l'aurait fait : mêmes
+contrôles (colonnes nom/prénom retirées, aucune correction automatique),
+mêmes analyses disponibles ensuite dans le chat.
+
+**Le dossier étant restreint à des comptes précis** (pas un lien public),
+l'accès se fait via un **compte de service Google** (un compte technique,
+sans interface de connexion humaine), à créer une seule fois :
+
+1. Sur [console.cloud.google.com](https://console.cloud.google.com), créer un
+   projet (ou réutiliser un projet existant), puis dans **API et services →
+   Bibliothèque**, activer l'**API Google Drive**.
+2. Dans **API et services → Identifiants → Créer des identifiants → Compte de
+   service**, créer un compte de service (nom libre, ex. `assistant-opo-drive`).
+   Une fois créé, ouvrir l'onglet **Clés** du compte de service → **Ajouter
+   une clé → Créer une clé → JSON** : un fichier `.json` se télécharge — c'est
+   la clé secrète de ce compte, à garder confidentielle comme un mot de passe.
+3. Repérer l'adresse e-mail du compte de service (visible sur sa page,
+   de la forme `assistant-opo-drive@<projet>.iam.gserviceaccount.com`), puis,
+   **dans Google Drive**, ouvrir le dossier `opo_db_exports` → **Partager**
+   → coller cette adresse e-mail avec le rôle **Lecteur** (aucun besoin
+   d'accès en écriture, l'assistant ne fait que lire les exports).
+4. Configurer la clé récupérée à l'étape 2 :
+   - **Pour un vrai déploiement (recommandé)**, dans **Settings → Secrets**
+     de l'application Streamlit Cloud, coller le contenu du fichier JSON
+     sous la forme :
+     ```toml
+     [gdrive]
+     folder_id = "1qjV_hHhGIE5klnQYUzxLT-OJQp827v0l"
+
+     [gdrive.service_account]
+     type = "service_account"
+     project_id = "..."
+     private_key_id = "..."
+     private_key = "..."
+     client_email = "assistant-opo-drive@....iam.gserviceaccount.com"
+     client_id = "..."
+     auth_uri = "https://accounts.google.com/o/oauth2/auth"
+     token_uri = "https://oauth2.googleapis.com/token"
+     auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
+     client_x509_cert_url = "..."
+     universe_domain = "googleapis.com"
+     ```
+     (reprendre telles quelles les valeurs du fichier JSON téléchargé pour
+     chaque champ).
+   - **Pour un usage local**, copier `service_account.exemple.json` en
+     `service_account.json` (déjà ignoré par Git) et y coller le contenu du
+     vrai fichier JSON téléchargé.
+5. `folder_id` n'a normalement rien à changer : le dossier `opo_db_exports`
+   partagé par l'équipe est déjà la valeur par défaut du code
+   (`drive_sync.FOLDER_ID_PAR_DEFAUT`). À ne renseigner que si un autre
+   dossier doit être utilisé un jour.
+
+Tant que ce compte de service n'est pas configuré, l'application reste
+utilisable pour les questions sur le dictionnaire (chemin RAG), mais affiche
+un message clair indiquant qu'aucune table n'est disponible pour l'instant,
+plutôt que de planter.
 
 ## Ajouter un document de référence (fiche, manuel, PDF, Word...)
 
@@ -132,7 +207,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-180 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+202 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
@@ -142,8 +217,10 @@ leurs contrôles croisés entre tables, module Performances de terrain —
 agrégation par agent, jointure contrôleur, prévision d'objectif, rapport
 Word, recherche par identifiant), `rag.py` (récupération documentaire,
 garde-fous index/clé manquants, classification d'intention), `auth_config.yaml`
-(structure des comptes, hash/vérification des mots de passe), et `app.py` via
-des tests bout-en-bout (`tests/test_app.py`, avec
+(structure des comptes, hash/vérification des mots de passe), `drive_sync.py`
+(détection de la date d'export dans le nom du fichier, sélection du dernier
+export par table, synchronisation avec un client Drive simulé — sans appel
+réseau réel), et `app.py` via des tests bout-en-bout (`tests/test_app.py`, avec
 `streamlit.testing.v1.AppTest`) qui simulent de vraies conversations
 multi-tours dans l'interface.
 
@@ -154,10 +231,12 @@ multi-tours dans l'interface.
 - `prepare_corpus.py` — convertit les fichiers de `data/source_documents/` (`.doc`, `.docx`, `.pdf`, `.xlsx`, `.txt`, `.md`) en texte dans `data/docs/`.
 - `ingest.py` — construit l'index de recherche (TF-IDF, léger, sans téléchargement de modèle) ; appelle `prepare_corpus.py` en premier.
 - `rag.py` — recherche + construction du prompt + appel au LLM.
-- `data_tools.py` — analyse d'une ou plusieurs tables déposées (CSV, Excel — multi-feuilles compris — ou Stata) : répartitions, échantillon reproductible, détection de doublons/dates invraisemblables (colonnes ID/date détectées automatiquement par leur nom/contenu), résolution automatique de la table ciblée par une question (nom de table ou colonne mentionnée), détection des colonnes communes entre tables chargées (relations, candidates de jointure) et fusion sur demande. Les colonnes de type nom/prénom sont systématiquement retirées avant toute analyse.
+- `data_tools.py` — analyse d'une ou plusieurs tables (CSV, Excel — multi-feuilles compris — ou Stata) : répartitions, échantillon reproductible, détection de doublons/dates invraisemblables (colonnes ID/date détectées automatiquement par leur nom/contenu), résolution automatique de la table ciblée par une question (nom de table ou colonne mentionnée), détection des colonnes communes entre tables chargées (relations, candidates de jointure) et fusion sur demande. Les colonnes de type nom/prénom sont systématiquement retirées avant toute analyse.
+- `drive_sync.py` — synchronisation automatique des tables depuis le dossier Google Drive `opo_db_exports` (authentification par compte de service, détection du dernier export par table, téléchargement). Voir la section [Connexion automatique à Google Drive](#connexion-automatique-à-google-drive-opo_db_exports).
 - `app.py` — interface de chat (Streamlit).
 - `instructions_systeme.md` — rôle et garde-fous de l'assistant (ce qu'il fait, ce qu'il ne fait jamais).
 - `auth_config.yaml` — comptes réels de l'équipe (identifiants, mots de passe, rôles), non suivi par Git. `auth_config.yaml.exemple` est le modèle versionné (valeurs factices).
+- `service_account.json` — clé du compte de service Google utilisé pour lire le dossier Drive, non suivi par Git. `service_account.exemple.json` est le modèle versionné (valeurs factices).
 - `.env` / `.env.exemple` — clé du modèle (Anthropic/Groq) chargée automatiquement au démarrage, jamais à ressaisir dans l'application.
 - `packages.txt` — dépendances système (LibreOffice, poppler-utils) installées automatiquement par Streamlit Community Cloud au déploiement.
 - `tests/` — suite de tests automatisés (pytest).

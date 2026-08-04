@@ -17,8 +17,21 @@ from dotenv import load_dotenv
 
 import auth
 import data_tools as dt
+import drive_sync
 import ingest
 import rag
+
+
+@st.cache_data(ttl=900, show_spinner="Synchronisation avec Google Drive...")
+def _telecharger_depuis_drive():
+    """Recupere depuis le dossier Google Drive de l'observatoire le dernier
+    export de chaque table (voir drive_sync.py). Mis en cache 15 minutes :
+    Streamlit relance tout le script a chaque question posee dans le chat,
+    et les exports Drive n'ont lieu qu'une fois par jour - interroger
+    l'API Drive a chaque interaction serait a la fois inutile et lent. Le
+    bouton "Recharger depuis Google Drive maintenant" (barre laterale) vide
+    ce cache pour forcer une verification immediate si besoin."""
+    return drive_sync.synchroniser()
 
 
 def sans_accents(texte: str) -> str:
@@ -198,9 +211,10 @@ with st.sidebar:
     st.divider()
     st.header("📁 Tables / bases de données")
     st.caption(
-        "Fichiers CSV, Excel (.xlsx, .xls) ou Stata (.dta) — un fichier = une table analysable "
-        "(indicateurs, échantillons, doublons...). Un classeur Excel avec plusieurs feuilles "
-        "est reconnu automatiquement comme plusieurs tables, une par feuille."
+        "Les tables analysables (indicateurs, échantillons, doublons, performance de terrain...) "
+        "sont chargées **automatiquement** depuis le dossier Google Drive de l'observatoire, où "
+        "un export (CSV, Excel ou Stata) de chaque table est déposé chaque jour. Aucun dépôt "
+        "manuel de fichier n'est nécessaire : seul le dernier export de chaque table est retenu."
     )
 
     if "tables" not in st.session_state:
@@ -210,75 +224,90 @@ with st.sidebar:
     if "historique_chargements" not in st.session_state:
         st.session_state["historique_chargements"] = []  # trace chaque (re)chargement de table
 
-    fichiers = st.file_uploader(
-        "Déposer une ou plusieurs tables (CSV, Excel ou Stata)",
-        type=["csv", "xlsx", "xls", "dta"],
-        accept_multiple_files=True,
-    )
+    if st.button("🔄 Recharger depuis Google Drive maintenant"):
+        _telecharger_depuis_drive.clear()
 
-    # Streamlit relance tout le script a chaque interaction (chaque question
-    # posee dans le chat, par exemple) : sans ce controle, chaque fichier
-    # deja depose serait relu et re-parse a chaque fois, ce qui rend l'appli
-    # tres lente des que les tables sont un peu grosses ou nombreuses.
-    if fichiers:
-        for fichier in fichiers:
-            signature = (fichier.name, fichier.size)
-            if signature in st.session_state["fichiers_traites"]:
-                continue
+    try:
+        contenus_drive, meta_drive, avertissements_drive = _telecharger_depuis_drive()
+    except Exception as e:
+        contenus_drive, meta_drive, avertissements_drive = {}, {}, []
+        st.error(
+            "Connexion à Google Drive impossible pour l'instant : "
+            f"{e} — le chat reste utilisable pour les questions sur le dictionnaire, mais "
+            "aucune table n'est disponible tant que la connexion n'est pas rétablie."
+        )
+
+    for avert in avertissements_drive:
+        st.warning(avert)
+
+    # Meme controle anti-relecture que pour un depot manuel : Streamlit
+    # relance tout le script a chaque interaction (chaque question posee
+    # dans le chat), et un export dont le nom (donc la date) n'a pas change
+    # depuis la derniere synchronisation ne doit pas etre reparse a chaque
+    # fois - seul un nouvel export (nom de fichier different, date plus
+    # recente) declenche un nouveau chargement.
+    for nom_fichier, contenu in contenus_drive.items():
+        signature = (nom_fichier, len(contenu))
+        if signature in st.session_state["fichiers_traites"]:
+            continue
+        info = meta_drive.get(nom_fichier, {})
+        try:
+            nom_bas = nom_fichier.lower()
+            if nom_bas.endswith((".xlsx", ".xls")):
+                suffix = ".xlsx"
+            elif nom_bas.endswith(".dta"):
+                suffix = ".dta"
+            else:
+                suffix = ".csv"
+            # delete=False est necessaire pour pouvoir rouvrir le fichier par
+            # son chemin (pd.read_excel/read_stata...) une fois ferme ; le
+            # nettoyage est fait explicitement dans le bloc `finally`
+            # juste en dessous, pour ne jamais laisser une donnee
+            # synchronisee depuis le Drive trainer sur le disque du serveur
+            # au-dela du temps de son chargement (securite des donnees).
+            tmp_path = tempfile.NamedTemporaryFile(delete=False, suffix=suffix).name
             try:
-                nom_bas = fichier.name.lower()
-                if nom_bas.endswith((".xlsx", ".xls")):
-                    suffix = ".xlsx"
-                elif nom_bas.endswith(".dta"):
-                    suffix = ".dta"
-                else:
-                    suffix = ".csv"
-                # tempfile.gettempdir() fonctionne sur Windows, macOS et Linux
-                # (un chemin code en dur type "/tmp/..." plante sous Windows).
-                # delete=False est necessaire pour pouvoir rouvrir le fichier
-                # par son chemin (pd.read_excel/read_stata...) une fois
-                # ferme ; le nettoyage est fait explicitement dans le bloc
-                # `finally` juste en dessous, pour ne jamais laisser une
-                # donnee deposee trainer sur le disque du serveur au-dela du
-                # temps de son chargement (securite des donnees importees).
-                tmp_path = tempfile.NamedTemporaryFile(delete=False, suffix=suffix).name
-                try:
-                    with open(tmp_path, "wb") as f:
-                        f.write(fichier.getbuffer())
+                with open(tmp_path, "wb") as f:
+                    f.write(contenu)
 
-                    horodatage = datetime.now()
-                    if dt.est_classeur_excel(fichier.name):
-                        # Un classeur Excel peut contenir plusieurs feuilles, chacune
-                        # une table distincte (ex: une feuille par table de
-                        # l'observatoire) : on les reconnait toutes, pas seulement
-                        # la premiere.
-                        feuilles = dt.charger_classeur(tmp_path)
-                        for nom_feuille, df_feuille in feuilles.items():
-                            nom_table = nom_feuille if nom_feuille not in st.session_state["tables"] else (
-                                f"{Path(fichier.name).stem}_{nom_feuille}"
-                            )
-                            st.session_state["tables"][nom_table] = df_feuille
-                            st.session_state["historique_chargements"].append({
-                                "horodatage": horodatage, "fichier": fichier.name,
-                                "table": nom_table, "n_lignes": len(df_feuille),
-                            })
-                    else:
-                        nom_table = re.sub(r"\.(csv|xlsx|xls|dta)$", "", fichier.name, flags=re.IGNORECASE)
-                        st.session_state["tables"][nom_table] = dt.load_table(tmp_path)
+                horodatage = datetime.now()
+                date_export = info.get("date_export")
+                if dt.est_classeur_excel(nom_fichier):
+                    # Un classeur Excel peut contenir plusieurs feuilles, chacune
+                    # une table distincte (ex: une feuille par table de
+                    # l'observatoire) : on les reconnait toutes, pas seulement
+                    # la premiere.
+                    feuilles = dt.charger_classeur(tmp_path)
+                    for nom_feuille, df_feuille in feuilles.items():
+                        nom_table = nom_feuille if nom_feuille not in st.session_state["tables"] else (
+                            f"{Path(nom_fichier).stem}_{nom_feuille}"
+                        )
+                        st.session_state["tables"][nom_table] = df_feuille
                         st.session_state["historique_chargements"].append({
-                            "horodatage": horodatage, "fichier": fichier.name,
-                            "table": nom_table, "n_lignes": len(st.session_state["tables"][nom_table]),
+                            "horodatage": horodatage, "fichier": nom_fichier,
+                            "table": nom_table, "n_lignes": len(df_feuille),
+                            "date_export": date_export, "source": "Google Drive",
                         })
+                else:
+                    nom_table = info.get("table") or re.sub(
+                        r"\.(csv|xlsx|xls|dta)$", "", nom_fichier, flags=re.IGNORECASE
+                    )
+                    st.session_state["tables"][nom_table] = dt.load_table(tmp_path)
+                    st.session_state["historique_chargements"].append({
+                        "horodatage": horodatage, "fichier": nom_fichier,
+                        "table": nom_table, "n_lignes": len(st.session_state["tables"][nom_table]),
+                        "date_export": date_export, "source": "Google Drive",
+                    })
 
-                    st.session_state["fichiers_traites"].add(signature)
-                finally:
-                    Path(tmp_path).unlink(missing_ok=True)
-            except Exception as e:
-                st.error(f"Impossible de lire {fichier.name} : {e}")
+                st.session_state["fichiers_traites"].add(signature)
+            finally:
+                Path(tmp_path).unlink(missing_ok=True)
+        except Exception as e:
+            st.error(f"Impossible de lire {nom_fichier} (Google Drive) : {e}")
 
     tables = st.session_state["tables"]
     if tables:
-        st.success(f"{len(tables)} table(s) chargée(s) : {', '.join(tables.keys())}")
+        st.success(f"{len(tables)} table(s) chargée(s) depuis Google Drive : {', '.join(tables.keys())}")
         st.caption(
             "Les colonnes de type nom/prénom sont automatiquement retirées. "
             "**Toutes les tables chargées sont ouvertes par défaut, aucune n'est \"active\" par "
@@ -286,11 +315,21 @@ with st.sidebar:
             "ta question pour cibler une table précise, sinon l'assistant cherche automatiquement dans "
             "toutes les tables concernées plutôt que d'en choisir une au hasard."
         )
-        with st.expander("Voir les colonnes de chaque table chargée"):
+        with st.expander("Voir les colonnes et la date d'export de chaque table chargée"):
             for nom, df_apercu in tables.items():
-                st.markdown(f"**{nom}** : {', '.join(f'`{c}`' for c in df_apercu.columns)}")
+                derniere_entree = next(
+                    (e for e in reversed(st.session_state["historique_chargements"]) if e["table"] == nom),
+                    None,
+                )
+                suffixe_date = ""
+                if derniere_entree and derniere_entree.get("date_export"):
+                    suffixe_date = f" — export du {derniere_entree['date_export'].strftime('%d/%m/%Y')}"
+                st.markdown(f"**{nom}**{suffixe_date} : {', '.join(f'`{c}`' for c in df_apercu.columns)}")
     else:
-        st.info("Aucune table déposée pour l'instant — le chat répond depuis le dictionnaire.")
+        st.info(
+            "Aucune table disponible depuis Google Drive pour l'instant — le chat répond "
+            "depuis le dictionnaire."
+        )
 
     st.divider()
     st.header("📚 Ajouter un document de référence")
@@ -840,9 +879,12 @@ def reponse_historique_actualisations() -> dict:
         return {"content": "Aucune table n'a encore été chargée durant cette session."}
     lignes = ["**Historique des actualisations de cette session** :"]
     for entree in reversed(historique):
+        date_export = entree.get("date_export")
+        suffixe_export = f", export du {date_export.strftime('%d/%m/%Y')}" if date_export else ""
+        source = entree.get("source", "dépôt manuel")
         lignes.append(
             f"- {entree['horodatage'].strftime('%d/%m/%Y %H:%M:%S')} — **{entree['table']}** "
-            f"({entree['n_lignes']} ligne(s)), depuis `{entree['fichier']}`"
+            f"({entree['n_lignes']} ligne(s)), depuis `{entree['fichier']}` ({source}{suffixe_export})"
         )
     return {"content": "\n".join(lignes)}
 

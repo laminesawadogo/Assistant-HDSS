@@ -10,6 +10,8 @@ pytest>=8.0  # pour lancer la suite de tests (dossier tests/)
 python-docx>=1.1   # lecture des fichiers Word .docx deposes dans data/source_documents/, et generation du rapport de performance
 python-pptx>=1.0   # lecture des fichiers PowerPoint .ppt/.pptx deposes dans data/source_documents/
 pdfplumber>=0.11   # repli pour lire les PDF si pdftotext (poppler) n'est pas installe
+google-api-python-client>=2.100   # synchronisation automatique des tables depuis Google Drive (drive_sync.py)
+google-auth>=2.23                 # authentification par compte de service pour l'API Drive (lecture seule)
 
 # Un seul des deux suffit, selon le fournisseur de LLM choisi :
 groq>=0.9        # gratuit, rapide (recommande pour demarrer)
