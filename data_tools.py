@@ -271,6 +271,16 @@ def alias_table(nom: str) -> list[str]:
     return [v for v in variantes if len(v) >= 4]
 
 
+def _alias_mentionne(alias: str, q: str) -> bool:
+    """Verifie qu'un alias de table (voir `alias_table`) est mentionne comme
+    mot entier dans la question, plutot qu'une simple sous-chaine - evite un
+    faux positif quand l'alias d'une table correspond par hasard au debut
+    d'un nom de colonne sans rapport (ex: l'alias "education" de la table
+    FNewEducation ne doit PAS matcher a l'interieur du nom de colonne
+    "education_level", qui parle d'une colonne, pas de la table)."""
+    return re.search(r"\b" + re.escape(alias) + r"\b", q) is not None
+
+
 def resoudre_table_ciblee(
     question: str, tables: dict, nom_par_defaut: str | None = None, historique: list[dict] | None = None
 ):
@@ -302,7 +312,7 @@ def resoudre_table_ciblee(
             return nom, tables[nom]
 
     for nom in tables:
-        if any(alias in q for alias in alias_table(nom)):
+        if any(_alias_mentionne(alias, q) for alias in alias_table(nom)):
             return nom, tables[nom]
 
     tables_correspondantes = []
@@ -331,6 +341,42 @@ def tables_avec_colonne(question: str, tables: dict) -> list[str]:
     defaut")."""
     q = question.lower()
     return [nom for nom, df in tables.items() if any(str(colonne).lower() in q for colonne in df.columns)]
+
+
+def colonnes_mentionnees(question: str, tables: dict) -> list[str]:
+    """Renvoie, dans l'ordre de premiere apparition dans la question, les
+    noms de colonnes mentionnes - a partir de l'UNION de toutes les colonnes
+    de TOUTES les tables chargees (pas seulement celles d'une table deja
+    choisie par defaut), pour reconnaitre une colonne peu importe quelle
+    table est regardee en premier. Sert de base a la recherche multi-table
+    pour les analyses a plusieurs colonnes (bivariee, correlation,
+    multivariee) quand aucune table n'est nommee explicitement."""
+    q = question.lower()
+    toutes_colonnes, vues = [], set()
+    for df in tables.values():
+        for c in df.columns:
+            cle = str(c).lower()
+            if cle not in vues:
+                vues.add(cle)
+                toutes_colonnes.append(str(c))
+    return [c for c in toutes_colonnes if c.lower() in q]
+
+
+def tables_avec_toutes_colonnes(colonnes: list[str], tables: dict) -> list[str]:
+    """Renvoie les tables chargees qui contiennent TOUTES les colonnes
+    donnees a la fois - candidates pour une analyse bivariee/multivariee sur
+    plusieurs colonnes mentionnees dans la question sans qu'aucune table ne
+    soit nommee explicitement ("il ne faut pas lire une seule base par
+    defaut ; il faut tout lire")."""
+    if not colonnes:
+        return []
+    colonnes_norm = {c.lower() for c in colonnes}
+    resultat = []
+    for nom, df in tables.items():
+        colonnes_table = {str(c).lower() for c in df.columns}
+        if colonnes_norm.issubset(colonnes_table):
+            resultat.append(nom)
+    return resultat
 
 
 def resume_tables_chargees(tables: dict) -> str:
@@ -372,7 +418,7 @@ def detecter_tables_mentionnees(question: str, tables: dict) -> list[str]:
     q = question.lower()
     trouvees = []
     for nom in tables:
-        if nom.lower() in q or any(alias in q for alias in alias_table(nom)):
+        if nom.lower() in q or any(_alias_mentionne(alias, q) for alias in alias_table(nom)):
             trouvees.append(nom)
     return trouvees
 

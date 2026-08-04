@@ -374,3 +374,43 @@ def test_recherche_instantanee_identifiant_introuvable(tables_performance):
     at.chat_input[0].set_value("recherche l'individu 999999").run()
     reponse = at.session_state["messages"][-1]["content"]
     assert "Aucune fiche trouvée" in reponse
+
+
+@pytest.fixture
+def tables_colonnes_partagees():
+    return {
+        "FNewEducation": pd.DataFrame({
+            "individid": [1, 2, 3, 4], "sex": [1, 2, 1, 2], "education_level": ["primaire", "secondaire", "primaire", "aucun"],
+        }),
+        "FNewEmploi": pd.DataFrame({
+            "individid": [1, 2, 3], "sex": [2, 2, 1], "education_level": ["primaire", "primaire", "secondaire"],
+        }),
+        "FNewSante": pd.DataFrame({"individid": [1], "autre_col": ["x"]}),
+    }
+
+
+def test_tableau_croise_sans_nommer_de_table_couvre_toutes_les_tables_concernees(tables_colonnes_partagees):
+    # "il ne faut pas lire une seule base par defaut" : sex et
+    # education_level existent dans DEUX tables sans qu'aucune ne soit
+    # nommee -> les deux doivent apparaitre, pas seulement la table par
+    # defaut de la barre laterale (la premiere chargee).
+    at = _app_avec_tables(tables_colonnes_partagees)
+    at.chat_input[0].set_value("tableau croisé entre sex et education_level").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "FNewEducation" in reponse
+    assert "FNewEmploi" in reponse
+    assert "FNewSante" not in reponse
+
+
+def test_correlation_sans_nommer_de_table_couvre_toutes_les_tables_concernees():
+    tables = {
+        "FNewIndividual": pd.DataFrame({"individid": [1, 2, 3], "age": [20, 30, 40], "poids": [60, 70, 80]}),
+        "FNewSante": pd.DataFrame({"individid": [1, 2], "age": [20, 30], "poids": [60, 70]}),
+        "FNewEducation": pd.DataFrame({"individid": [1], "autre_col": ["x"]}),
+    }
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value("corrélation entre age et poids").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "FNewIndividual" in reponse
+    assert "FNewSante" in reponse
+    assert "FNewEducation" not in reponse

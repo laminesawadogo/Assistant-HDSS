@@ -1148,6 +1148,46 @@ def route_question(question: str) -> dict:
                     if morceaux:
                         return {"content": "\n\n---\n\n".join(morceaux)}
 
+        # Meme principe pour les analyses a plusieurs colonnes (bivariee,
+        # correlation, multivariee) : sans nom de table, on cherche TOUTES
+        # les colonnes mentionnees (union de toutes les tables chargees) et
+        # on calcule sur CHAQUE table qui les contient toutes ensemble,
+        # plutot que de retomber sur la table par defaut de la barre
+        # laterale des qu'aucune table n'est explicitement nommee.
+        colonnes_visees_globales = dt.colonnes_mentionnees(question, tables)
+        if len(colonnes_visees_globales) >= 2:
+            candidats_multi = dt.tables_avec_toutes_colonnes(colonnes_visees_globales, tables)
+            if candidats_multi:
+                if contient_mot_cle(q, MOTS_BIVARIE, entiers=True):
+                    morceaux = []
+                    for nom in candidats_multi:
+                        try:
+                            morceaux.append(reponse_tableau_croise(
+                                tables[nom], nom, colonnes_visees_globales[0], colonnes_visees_globales[1]
+                            )["content"])
+                        except ValueError:
+                            continue
+                    if morceaux:
+                        return {"content": "\n\n---\n\n".join(morceaux)}
+                if contient_mot_cle(q, MOTS_CORRELATION, entiers=True):
+                    morceaux = []
+                    for nom in candidats_multi:
+                        try:
+                            morceaux.append(reponse_correlation(tables[nom], nom, colonnes_visees_globales)["content"])
+                        except ValueError:
+                            continue
+                    if morceaux:
+                        return {"content": "\n\n---\n\n".join(morceaux)}
+                if len(colonnes_visees_globales) >= 3 and contient_mot_cle(q, MOTS_MULTIVARIE, entiers=True):
+                    morceaux = []
+                    for nom in candidats_multi:
+                        try:
+                            morceaux.append(reponse_tableau_multivarie(tables[nom], nom, colonnes_visees_globales)["content"])
+                        except ValueError:
+                            continue
+                    if morceaux:
+                        return {"content": "\n\n---\n\n".join(morceaux)}
+
     nom_table, df = dt.resoudre_table_ciblee(question, tables, table_active_nom, historique=historique_recent())
 
     if df is not None and est_question_agents(q):

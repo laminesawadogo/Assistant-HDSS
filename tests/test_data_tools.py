@@ -840,3 +840,35 @@ def test_generer_rapport_performance_docx_produit_des_bytes(tables_performance_t
     contenu = dt.generer_rapport_performance_docx(rapport, prevision, objectif=20)
     assert isinstance(contenu, bytes)
     assert len(contenu) > 0
+
+
+# --- Recherche multi-table pour les analyses a plusieurs colonnes -----------
+# ("il ne faut pas lire une seule base par defaut ; il faut tout lire")
+
+@pytest.fixture
+def tables_colonnes_partagees():
+    return {
+        "FNewEducation": pd.DataFrame({
+            "individid": [1, 2, 3], "sex": [1, 2, 1], "education_level": ["primaire", "secondaire", "primaire"],
+        }),
+        "FNewEmploi": pd.DataFrame({
+            "individid": [1, 2], "sex": [2, 2], "revenu": [50000, 60000],
+        }),
+        "FNewSante": pd.DataFrame({"individid": [1], "autre_col": ["x"]}),
+    }
+
+
+def test_colonnes_mentionnees_cherche_dans_toutes_les_tables(tables_colonnes_partagees):
+    trouvees = dt.colonnes_mentionnees("croise sex et education_level", tables_colonnes_partagees)
+    assert "sex" in trouvees
+    assert "education_level" in trouvees
+    assert "autre_col" not in trouvees
+
+
+def test_tables_avec_toutes_colonnes_ne_garde_que_les_tables_completes(tables_colonnes_partagees):
+    resultat = dt.tables_avec_toutes_colonnes(["individid", "sex"], tables_colonnes_partagees)
+    assert set(resultat) == {"FNewEducation", "FNewEmploi"}
+
+
+def test_tables_avec_toutes_colonnes_vide_sans_colonnes():
+    assert dt.tables_avec_toutes_colonnes([], {"X": pd.DataFrame({"a": [1]})}) == []

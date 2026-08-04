@@ -132,7 +132,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-169 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+175 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
@@ -330,7 +330,18 @@ langage, et **systématiquement accompagnée de la syntaxe R et Stata
 nommée dans la question et qu'une colonne mentionnée existe dans plusieurs
 tables à la fois (ex. `individid` présent dans 20 tables), l'analyse est
 calculée pour **chacune** des tables concernées plutôt que de silencieusement
-n'en garder qu'une ou retomber sur la table par défaut de l'interface.
+n'en garder qu'une ou retomber sur la table par défaut de l'interface. Ce
+principe couvre aussi les analyses à plusieurs colonnes (tableau croisé,
+corrélation, multivariée) : si les colonnes mentionnées (ex. « tableau
+croisé entre sex et education_level ») existent ensemble dans plusieurs
+tables, le résultat est calculé pour chacune, pas seulement la première
+chargée.
+
+**Un nom de colonne ne se confond jamais avec le nom d'une table.** La
+reconnaissance d'une table mentionnée informellement (ex. « education » pour
+`FNewEducation`) exige un mot entier — une colonne comme `education_level`
+ne déclenche donc jamais à tort la table `FNewEducation`, même si son nom
+commence par les mêmes lettres.
 
 **Reconnaissance insensible aux accents et aux accords grammaticaux.** Une
 question est reconnue qu'elle soit tapée avec ou sans accents
