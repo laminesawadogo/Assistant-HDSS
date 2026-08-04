@@ -872,3 +872,141 @@ def test_tables_avec_toutes_colonnes_ne_garde_que_les_tables_completes(tables_co
 
 def test_tables_avec_toutes_colonnes_vide_sans_colonnes():
     assert dt.tables_avec_toutes_colonnes([], {"X": pd.DataFrame({"a": [1]})}) == []
+
+
+# --- Alignement sur le vrai schema de l'observatoire (base Hypervel) --------
+# Les tables reelles s'appellent "opo_hypervel_<nom>", certaines epellent un
+# sigle avec un underscore entre chaque lettre (ex: "opo_hypervel_d_e_c_e_s"),
+# et l'identite de l'agent n'est saisie qu'une fois par enquete/visite (table
+# "opo_hypervel_enquete_or_visites"), pas directement sur chaque fiche.
+
+def test_alias_table_reconnait_prefixe_opo_hypervel():
+    assert "naissances" in dt.alias_table("opo_hypervel_naissances")
+    assert "presences" in dt.alias_table("opo_hypervel_presences")
+
+
+def test_alias_table_reconnait_sigle_epelle_avec_underscores():
+    # "opo_hypervel_d_e_c_e_s" est le nom reel genere automatiquement pour la
+    # table des deces (Laravel/Hypervel epelle "DECES" lettre par lettre).
+    assert "deces" in dt.alias_table("opo_hypervel_d_e_c_e_s")
+    assert "cpns" in dt.alias_table("opo_hypervel_c_p_n_s")
+
+
+def test_table_correspond_reconnait_sigle_epelle_avec_underscores():
+    assert dt._table_correspond("opo_hypervel_d_e_c_e_s", ["death", "deces"])
+
+
+def test_detecter_tables_mentionnees_insensible_aux_accents():
+    tables = {"opo_hypervel_d_e_c_e_s": pd.DataFrame({"individu_id": [1]})}
+    # La question tape avec accent ("décès") doit reconnaitre la table meme
+    # si son nom reel/alias normalise ne porte pas d'accent.
+    assert dt.detecter_tables_mentionnees("combien de décès enregistrés", tables) == ["opo_hypervel_d_e_c_e_s"]
+
+
+def test_resoudre_table_ciblee_insensible_aux_accents():
+    tables = {
+        "opo_hypervel_d_e_c_e_s": pd.DataFrame({"individu_id": [1]}),
+        "opo_hypervel_naissances": pd.DataFrame({"individu_id": [1]}),
+    }
+    nom, _ = dt.resoudre_table_ciblee("nombre de décès", tables)
+    assert nom == "opo_hypervel_d_e_c_e_s"
+
+
+def test_agent_like_ne_capture_pas_enquete_id_ni_date_enquete():
+    df = pd.DataFrame({"enquete_id": [1], "date_enquete": ["2026-01-01"], "individu_id": [1]})
+    assert dt.detect_agent_columns(df) == []
+
+
+def test_agent_like_capture_agent_id():
+    df = pd.DataFrame({"agent_id": [1], "individu_id": [1]})
+    assert dt.detect_agent_columns(df) == ["agent_id"]
+
+
+def test_colonne_agent_effective_colonne_directe_prioritaire():
+    tables = {"opo_hypervel_presences": pd.DataFrame({"agent_id": ["A", "B"], "individu_id": [1, 2]})}
+    df, col = dt.colonne_agent_effective(tables["opo_hypervel_presences"], tables)
+    assert col == "agent_id"
+
+
+def test_colonne_agent_effective_jointure_via_enquete_id():
+    # Fiche naissance : pas de colonne agent directe, seulement enquete_id
+    # (schema reel) -> l'agent doit etre retrouve par jointure vers la table
+    # enquetes/visites qui, elle, porte agent_id.
+    tables = {
+        "opo_hypervel_naissances": pd.DataFrame({"individu_id": [1, 2, 3], "enquete_id": [10, 10, 20]}),
+        "opo_hypervel_enquete_or_visites": pd.DataFrame({"id": [10, 20], "agent_id": ["A", "B"]}),
+    }
+    df, col = dt.colonne_agent_effective(tables["opo_hypervel_naissances"], tables)
+    assert col == "__agent_via_enquete__"
+    assert list(df[col]) == ["A", "A", "B"]
+
+
+def test_colonne_agent_effective_sans_table_enquetes_renvoie_none():
+    tables = {"opo_hypervel_naissances": pd.DataFrame({"individu_id": [1], "enquete_id": [10]})}
+    df, col = dt.colonne_agent_effective(tables["opo_hypervel_naissances"], tables)
+    assert col is None
+
+
+def test_rapport_performance_agents_via_jointure_enquete_id():
+    # Bout en bout : une fiche sans colonne agent directe doit quand meme
+    # apparaitre dans le rapport de performance grace a la jointure automatique.
+    # (La table enquetes/visites elle-meme porte une colonne agent directe et
+    # est donc aussi comptee pour son propre role - chaque ligne y represente
+    # une visite de terrain reellement effectuee par l'agent.)
+    tables = {
+        "opo_hypervel_naissances": pd.DataFrame({"individu_id": [1, 2, 3], "enquete_id": [10, 10, 20]}),
+        "opo_hypervel_enquete_or_visites": pd.DataFrame({"id": [10, 20], "agent_id": ["A", "B"]}),
+    }
+    rapport = dt.rapport_performance_agents(tables)
+    assert set(rapport["agent"]) == {"A", "B"}
+    ligne_a = rapport[rapport["agent"] == "A"].iloc[0]
+    assert ligne_a["Naissances enregistrées"] == 2
+
+
+def test_fusion_identite_agent_ajoute_email_depuis_la_table_users():
+    rapport_agents = pd.DataFrame({"agent": ["1", "2"], "total_fiches": [5, 3]})
+    tables = {
+        "opo_hypervel_users": pd.DataFrame({"id": [1, 2], "email": ["a@obs.bf", "b@obs.bf"]}),
+    }
+    fusionne, nom_table = dt.fusion_identite_agent(rapport_agents, tables)
+    assert nom_table == "opo_hypervel_users"
+    assert list(fusionne.sort_values("agent")["email_agent"]) == ["a@obs.bf", "b@obs.bf"]
+
+
+def test_fusion_identite_agent_sans_table_users_renvoie_inchange():
+    rapport_agents = pd.DataFrame({"agent": ["1"], "total_fiches": [5]})
+    fusionne, nom_table = dt.fusion_identite_agent(rapport_agents, {})
+    assert nom_table is None
+    assert "email_agent" not in fusionne.columns
+
+
+def test_tranches_age_reconnait_histoire_marietales_reelle():
+    mots_cles = next(m for m, b in dt.TRANCHES_AGE_PAR_TYPE_FICHE if "marietal" in m)
+    assert dt._table_correspond("opo_hypervel_histoire_marietales", mots_cles)
+
+
+def test_rapport_coherence_avancee_grossesse_reelle_exclut_issue_grossesses():
+    tables = {
+        "opo_hypervel_grossesses": pd.DataFrame({"individu_id": [1, 2]}),
+        "opo_hypervel_issue_grossesses": pd.DataFrame({"individu_id": [1]}),
+    }
+    resultat = dt.rapport_coherence_avancee(tables)
+    croises = resultat["croises"]
+    # Un controle croise "grossesse sans issue" doit avoir ete detecte, avec
+    # les deux tables reelles correctement distinguees (jamais la meme table
+    # des deux cotes de la comparaison).
+    correspondances = [c for c in croises if "issue" in c[0].lower()]
+    assert len(correspondances) == 1
+    _, source, cible, _ = correspondances[0]
+    assert source == "opo_hypervel_grossesses"
+    assert cible == "opo_hypervel_issue_grossesses"
+
+
+def test_rapport_coherence_avancee_depart_reconnu_comme_migration_out():
+    tables = {
+        "opo_hypervel_presences": pd.DataFrame({"individu_id": [1, 2]}),
+        "opo_hypervel_departs": pd.DataFrame({"individu_id": [1]}),
+    }
+    resultat = dt.rapport_coherence_avancee(tables)
+    correspondances = [c for c in resultat["croises"] if "départ" in c[0].lower()]
+    assert len(correspondances) == 1

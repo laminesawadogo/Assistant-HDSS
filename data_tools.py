@@ -14,14 +14,29 @@ from __future__ import annotations
 
 import io
 import re
+import unicodedata
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
 
+
+def _sans_accents(texte: str) -> str:
+    """Retire les accents d'un texte (meme principe que app.sans_accents,
+    duplique ici pour que data_tools.py reste importable independamment de
+    app.py). Necessaire pour reconnaitre le nom ou l'alias d'une table tape
+    avec ou sans accent (ex: "décès"/"deces")."""
+    return "".join(c for c in unicodedata.normalize("NFD", str(texte)) if unicodedata.category(c) != "Mn")
+
 NAME_LIKE = re.compile(r"(nom|name|prenom|prénom|surname|firstname|lastname)", re.IGNORECASE)
 ID_LIKE = re.compile(r"(id|identif)", re.IGNORECASE)
-AGENT_LIKE = re.compile(r"(field_?wrkr|fieldworker|enquet|interview|agent)", re.IGNORECASE)
+# Volontairement restreint a des motifs qui identifient vraiment l'AGENT (pas
+# n'importe quelle colonne liee a une enquete) : le motif large precedent
+# (simple "enquet"/"interview" en sous-chaine) capturait a tort des colonnes
+# comme `enquete_id` ou `date_enquete`, presentes sur la quasi-totalite des
+# tables du schema reel de l'observatoire mais qui ne designent PAS l'agent -
+# seulement l'evenement d'enquete/visite auquel la fiche se rattache.
+AGENT_LIKE = re.compile(r"(field_?wrkr|fieldworker|agent_?id|^agent$|agent_?enquet|interviewer_?id)", re.IGNORECASE)
 
 
 def load_table(path: str) -> pd.DataFrame:
@@ -241,7 +256,15 @@ def tables_mentionnees_dans_historique(historique: list[dict] | None, tables: di
     return trouvees
 
 
-PREFIXES_TABLE_IGNORES = ("fnew_", "fnew", "f_new_", "f_new")
+PREFIXES_TABLE_IGNORES = (
+    "fnew_", "fnew", "f_new_", "f_new",
+    # Prefixe technique des exports reels de l'observatoire (base Hypervel) :
+    # les tables s'appellent par ex. "opo_hypervel_individus",
+    # "opo_hypervel_naissances"... - sans ce prefixe reconnu, aucun alias
+    # informel ("individus", "naissances"...) ne pouvait etre reconnu, puisque
+    # le nom charge ne commencait par aucun des prefixes connus jusqu'ici.
+    "opo_hypervel_", "opo_hypervel",
+)
 
 
 def alias_table(nom: str) -> list[str]:
@@ -267,6 +290,22 @@ def alias_table(nom: str) -> list[str]:
         variantes.add(alias[:-1])
     else:
         variantes.add(alias + "s")
+
+    # Certains noms de table reels epellent un sigle avec un underscore entre
+    # chaque lettre (ex: "d_e_c_e_s" pour "deces", "c_p_n_s" pour "cpns",
+    # schema Hypervel de l'observatoire) : sans underscores, l'alias redevient
+    # un mot naturel que l'equipe reconnait et emploie a l'oral.
+    sans_underscore = alias.replace("_", "")
+    if sans_underscore != alias:
+        variantes.add(sans_underscore)
+        if sans_underscore.endswith("s"):
+            variantes.add(sans_underscore[:-1])
+        else:
+            variantes.add(sans_underscore + "s")
+
+    # Variante insensible aux accents (ex: table "Présences" -> alias
+    # reconnu meme tape "presences" sans accent).
+    variantes |= {_sans_accents(v) for v in list(variantes)}
 
     return [v for v in variantes if len(v) >= 4]
 
@@ -305,10 +344,10 @@ def resoudre_table_ciblee(
     Renvoie un tuple (nom_de_la_table, dataframe) ou (None, None) si aucune
     table n'est disponible.
     """
-    q = question.lower()
+    q = _sans_accents(question.lower())
 
     for nom in tables:
-        if nom.lower() in q:
+        if _sans_accents(nom.lower()) in q:
             return nom, tables[nom]
 
     for nom in tables:
@@ -415,10 +454,10 @@ def detecter_tables_mentionnees(question: str, tables: dict) -> list[str]:
     - ex: "education" et "presence" reconnus pour "FNewEducation" et
     "FNewPresences", sans que l'equipe ait besoin de citer le nom technique
     complet."""
-    q = question.lower()
+    q = _sans_accents(question.lower())
     trouvees = []
     for nom in tables:
-        if nom.lower() in q or any(_alias_mentionne(alias, q) for alias in alias_table(nom)):
+        if _sans_accents(nom.lower()) in q or any(_alias_mentionne(alias, q) for alias in alias_table(nom)):
             trouvees.append(nom)
     return trouvees
 
@@ -940,18 +979,44 @@ CONTROLES_GENERIQUES_PAR_TABLE = [
 # de la table charge - voir alias_table pour le meme principe de
 # reconnaissance informelle des noms de table).
 TRANCHES_AGE_PAR_TYPE_FICHE = [
-    (["genesiqcompl", "gnesiqcompl"], None),  # cas particulier traite a part (age de la mere)
+    # "genesiqcompl"/"gnesiqcompl" : anciens noms synthetiques de test ;
+    # "genesiquecomplementaire" : vrai nom reel (table
+    # "opo_hypervel_histoire_genesique_complementaires", sans underscores
+    # "histoiregenesiquecomplementaires") - garde les deux formes pour ne
+    # jamais regresser sur les donnees de test existantes.
+    (["genesiqcompl", "gnesiqcompl", "genesiquecomplementaire"], None),  # cas particulier traite a part (age de la mere)
     (["genesiq", "gnesiq"], (12.0, 49.0)),
-    (["histmat", "matrimon", "union"], (12.0, 40.0)),
+    # "histmat"/"matrimon"/"union" : anciens mots-cles synthetiques ;
+    # "marietal" : vrai nom reel (table "opo_hypervel_histoire_marietales").
+    (["histmat", "matrimon", "union", "marietal"], (12.0, 40.0)),
     (["education"], (5.0, 34.0)),
     (["emploi", "employ"], (15.0, 120.0)),
     (["pregnancy", "grossesse"], (12.0, 49.0)),
 ]
 
 
+def _normaliser_nom_table(nom: str) -> str:
+    """Version normalisee d'un nom de table pour la reconnaissance par
+    mots-cles : prefixe technique retire (voir `PREFIXES_TABLE_IGNORES`) et
+    UNDERSCORES SUPPRIMES. Ce deuxieme point est necessaire pour le schema
+    reel de l'observatoire (base Hypervel), ou certains noms de table
+    generes automatiquement epellent un sigle avec un underscore entre
+    chaque lettre (ex: la table des deces s'appelle "opo_hypervel_d_e_c_e_s",
+    celle des CPN "opo_hypervel_c_p_n_s") : sans ce retrait, aucun mot-cle
+    ("deces", "cpn"...) ne peut jamais s'y retrouver comme sous-chaine
+    contigue."""
+    n = nom.lower()
+    for prefixe in PREFIXES_TABLE_IGNORES:
+        if n.startswith(prefixe) and len(n) > len(prefixe):
+            n = n[len(prefixe):]
+            break
+    return n.replace("_", "")
+
+
 def _table_correspond(nom: str, mots_cles: list[str]) -> bool:
     n = nom.lower()
-    return any(m in n for m in mots_cles)
+    n_normalise = _normaliser_nom_table(nom)
+    return any(m in n or m in n_normalise for m in mots_cles)
 
 
 def rapport_coherence_avancee(tables: dict, nom_table: str | None = None) -> dict:
@@ -999,7 +1064,7 @@ def rapport_coherence_avancee(tables: dict, nom_table: str | None = None) -> dic
         cibles = {
             "éducation": ["education"],
             "emploi": ["emploi", "employ"],
-            "histoire génésique complémentaire": ["gnesiqcompl", "genesiqcompl"],
+            "histoire génésique complémentaire": ["gnesiqcompl", "genesiqcompl", "genesiquecomplementaire"],
             "pauvreté": ["pauvrete"],
             "santé": ["sante"],
         }
@@ -1017,19 +1082,36 @@ def rapport_coherence_avancee(tables: dict, nom_table: str | None = None) -> dic
         if resultat is not None:
             controles_croises.append(("Décédé mais présent dans la fiche présence", nom_deces, nom_presence, resultat))
 
-    nom_migration_out = next((n for n in tables if _table_correspond(n, ["migration_out", "migrationout"])), None)
+    # "migration_out"/"migrationout" : anciens mots-cles synthetiques ;
+    # "depart" : vrai nom reel le plus proche (table "opo_hypervel_departs"
+    # - l'observatoire ne distingue pas de table "migration_out" a part,
+    # un depart du menage est l'equivalent reel disponible).
+    nom_migration_out = next(
+        (n for n in tables if _table_correspond(n, ["migration_out", "migrationout", "depart"])), None
+    )
     if nom_presence is not None and nom_migration_out is not None:
         resultat = controle_deces_present(tables, nom_migration_out, nom_presence)
         if resultat is not None:
             controles_croises.append(
-                ("A dormi dans le ménage mais apparaît aussi en migration OUT", nom_migration_out, nom_presence, resultat)
+                ("A dormi dans le ménage mais apparaît aussi en départ", nom_migration_out, nom_presence, resultat)
             )
 
+    # "pregnancy"/"pregoutcome" : anciens mots-cles synthetiques ; "grossesse"
+    # / "issue" : vrais noms reels (tables "opo_hypervel_grossesses" et
+    # "opo_hypervel_issue_grossesses" - la deuxieme doit etre exclue de la
+    # detection de la premiere, sous peine de se cibler elle-meme).
     nom_grossesse = next(
-        (n for n in tables if _table_correspond(n, ["pregnancy"]) and not _table_correspond(n, ["cpn", "outcome"])),
+        (
+            n
+            for n in tables
+            if _table_correspond(n, ["pregnancy", "grossesse"])
+            and not _table_correspond(n, ["cpn", "outcome", "issue"])
+        ),
         None,
     )
-    nom_issue = next((n for n in tables if _table_correspond(n, ["pregoutcome"])), None)
+    nom_issue = next(
+        (n for n in tables if _table_correspond(n, ["pregoutcome", "issuegrossesse", "issue_grossesse"])), None
+    )
     if nom_grossesse is not None and nom_issue is not None:
         cle = detecter_cle_jointure(nom_grossesse, nom_issue, tables)
         if cle:
@@ -1127,6 +1209,90 @@ CATEGORIES_PERFORMANCE_TERRAIN = [
     ("Grossesses enregistrées", ["pregnancy", "grossesse"], False),
 ]
 
+# Colonne de cle etrangere vers l'enquete/visite de terrain a laquelle une
+# fiche se rattache (ex: "enquete_id") - schema reel de l'observatoire (base
+# Hypervel) : l'identite de l'agent n'est saisie qu'UNE FOIS, sur la table
+# "opo_hypervel_enquete_or_visites", pas directement sur chaque fiche
+# individuelle (naissances, deces, education...) qui ne porte que cette cle.
+ENQUETE_ID_LIKE = re.compile(r"(enquete_?id|enquete_?or_?visite_?id|visite_?id)", re.IGNORECASE)
+
+# Adresse email de l'agent, seule identite disponible dans la table
+# "opo_hypervel_users" du schema reel (qui ne porte pas de nom/prenom).
+EMAIL_LIKE = re.compile(r"(email|e_?mail|courriel)", re.IGNORECASE)
+
+
+def _colonne_id_primaire(df: pd.DataFrame) -> str | None:
+    """Colonne d'identifiant primaire d'une table (typiquement `id`) - a
+    distinguer d'une simple cle etrangere detectee par `detect_id_columns`,
+    car necessaire pour joindre une table de reference (enquetes/visites,
+    utilisateurs) a une cle qui la cite ailleurs."""
+    exact = next((c for c in df.columns if str(c).strip().lower() == "id"), None)
+    if exact is not None:
+        return exact
+    return next(iter(detect_id_columns(df)), None)
+
+
+def _table_enquetes(tables: dict) -> tuple[str, pd.DataFrame, str, str] | None:
+    """Trouve la table de reference "enquetes/visites" : celle qui porte a la
+    fois une colonne d'agent detectee directement ET un identifiant primaire
+    - c'est elle qui permet de retrouver l'agent responsable d'une fiche qui
+    ne cite qu'un `enquete_id` (voir `colonne_agent_effective`).
+
+    Renvoie (nom_table, dataframe, colonne_id, colonne_agent) ou None si
+    aucune table de ce type n'est chargee."""
+    for nom, df in tables.items():
+        if not _table_correspond(nom, ["enquete", "visite"]):
+            continue
+        col_agent = next(iter(detect_agent_columns(df)), None)
+        col_id = _colonne_id_primaire(df)
+        if col_agent is None or col_id is None:
+            continue
+        return nom, df, col_id, col_agent
+    return None
+
+
+def colonne_agent_effective(df: pd.DataFrame, tables: dict) -> tuple[pd.DataFrame, str | None]:
+    """Determine quelle colonne utiliser pour identifier l'agent sur une
+    fiche donnee, et enrichit au besoin le dataframe par jointure :
+
+    1. Colonne agent directe (ex: `field_wrkr`, `agent_id`) si presente -
+       cas le plus simple, notamment les donnees de test historiques.
+    2. Sinon, si la fiche porte une cle `enquete_id` ET qu'une table
+       enquetes/visites avec agent est chargee (voir `_table_enquetes`),
+       l'agent est deduit par jointure et ajoute EN MEMOIRE (jamais ecrit
+       dans les fichiers source) sous une colonne dediee
+       `__agent_via_enquete__` - c'est le cas du schema reel de
+       l'observatoire, ou l'identite de l'agent n'est saisie qu'une fois par
+       enquete/visite, pas sur chaque fiche individuelle qui s'y rattache.
+
+    Renvoie (df eventuellement enrichi, nom de colonne a utiliser, ou None si
+    aucun agent n'a pu etre determine)."""
+    col_direct = next(iter(detect_agent_columns(df)), None)
+    if col_direct is not None:
+        return df, col_direct
+
+    col_enquete_id = _premiere_colonne(df, ENQUETE_ID_LIKE)
+    if col_enquete_id is None:
+        return df, None
+
+    ref = _table_enquetes(tables)
+    if ref is None:
+        return df, None
+    _, df_enquetes, col_id, col_agent_ref = ref
+    if col_enquete_id not in df.columns:
+        return df, None
+
+    mapping = (
+        df_enquetes[[col_id, col_agent_ref]]
+        .drop_duplicates(subset=[col_id])
+        .set_index(col_id)[col_agent_ref]
+    )
+    df = df.copy()
+    df["__agent_via_enquete__"] = df[col_enquete_id].map(mapping)
+    if df["__agent_via_enquete__"].notna().sum() == 0:
+        return df, None
+    return df, "__agent_via_enquete__"
+
 
 def rapport_performance_agents(
     tables: dict, exclure: list[str] | None = None, colonne_agent: str | None = None
@@ -1149,9 +1315,15 @@ def rapport_performance_agents(
     donnees: dict[str, dict[str, float]] = {}
 
     for nom, df in tables.items():
-        col_agent = colonne_agent if (colonne_agent and colonne_agent in df.columns) else (
-            next(iter(detect_agent_columns(df)), None)
-        )
+        if colonne_agent and colonne_agent in df.columns:
+            col_agent = colonne_agent
+        else:
+            # Colonne agent directe si presente ; sinon, jointure automatique
+            # via `enquete_id` vers la table enquetes/visites (schema reel de
+            # l'observatoire ou l'identite de l'agent n'est saisie qu'une
+            # fois par enquete, pas sur chaque fiche) - voir
+            # `colonne_agent_effective`.
+            df, col_agent = colonne_agent_effective(df, tables)
         if col_agent is None:
             continue
         # Une table qui comporte une colonne "controleur" est traitee comme la
@@ -1205,9 +1377,12 @@ def rapport_performance_par_jour(tables: dict, colonne_agent: str | None = None)
     premiere table eligible trouvee parmi celles chargees."""
     candidates = []
     for nom, df in tables.items():
-        col_agent = colonne_agent if (colonne_agent and colonne_agent in df.columns) else (
-            next(iter(detect_agent_columns(df)), None)
-        )
+        if colonne_agent and colonne_agent in df.columns:
+            col_agent = colonne_agent
+        else:
+            # Meme jointure de repli via `enquete_id` que dans
+            # `rapport_performance_agents` (voir `colonne_agent_effective`).
+            df, col_agent = colonne_agent_effective(df, tables)
         if col_agent is None or _premiere_colonne(df, CONTROLEUR_LIKE) is not None:
             continue
         colonnes_date = detect_date_columns(df)
@@ -1251,6 +1426,41 @@ def fusion_agent_controleur(rapport_agents: pd.DataFrame, tables: dict) -> tuple
         fusionne = rapport_agents.merge(mapping, on="agent", how="left")
         fusionne["controleur"] = fusionne["controleur"].fillna("Non renseigné")
         colonnes = ["agent", "controleur"] + [c for c in fusionne.columns if c not in ("agent", "controleur")]
+        return fusionne[colonnes], nom
+
+    return rapport_agents, None
+
+
+def fusion_identite_agent(rapport_agents: pd.DataFrame, tables: dict) -> tuple[pd.DataFrame, str | None]:
+    """Ajoute une colonne `email_agent` au rapport de performance par agent,
+    en joignant l'identifiant agent a la table des utilisateurs (detectee par
+    son nom - "users"/"utilisateurs"), si elle est chargee.
+
+    C'est la SEULE identite disponible pour un agent dans le schema reel de
+    l'observatoire : la table "opo_hypervel_users" ne porte pas de colonne
+    nom/prenom (deliberement retiree cote source), uniquement un identifiant
+    et une adresse email - c'est donc l'email qui permet de savoir "quel
+    agent a fait quoi", pas un nom.
+
+    Meme principe que `fusion_agent_controleur` : renvoie (rapport enrichi,
+    nom de la table utilisateurs utilisee) ou (rapport inchange, None) si
+    aucune table de ce type n'est chargee, plutot que d'echouer."""
+    if rapport_agents.empty or "agent" not in rapport_agents.columns:
+        return rapport_agents, None
+
+    for nom, df in tables.items():
+        if not _table_correspond(nom, ["users", "utilisateurs", "user"]):
+            continue
+        col_email = _premiere_colonne(df, EMAIL_LIKE)
+        col_id = _colonne_id_primaire(df)
+        if col_email is None or col_id is None:
+            continue
+        mapping = df[[col_id, col_email]].drop_duplicates(subset=[col_id])
+        mapping = mapping.rename(columns={col_id: "agent", col_email: "email_agent"})
+        mapping["agent"] = mapping["agent"].astype(str).str.strip()
+        fusionne = rapport_agents.merge(mapping, on="agent", how="left")
+        fusionne["email_agent"] = fusionne["email_agent"].fillna("Non renseigné")
+        colonnes = ["agent", "email_agent"] + [c for c in fusionne.columns if c not in ("agent", "email_agent")]
         return fusionne[colonnes], nom
 
     return rapport_agents, None

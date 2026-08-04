@@ -218,20 +218,27 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-210 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+230 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
-CSV/Excel/Stata, résolution de la table ciblée, tableaux croisés, corrélation,
+CSV/Excel/Stata, résolution de la table ciblée — insensible aux accents et aux
+noms techniques réels du schéma Hypervel (préfixe `opo_hypervel_`, sigles
+épelés lettre par lettre comme `d_e_c_e_s`) —, tableaux croisés, corrélation,
 rapport par agent enquêteur, catalogue de contrôles de cohérence avancés et
-leurs contrôles croisés entre tables, module Performances de terrain —
-agrégation par agent, jointure contrôleur, prévision d'objectif, rapport
-Word, recherche par identifiant), `rag.py` (récupération documentaire,
-garde-fous index/clé manquants, classification d'intention), `auth_config.yaml`
-(structure des comptes, hash/vérification des mots de passe), `drive_sync.py`
-(détection de la date d'export dans le nom du fichier, sélection du dernier
-export par table, synchronisation avec un client Drive simulé — sans appel
-réseau réel), et `app.py` via des tests bout-en-bout (`tests/test_app.py`, avec
+leurs contrôles croisés entre tables (mots-clés alignés sur les vrais noms :
+grossesses/issue_grossesses, histoire_marietales, departs...), module
+Performances de terrain — agrégation par agent (y compris par jointure
+automatique via `enquete_id` quand la fiche ne porte pas de colonne agent
+directe, cas du schéma réel où l'agent n'est saisi qu'une fois par
+enquête/visite), identité de l'agent par email (table `users`), jointure
+contrôleur, prévision d'objectif, rapport Word, recherche par identifiant),
+`rag.py` (récupération documentaire, garde-fous index/clé manquants,
+classification d'intention), `auth_config.yaml` (structure des comptes,
+hash/vérification des mots de passe), `drive_sync.py` (détection de la date
+d'export dans le nom du fichier, sélection du dernier export par table,
+synchronisation avec un client Drive simulé — sans appel réseau réel), et
+`app.py` via des tests bout-en-bout (`tests/test_app.py`, avec
 `streamlit.testing.v1.AppTest`) qui simulent de vraies conversations
 multi-tours dans l'interface.
 

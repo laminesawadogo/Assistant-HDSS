@@ -346,6 +346,63 @@ def test_performance_terrain_exclut_les_agents_demandes(tables_performance):
     assert not re.search(r"\|\s*A3\s*\|", reponse)
 
 
+# Une question ciblee sur UNE seule categorie (ex: "menage collecte") ne doit
+# afficher QUE cette colonne dans le texte de reponse (pas les 4 categories +
+# total systematiquement), et ne doit plus generer d'avertissements sur des
+# fonctionnalites que la question n'a jamais demandees (projection vers un
+# objectif, table equipe/controleur) - regression du signalement ou une
+# question ciblee renvoyait un grand tableau complet plus deux avertissements
+# hors-sujet ("aucune table equipe...", "aucune colonne de date...").
+def test_performance_terrain_question_ciblee_menage_sans_bruit_hors_sujet(tables_performance):
+    at = _app_avec_tables(tables_performance)
+    at.chat_input[0].set_value("je peux avoir la performance des agents en nombre de menage collecté ?").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "Rapport de performance de terrain" in reponse
+    assert "Ménages/UCH visités" in reponse
+    assert "Naissances enregistrées" not in reponse
+    assert "Aucune colonne de date détectée" not in reponse
+
+
+@pytest.fixture
+def tables_performance_sans_equipe():
+    presence = pd.DataFrame({
+        "individid": [1, 2, 3, 4],
+        "menageid": [10, 10, 11, 12],
+        "field_wrkr": ["A1", "A1", "A2", "A2"],
+    })
+    return {"FNewPresences": presence}
+
+
+def test_performance_terrain_question_ciblee_sans_table_equipe_ni_dates(tables_performance_sans_equipe):
+    # Ni table equipe, ni colonne de date chargee : les deux avertissements
+    # existent toujours quand ils sont pertinents (voir le test suivant),
+    # mais une question ciblee qui ne parle ni de controleur ni d'objectif ne
+    # doit afficher AUCUN des deux.
+    at = _app_avec_tables(tables_performance_sans_equipe)
+    at.chat_input[0].set_value("bilan : combien de ménages collectés par agent ?").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "Ménages/UCH visités" in reponse
+    assert "Aucune table équipe" not in reponse
+    assert "Aucune colonne de date détectée" not in reponse
+
+
+def test_performance_terrain_avec_objectif_garde_lavertissement_de_projection(tables_performance_sans_equipe):
+    # Une question qui demande explicitement l'avancement vers un objectif
+    # doit continuer a signaler l'absence de colonne de date exploitable.
+    at = _app_avec_tables(tables_performance_sans_equipe)
+    at.chat_input[0].set_value("bilan de terrain, objectif 100").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "Ménages/UCH visités" in reponse
+    assert "Aucune colonne de date détectée" in reponse
+
+
+def test_performance_terrain_avec_controleur_dans_la_question_garde_lavertissement(tables_performance_sans_equipe):
+    at = _app_avec_tables(tables_performance_sans_equipe)
+    at.chat_input[0].set_value("bilan de terrain : qui est le contrôleur de chaque agent ?").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "Aucune table équipe" in reponse
+
+
 def test_historique_des_actualisations_liste_les_tables_chargees(tables_performance):
     at = _app_avec_tables(tables_performance)
     # _app_avec_tables charge les tables directement en session_state (pas via

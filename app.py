@@ -811,7 +811,7 @@ def extraire_identifiant_recherche(question: str) -> str | None:
     return mots[-1] if mots else None
 
 
-def reponse_performance_terrain(tables: dict, exclure: list[str] | None, objectif: int) -> dict:
+def reponse_performance_terrain(tables: dict, exclure: list[str] | None, objectif: int, q: str = "") -> dict:
     rapport = dt.rapport_performance_agents(tables, exclure=exclure)
     if rapport.empty:
         return {
@@ -821,40 +821,74 @@ def reponse_performance_terrain(tables: dict, exclure: list[str] | None, objecti
             )
         }
     rapport, nom_equipe = dt.fusion_agent_controleur(rapport, tables)
+    rapport, nom_table_users = dt.fusion_identite_agent(rapport, tables)
+
+    # Ne calcule/affiche l'avancement vers un objectif que si la question le
+    # demande explicitement (objectif/avancement/projection/prevision) - une
+    # question ciblee ("combien de menages collectes par agent ?") ne doit
+    # pas se voir imposer un avertissement hors-sujet sur une projection
+    # qu'elle n'a jamais demandee.
+    demande_projection = contient_mot_cle(q, MOTS_OBJECTIF_PROJECTION)
     par_jour = dt.rapport_performance_par_jour(tables)
     prevision = dt.prevision_objectif(par_jour, objectif=objectif) if not par_jour.empty else None
+
+    # Si la question cible une ou plusieurs categories precises (menage/UCH,
+    # naissances, deces, grossesses), le TEXTE de la reponse se limite a ces
+    # colonnes plutot que d'afficher systematiquement les 4 categories + le
+    # total - le tableau complet reste neanmoins disponible via les boutons
+    # d'export (voir la cle "table", jamais filtree).
+    categories_demandees = colonnes_categories_demandees(q)
+    if categories_demandees:
+        colonnes_texte = ["agent"]
+        if "controleur" in rapport.columns:
+            colonnes_texte.append("controleur")
+        if "email_agent" in rapport.columns:
+            colonnes_texte.append("email_agent")
+        colonnes_texte += [c for c in categories_demandees if c in rapport.columns]
+        if "Ménages/UCH visités" in categories_demandees and "Ménages/UCH distincts" in rapport.columns:
+            colonnes_texte.append("Ménages/UCH distincts")
+        rapport_texte = rapport[colonnes_texte]
+    else:
+        rapport_texte = rapport
 
     morceaux = [
         f"**Rapport de performance de terrain** ({len(rapport)} agent(s)"
         + (f", exclusion de {len(exclure)} agent(s) non-terrain" if exclure else "")
-        + ") :\n\n" + rapport.to_markdown(index=False)
+        + ") :\n\n" + rapport_texte.to_markdown(index=False)
     ]
     if nom_equipe:
         morceaux.append(f"_Contrôleur ajouté à partir de la table équipe **{nom_equipe}**._")
-    else:
+    elif contient_mot_cle(q, MOTS_CONTROLEUR_EQUIPE):
         morceaux.append(
             "_Aucune table équipe (agent ↔ contrôleur) détectée parmi les tables chargées : "
             "dépose-la pour faire apparaître la colonne `controleur`._"
         )
+    if nom_table_users:
+        morceaux.append(
+            f"_Identité ajoutée (email) à partir de la table **{nom_table_users}** — "
+            "seule identité disponible pour un agent dans les données actuelles, "
+            "qui ne comportent pas de nom/prénom._"
+        )
 
-    if prevision:
-        morceaux.append(
-            f"**Avancement vers l'objectif ({prevision['objectif']})** : "
-            f"{prevision['cumul_actuel']} réalisé(s), {prevision['reste_a_faire']} restant(s), "
-            f"rythme moyen {prevision['rythme_journalier_moyen']}/jour "
-            f"({prevision['n_jours_observes']} jour(s) observé(s), "
-            f"{prevision['date_debut']} → {prevision['date_derniere_donnee']})."
-            + (
-                f" Au rythme actuel, objectif atteint vers le **{prevision['date_fin_projetee']}** "
-                f"(≈{prevision['jours_restants_estimes']} jour(s))."
-                if prevision.get("date_fin_projetee") else ""
+    if demande_projection:
+        if prevision:
+            morceaux.append(
+                f"**Avancement vers l'objectif ({prevision['objectif']})** : "
+                f"{prevision['cumul_actuel']} réalisé(s), {prevision['reste_a_faire']} restant(s), "
+                f"rythme moyen {prevision['rythme_journalier_moyen']}/jour "
+                f"({prevision['n_jours_observes']} jour(s) observé(s), "
+                f"{prevision['date_debut']} → {prevision['date_derniere_donnee']})."
+                + (
+                    f" Au rythme actuel, objectif atteint vers le **{prevision['date_fin_projetee']}** "
+                    f"(≈{prevision['jours_restants_estimes']} jour(s))."
+                    if prevision.get("date_fin_projetee") else ""
+                )
             )
-        )
-    else:
-        morceaux.append(
-            "_Aucune colonne de date détectée en plus de la colonne d'agent : la projection vers "
-            "l'objectif n'a pas pu être calculée._"
-        )
+        else:
+            morceaux.append(
+                "_Aucune colonne de date détectée en plus de la colonne d'agent : la projection vers "
+                "l'objectif n'a pas pu être calculée._"
+            )
 
     docx_bytes = dt.generer_rapport_performance_docx(rapport, prevision, objectif=objectif)
 
@@ -967,6 +1001,34 @@ MOTS_TERRAIN_RAPPORT = [
     "performance", "avancement", "suivi", "bilan", "tableau de bord",
     "rapport", "objectif", "projection", "prevision", "prévision",
 ]
+
+# Sous-familles de mots-cles pour NE PAS noyer une question ciblee ("combien
+# de menages collectes par agent ?") dans le rapport complet à 4+ colonnes
+# ni dans des avertissements hors-sujet ("aucune table equipe...", "aucune
+# colonne de date...") qui ne concernent que l'avancement vers un objectif
+# ou le controleur - jamais demandes dans ce type de question precise.
+MOTS_OBJECTIF_PROJECTION = ["objectif", "avancement", "projection", "prevision", "prévision"]
+MOTS_CONTROLEUR_EQUIPE = ["controleur", "contrôleur", "superviseur", "encadrement", "equipe", "équipe"]
+
+# Chaque entree associe les mots-cles qu'une question peut employer au
+# libelle EXACT de colonne produit par `dt.rapport_performance_agents`
+# (voir `dt.CATEGORIES_PERFORMANCE_TERRAIN`) - permet de filtrer le rapport
+# a la seule categorie demandee plutot que d'afficher systematiquement les
+# 4 categories + le total, meme quand une seule est demandee.
+CATEGORIES_MOTS_CLES_QUESTION = [
+    ("Ménages/UCH visités", ["menage", "menages", "ménage", "ménages", "uch"]),
+    ("Naissances enregistrées", ["naissance", "naissances"]),
+    ("Décès enregistrés", ["deces", "décès", "dèces"]),
+    ("Grossesses enregistrées", ["grossesse", "grossesses"]),
+]
+
+
+def colonnes_categories_demandees(q: str) -> list[str]:
+    """Renvoie les libelles de colonnes du rapport de performance de terrain
+    explicitement demandes dans la question (ex: "menage" -> "Ménages/UCH
+    visités"), dans l'ordre de `CATEGORIES_MOTS_CLES_QUESTION` - liste vide
+    si la question ne cible aucune categorie precise (rapport complet)."""
+    return [libelle for libelle, mots in CATEGORIES_MOTS_CLES_QUESTION if contient_mot_cle(q, mots)]
 
 
 def est_question_performance_terrain(q: str) -> bool:
@@ -1083,7 +1145,7 @@ def route_question(question: str) -> dict:
     if est_question_performance_terrain(q):
         objectif = extraire_objectif(q)
         exclure = extraire_agents_exclus(q)
-        return reponse_performance_terrain(tables, exclure, objectif)
+        return reponse_performance_terrain(tables, exclure, objectif, q)
 
     # Une relance courte ("il faut analyser directement") qui ne repete pas le
     # mot-cle d'action initial : on regarde si le tour precedent de l'equipe
