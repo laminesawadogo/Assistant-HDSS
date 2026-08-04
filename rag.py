@@ -139,12 +139,19 @@ def call_llm(prompt: str, groq_key: str | None = None, anthropic_key: str | None
     # qualite de redaction et de comprehension est nettement meilleure que le
     # petit modele Groq gratuit - Groq ne sert de repli que si aucune cle
     # Anthropic n'est renseignee.
+    #
+    # Modele Claude Sonnet 5 (et non Haiku) : demande explicite de
+    # l'observatoire suite a des reponses jugees pas assez precises,
+    # notamment sur le contenu des bases de donnees - Haiku privilegie la
+    # vitesse/le cout, Sonnet est nettement meilleur en comprehension/
+    # raisonnement pour un cout par requete qui reste raisonnable au volume
+    # d'un observatoire (pas besoin d'Opus, plus cher, pour cet usage).
     if anthropic_key:
         import anthropic
 
         client = anthropic.Anthropic(api_key=anthropic_key)
         resp = client.messages.create(
-            model="claude-haiku-4-5-20251001",
+            model="claude-sonnet-5",
             max_tokens=1200,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -191,7 +198,7 @@ def analyser_image(
     client = anthropic.Anthropic(api_key=anthropic_key)
     image_b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
     resp = client.messages.create(
-        model="claude-haiku-4-5-20251001",
+        model="claude-sonnet-5",
         max_tokens=1200,
         messages=[
             {
