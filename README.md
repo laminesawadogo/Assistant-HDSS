@@ -132,7 +132,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-175 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+180 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
@@ -291,7 +291,9 @@ date ont été vérifiées, pas seulement les anomalies trouvées.
 suivi qui ne renomme pas la table ("et les doublons ?" après avoir parlé
 d'une table précise) reste rattachée au bon contexte : la résolution de
 table regarde d'abord la question en cours, puis les derniers échanges de la
-conversation, avant de retomber sur la table par défaut de l'interface.
+conversation. Il n'y a plus de table par défaut choisie dans la barre
+latérale : si rien ne se résout après la question et l'historique, l'analyse
+est menée sur toutes les tables chargées (voir plus bas).
 
 **Relance de calcul.** Si une réponse précédente a hésité ou n'a pas calculé
 directement (rare, mais peut arriver si la question initiale n'a pas été bien
@@ -326,16 +328,32 @@ langage, et **systématiquement accompagnée de la syntaxe R et Stata
   repérer une charge de travail inhabituelle ou un agent avec plus
   d'erreurs que les autres.
 
-**Lire partout, pas une seule table par défaut.** Si aucune table n'est
-nommée dans la question et qu'une colonne mentionnée existe dans plusieurs
-tables à la fois (ex. `individid` présent dans 20 tables), l'analyse est
-calculée pour **chacune** des tables concernées plutôt que de silencieusement
-n'en garder qu'une ou retomber sur la table par défaut de l'interface. Ce
-principe couvre aussi les analyses à plusieurs colonnes (tableau croisé,
-corrélation, multivariée) : si les colonnes mentionnées (ex. « tableau
-croisé entre sex et education_level ») existent ensemble dans plusieurs
-tables, le résultat est calculé pour chacune, pas seulement la première
-chargée.
+**Aucune table par défaut : toutes les tables travaillent dès le départ.**
+La barre latérale n'impose plus de table active — elle liste simplement les
+tables chargées et leurs colonnes (dans un menu déroulant repliable). Pour
+cibler UNE table précise, il suffit de la nommer dans la question (ou de
+nommer une colonne qui n'existe que dans cette table-là) ; sinon,
+l'assistant considère que la question porte sur toutes les tables
+concernées :
+
+- Si une colonne mentionnée existe dans plusieurs tables à la fois (ex.
+  `individid` présent dans 20 tables), l'analyse est calculée pour
+  **chacune** des tables concernées plutôt que de silencieusement n'en
+  garder qu'une. Ce principe couvre aussi les analyses à plusieurs colonnes
+  (tableau croisé, corrélation, multivariée) : si les colonnes mentionnées
+  (ex. « tableau croisé entre sex et education_level ») existent ensemble
+  dans plusieurs tables, le résultat est calculé pour chacune, pas seulement
+  la première chargée.
+- Si la question ne nomme ni table ni colonne reconnaissable (ex. « les
+  doublons ? », « vérifie la cohérence », « échantillon de 50 », « performance
+  des agents ») et qu'aucun contexte de conversation ne permet de trancher,
+  le calcul est fait sur **toutes** les tables chargées et les résultats sont
+  présentés les uns après les autres.
+- Si la question dépend forcément d'une colonne précise (répartition,
+  tableau croisé, corrélation, analyse multivariée) et qu'aucune colonne
+  reconnaissable n'a été citée, l'assistant ne devine pas : il répond en
+  listant les vraies tables chargées et leurs colonnes pour demander de
+  préciser.
 
 **Un nom de colonne ne se confond jamais avec le nom d'une table.** La
 reconnaissance d'une table mentionnée informellement (ex. « education » pour

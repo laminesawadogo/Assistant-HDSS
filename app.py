@@ -279,17 +279,17 @@ with st.sidebar:
     tables = st.session_state["tables"]
     if tables:
         st.success(f"{len(tables)} table(s) chargée(s) : {', '.join(tables.keys())}")
-        table_active_nom = st.selectbox("Table par défaut (si la question est ambiguë)", list(tables.keys()))
-        st.write("Colonnes :", list(tables[table_active_nom].columns))
         st.caption(
             "Les colonnes de type nom/prénom sont automatiquement retirées. "
-            "Toutes les tables chargées sont interrogeables directement : mentionne une colonne "
-            "(ex. « répartition de sex ») ou le nom d'une table dans ta question, l'assistant devine "
-            "automatiquement laquelle cibler. La table ci-dessus ne sert que de repli si la question "
-            "est vraiment ambiguë (aucun nom de table ni colonne reconnaissable)."
+            "**Toutes les tables chargées sont ouvertes par défaut, aucune n'est \"active\" par "
+            "défaut** : mentionne une colonne (ex. « répartition de sex ») ou le nom d'une table dans "
+            "ta question pour cibler une table précise, sinon l'assistant cherche automatiquement dans "
+            "toutes les tables concernées plutôt que d'en choisir une au hasard."
         )
+        with st.expander("Voir les colonnes de chaque table chargée"):
+            for nom, df_apercu in tables.items():
+                st.markdown(f"**{nom}** : {', '.join(f'`{c}`' for c in df_apercu.columns)}")
     else:
-        table_active_nom = None
         st.info("Aucune table déposée pour l'instant — le chat répond depuis le dictionnaire.")
 
     st.divider()
@@ -528,6 +528,22 @@ def message_precision_tables(verbe: str, tables: dict, tables_mentionnees: list[
         f"Précise les deux tables à {verbe}, parmi celles chargées : "
         f"{', '.join(f'**{n}**' for n in tables)}."
     )
+
+
+def message_precision_colonne(tables: dict) -> str:
+    """Message de relance dynamique quand une analyse necessitant une ou
+    plusieurs colonnes (repartition, tableau croise, correlation,
+    multivariee) ne peut identifier AUCUNE colonne mentionnee dans AUCUNE
+    des tables chargees, et qu'aucune table n'est nommee non plus : liste
+    les vraies tables et leurs vraies colonnes, plutot que de deviner une
+    table au hasard ("il ne faut pas lire une seule base par defaut")."""
+    lignes = ["Précise sur quelle colonne (et éventuellement quelle table) travailler. Tables chargées :"]
+    for nom, df in tables.items():
+        apercu = ", ".join(f"`{c}`" for c in df.columns[:12])
+        if len(df.columns) > 12:
+            apercu += ", ..."
+        lignes.append(f"- **{nom}** : {apercu}")
+    return "\n".join(lignes)
 
 
 def formater_rapport_coherence(rapport: dict, nom_table: str) -> str:
@@ -1188,7 +1204,42 @@ def route_question(question: str) -> dict:
                     if morceaux:
                         return {"content": "\n\n---\n\n".join(morceaux)}
 
-    nom_table, df = dt.resoudre_table_ciblee(question, tables, table_active_nom, historique=historique_recent())
+    # Plus de "table par defaut" choisie a l'avance dans la barre laterale :
+    # sans nom de table, sans colonne reconnaissable qui n'appartienne qu'a
+    # une seule table, et sans historique exploitable, `resoudre_table_ciblee`
+    # renvoie maintenant (None, None) plutot que de deviner une table -
+    # "toutes les tables travaillent au debut, on selectionne seulement si on
+    # veut UNE table precise". Voir le bloc juste en dessous pour ce qui se
+    # passe alors : l'operation demandee est appliquee a TOUTES les tables
+    # chargees plutot que d'etre perdue ou de retomber sur le dictionnaire.
+    nom_table, df = dt.resoudre_table_ciblee(question, tables, historique=historique_recent())
+
+    if df is None and tables:
+        if est_question_agents(q):
+            candidats = [n for n, d in tables.items() if dt.detect_agent_columns(d)]
+            if candidats:
+                morceaux = [reponse_agents(tables[n], n)["content"] for n in candidats]
+                return {"content": "\n\n---\n\n".join(morceaux)}
+        if contient_mot_cle(q, ["doublon"]):
+            morceaux = [reponse_doublons(tables[n], n)["content"] for n in tables]
+            return {"content": "\n\n---\n\n".join(morceaux)}
+        if contient_mot_cle(q, ["incoherence", "coherence", "anomalie"]):
+            morceaux = [reponse_coherence(tables[n], n)["content"] for n in tables]
+            return {"content": "\n\n---\n\n".join(morceaux)}
+        if contient_mot_cle(q, ["echantillon"]):
+            m_ech = re.search(r"\d+", q)
+            n_ech = int(m_ech.group()) if m_ech else 100
+            morceaux = [reponse_echantillon(tables[n], n, n_ech)["content"] for n in tables]
+            return {"content": "\n\n---\n\n".join(morceaux)}
+        # Repartition/bivarie/correlation/multivarie ont besoin d'au moins
+        # une colonne reconnue quelque part pour ne rien calculer au hasard :
+        # si la question semble viser une de ces analyses mais qu'aucune
+        # colonne ni table n'a pu etre identifiee, on demande de preciser
+        # avec les vraies tables/colonnes chargees plutot que de deviner.
+        if contient_mot_cle(q, ["repartition", "indicateur"]) or contient_mot_cle(
+            q, MOTS_BIVARIE + MOTS_CORRELATION + MOTS_MULTIVARIE, entiers=True
+        ):
+            return {"content": message_precision_colonne(tables)}
 
     if df is not None and est_question_agents(q):
         return reponse_agents(df, nom_table)

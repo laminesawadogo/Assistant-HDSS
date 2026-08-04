@@ -414,3 +414,69 @@ def test_correlation_sans_nommer_de_table_couvre_toutes_les_tables_concernees():
     assert "FNewIndividual" in reponse
     assert "FNewSante" in reponse
     assert "FNewEducation" not in reponse
+
+
+# --- Plus de "table par defaut" : toutes les tables travaillent au depart ---
+
+@pytest.fixture
+def tables_ambigues():
+    return {
+        "FNewEducation": pd.DataFrame({"individid": [1, 1, 2], "niveau": ["primaire", "primaire", "secondaire"]}),
+        "FNewEmploi": pd.DataFrame({"individid": [10, 10, 11], "secteur": ["informel", "informel", "formel"]}),
+        "FNewSante": pd.DataFrame({"individid": [20, 21], "etat": ["bon", "mauvais"]}),
+    }
+
+
+def test_doublons_sans_rien_nommer_couvre_toutes_les_tables(tables_ambigues):
+    # Aucune table nommee, aucune colonne mentionnee, aucun historique : avant,
+    # ceci retombait sur la table "par defaut" de la barre laterale (retiree
+    # sur demande) - maintenant, ca doit calculer sur TOUTES les tables.
+    at = _app_avec_tables(tables_ambigues)
+    at.chat_input[0].set_value("il y a des doublons ?").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "FNewEducation" in reponse
+    assert "FNewEmploi" in reponse
+    assert "FNewSante" in reponse
+
+
+def test_coherence_sans_rien_nommer_couvre_toutes_les_tables(tables_ambigues):
+    at = _app_avec_tables(tables_ambigues)
+    at.chat_input[0].set_value("vérifie la cohérence").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "FNewEducation" in reponse
+    assert "FNewEmploi" in reponse
+    assert "FNewSante" in reponse
+
+
+def test_echantillon_sans_rien_nommer_couvre_toutes_les_tables(tables_ambigues):
+    at = _app_avec_tables(tables_ambigues)
+    at.chat_input[0].set_value("donne-moi un échantillon").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "FNewEducation" in reponse
+    assert "FNewEmploi" in reponse
+    assert "FNewSante" in reponse
+
+
+def test_repartition_sans_rien_nommer_demande_de_preciser_avec_les_vraies_tables(tables_ambigues):
+    # Aucune colonne mentionnee nulle part : impossible de calculer quoi que
+    # ce soit sans deviner - doit demander de preciser, avec les VRAIES
+    # tables/colonnes chargees (jamais un exemple generique).
+    at = _app_avec_tables(tables_ambigues)
+    at.chat_input[0].set_value("donne-moi la répartition").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "FNewEducation" in reponse
+    assert "niveau" in reponse
+    assert "FNewEmploi" in reponse
+    assert "secteur" in reponse
+
+
+def test_table_specifique_encore_ciblable_directement(tables_ambigues):
+    # Nommer explicitement une table doit toujours fonctionner comme avant -
+    # la suppression de la table par defaut ne doit pas empecher de cibler
+    # UNE table precise quand on le demande.
+    at = _app_avec_tables(tables_ambigues)
+    at.chat_input[0].set_value("doublons dans FNewSante").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "FNewSante" in reponse
+    assert "FNewEducation" not in reponse
+    assert "FNewEmploi" not in reponse
