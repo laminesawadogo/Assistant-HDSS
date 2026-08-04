@@ -8,11 +8,25 @@ est teste avec un client Drive ENTIEREMENT SIMULE (aucun appel reseau reel,
 aucun identifiant necessaire) pour rester rapide et reproductible en CI.
 """
 
+import io
+import re
+import zipfile
 from datetime import datetime
 
 import pytest
 
 import drive_sync as ds
+
+
+def _construire_zip(fichiers: dict[str, bytes]) -> bytes:
+    """Construit une vraie archive .zip en memoire, pour tester l'extraction
+    reelle (drive_sync._extraire_tables_dune_archive) sans jamais rien ecrire
+    sur disque."""
+    tampon = io.BytesIO()
+    with zipfile.ZipFile(tampon, "w") as archive:
+        for nom, contenu in fichiers.items():
+            archive.writestr(nom, contenu)
+    return tampon.getvalue()
 
 
 # --- extraire_date_export ---------------------------------------------------
@@ -135,22 +149,37 @@ class _FauxTelechargeur:
 
 
 class _FauxFichiers:
-    def __init__(self, fichiers_disponibles, contenus_par_id):
-        self._fichiers_disponibles = fichiers_disponibles
+    """Simule service.files() en repondant differemment selon le dossier
+    parent demande dans la requete `q` (necessaire pour tester la resolution
+    a deux niveaux : dossier racine -> sous-dossier d'export choisi)."""
+
+    def __init__(self, enfants_par_dossier: dict, contenus_par_id: dict):
+        self._enfants_par_dossier = enfants_par_dossier
         self._contenus_par_id = contenus_par_id
 
     def list(self, q=None, fields=None, pageToken=None, pageSize=None):
-        return _FausseRequete({"files": self._fichiers_disponibles, "nextPageToken": None})
+        m = re.search(r"'([^']+)' in parents", q or "")
+        dossier_id = m.group(1) if m else None
+        enfants = self._enfants_par_dossier.get(dossier_id, [])
+        return _FausseRequete({"files": enfants, "nextPageToken": None})
 
     def get_media(self, fileId):
         return ("requete_media", fileId)
 
 
 class _FauxServiceDrive:
-    """Simule l'objet renvoye par googleapiclient.discovery.build('drive', 'v3', ...)."""
+    """Simule l'objet renvoye par googleapiclient.discovery.build('drive', 'v3', ...).
 
-    def __init__(self, fichiers_disponibles, contenus_par_id):
-        self._fichiers = _FauxFichiers(fichiers_disponibles, contenus_par_id)
+    `fichiers_dossier_principal` : enfants directs du dossier interroge en
+    premier (folder_id passe a `synchroniser`).
+    `sous_dossiers` : dict optionnel {id_du_sous_dossier: [ses enfants]},
+    pour simuler l'organisation "un sous-dossier par export"."""
+
+    def __init__(self, fichiers_dossier_principal, contenus_par_id, folder_id="dossier_test", sous_dossiers=None):
+        enfants_par_dossier = {folder_id: fichiers_dossier_principal}
+        if sous_dossiers:
+            enfants_par_dossier.update(sous_dossiers)
+        self._fichiers = _FauxFichiers(enfants_par_dossier, contenus_par_id)
         self._contenus_par_id = contenus_par_id
 
     def files(self):
@@ -228,6 +257,139 @@ def test_synchroniser_signale_un_echec_de_telechargement_sans_bloquer_les_autres
     assert "FNewIndividual_2026-08-04.csv" not in contenus
     assert len(avertissements) == 1
     assert "FNewIndividual" in avertissements[0]
+
+
+# --- organisation en sous-dossiers par export (ex. "export_2026-07-30_12-50-37") ---
+
+def test_resoudre_elements_choisit_le_sous_dossier_dexport_le_plus_recent():
+    racine = [
+        {"id": "vieux", "name": "export_2026-07-30_12-50-37", "mimeType": ds.DOSSIER_MIME,
+         "modifiedTime": "2026-07-30T12:50:37Z"},
+        {"id": "recent", "name": "export_2026-08-03_09-15-00", "mimeType": ds.DOSSIER_MIME,
+         "modifiedTime": "2026-08-03T09:15:00Z"},
+    ]
+    sous_dossiers = {
+        "vieux": [{"id": "1", "name": "FNewIndividual.csv", "mimeType": "text/csv"}],
+        "recent": [{"id": "2", "name": "FNewIndividual.csv", "mimeType": "text/csv"}],
+    }
+    service = _FauxServiceDrive(racine, {}, sous_dossiers=sous_dossiers)
+
+    candidats, date_lot = ds.resoudre_elements_du_dernier_export(service, "dossier_test")
+
+    assert [c["id"] for c in candidats] == ["2"]
+    assert date_lot == datetime(2026, 8, 3)
+
+
+def test_synchroniser_avec_un_sous_dossier_par_export():
+    racine = [
+        {"id": "vieux", "name": "export_2026-07-30_12-50-37", "mimeType": ds.DOSSIER_MIME,
+         "modifiedTime": "2026-07-30T12:50:37Z"},
+        {"id": "recent", "name": "export_2026-08-03_09-15-00", "mimeType": ds.DOSSIER_MIME,
+         "modifiedTime": "2026-08-03T09:15:00Z"},
+    ]
+    sous_dossiers = {
+        "vieux": [{"id": "1", "name": "FNewIndividual.csv", "mimeType": "text/csv"}],
+        "recent": [
+            {"id": "2", "name": "FNewIndividual.csv", "mimeType": "text/csv"},
+            {"id": "3", "name": "FNewEducation.csv", "mimeType": "text/csv"},
+        ],
+    }
+    contenus_par_id = {"1": b"ancien", "2": b"individual_recent", "3": b"education_recent"}
+    service = _FauxServiceDrive(racine, contenus_par_id, sous_dossiers=sous_dossiers)
+
+    contenus, meta, avertissements = ds.synchroniser(folder_id="dossier_test", service=service)
+
+    assert avertissements == []
+    assert contenus == {"FNewIndividual.csv": b"individual_recent", "FNewEducation.csv": b"education_recent"}
+    # Les fichiers a l'interieur du sous-dossier ne portent pas de date dans
+    # leur propre nom : la date du LOT (portee par le nom du sous-dossier)
+    # doit etre reutilisee pour l'affichage de l'historique.
+    assert meta["FNewIndividual.csv"]["date_export"] == datetime(2026, 8, 3)
+    assert meta["FNewEducation.csv"]["date_export"] == datetime(2026, 8, 3)
+
+
+# --- organisation en archive .zip par export ---------------------------------
+
+def test_extraire_tables_dune_archive_ignore_les_fichiers_non_reconnus_et_macosx():
+    octets = _construire_zip({
+        "FNewIndividual.csv": b"contenu_individual",
+        "manuel.pdf": b"pas une table",
+        "__MACOSX/._FNewIndividual.csv": b"artefact macos",
+        ".DS_Store": b"artefact macos",
+    })
+    extraits = ds._extraire_tables_dune_archive(octets)
+    assert extraits == {"FNewIndividual.csv": b"contenu_individual"}
+
+
+def test_synchroniser_avec_une_archive_zip_a_la_racine():
+    octets_zip = _construire_zip({
+        "FNewIndividual.csv": b"contenu_individual",
+        "FNewEducation.csv": b"contenu_education",
+    })
+    racine = [{"id": "1", "name": "export_2026-08-03_09-15-00.zip", "mimeType": "application/zip",
+               "modifiedTime": "2026-08-03T09:15:00Z"}]
+    service = _FauxServiceDrive(racine, {"1": octets_zip})
+
+    contenus, meta, avertissements = ds.synchroniser(folder_id="dossier_test", service=service)
+
+    assert avertissements == []
+    assert contenus == {"FNewIndividual.csv": b"contenu_individual", "FNewEducation.csv": b"contenu_education"}
+    assert meta["FNewIndividual.csv"]["table"] == "FNewIndividual"
+    assert meta["FNewIndividual.csv"]["date_export"] == datetime(2026, 8, 3)
+
+
+def test_synchroniser_avec_une_archive_zip_dans_un_sous_dossier():
+    octets_zip = _construire_zip({"FNewIndividual.csv": b"contenu_individual"})
+    racine = [{"id": "recent", "name": "export_2026-08-03_09-15-00", "mimeType": ds.DOSSIER_MIME,
+               "modifiedTime": "2026-08-03T09:15:00Z"}]
+    sous_dossiers = {"recent": [{"id": "z1", "name": "export.zip", "mimeType": "application/zip"}]}
+    service = _FauxServiceDrive(racine, {"z1": octets_zip}, sous_dossiers=sous_dossiers)
+
+    contenus, meta, avertissements = ds.synchroniser(folder_id="dossier_test", service=service)
+
+    assert avertissements == []
+    assert contenus == {"FNewIndividual.csv": b"contenu_individual"}
+    # La date vient du nom du sous-dossier, pas du nom de l'archive (qui n'en
+    # porte pas ici).
+    assert meta["FNewIndividual.csv"]["date_export"] == datetime(2026, 8, 3)
+
+
+def test_synchroniser_archive_sans_table_reconnue_signale_un_avertissement():
+    octets_zip = _construire_zip({"lisez-moi.txt": b"rien d'utile ici"})
+    racine = [{"id": "1", "name": "export_2026-08-03.zip", "mimeType": "application/zip"}]
+    service = _FauxServiceDrive(racine, {"1": octets_zip})
+
+    contenus, meta, avertissements = ds.synchroniser(folder_id="dossier_test", service=service)
+
+    assert contenus == {}
+    assert len(avertissements) == 1
+    assert "aucun fichier" in avertissements[0].lower()
+
+
+def test_synchroniser_archive_corrompue_renvoie_un_avertissement_sans_planter():
+    racine = [{"id": "1", "name": "export_2026-08-03.zip", "mimeType": "application/zip"}]
+    service = _FauxServiceDrive(racine, {"1": b"ceci n'est pas un zip valide"})
+
+    contenus, meta, avertissements = ds.synchroniser(folder_id="dossier_test", service=service)
+
+    assert contenus == {}
+    assert len(avertissements) == 1
+    assert "illisible" in avertissements[0].lower() or "zip" in avertissements[0].lower()
+
+
+def test_synchroniser_archive_echec_de_telechargement_renvoie_un_avertissement(monkeypatch):
+    racine = [{"id": "1", "name": "export_2026-08-03.zip", "mimeType": "application/zip"}]
+    service = _FauxServiceDrive(racine, {})
+
+    def _echec(service, file_id):
+        raise RuntimeError("panne reseau simulee")
+
+    monkeypatch.setattr(ds, "telecharger_contenu", _echec)
+
+    contenus, meta, avertissements = ds.synchroniser(folder_id="dossier_test", service=service)
+
+    assert contenus == {}
+    assert len(avertissements) == 1
 
 
 # --- configuration (secrets / fichier local) --------------------------------

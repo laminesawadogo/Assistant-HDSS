@@ -84,17 +84,28 @@ strict temps de traitement.
 ## Connexion automatique à Google Drive (`opo_db_exports`)
 
 Les tables ne se déposent plus manuellement dans l'application : un
-processus externe exporte chaque jour un fichier par table (CSV, Excel ou
-Stata, avec la date d'export dans le nom du fichier) dans le dossier Google
-Drive partagé `opo_db_exports`. À l'ouverture de l'application (et toutes les
-15 minutes ensuite, ou immédiatement via le bouton **🔄 Recharger depuis
-Google Drive maintenant** dans la barre latérale), l'assistant se connecte à
-ce dossier, ne garde que le **dernier export de chaque table** (plusieurs
-fichiers d'une même table peuvent coexister dans le dossier, un par jour —
-seul le plus récent, détecté par la date dans le nom du fichier, est utilisé)
-et les charge exactement comme un dépôt manuel l'aurait fait : mêmes
-contrôles (colonnes nom/prénom retirées, aucune correction automatique),
-mêmes analyses disponibles ensuite dans le chat.
+processus externe exporte chaque jour les tables (CSV, Excel ou Stata) dans
+le dossier Google Drive partagé `opo_db_exports`. À l'ouverture de
+l'application (et toutes les 15 minutes ensuite, ou immédiatement via le
+bouton **🔄 Recharger depuis Google Drive maintenant** dans la barre
+latérale), l'assistant se connecte à ce dossier et ne garde que le
+**dernier export**, quelle que soit la façon dont il est organisé dans le
+Drive — trois organisations sont reconnues automatiquement, sans réglage :
+
+- des fichiers directement dans le dossier, un par table, avec la date
+  d'export dans le nom (ex. `FNewIndividual_2026-08-04.csv`) ;
+- un **sous-dossier par export** (organisation observée en pratique sur
+  `opo_db_exports`, ex. `export_2026-08-03_09-15-00`, contenant un fichier
+  par table pour ce jour-là) : seul le sous-dossier le plus récent est
+  utilisé, les autres sont ignorés ;
+- une **archive `.zip`** par export (à la racine ou dans un sous-dossier),
+  contenant les fichiers de chaque table : elle est téléchargée puis
+  extraite en mémoire (rien n'est jamais écrit sur disque au-delà du temps
+  de traitement), sans qu'il soit nécessaire de la dézipper manuellement.
+
+Ces fichiers sont ensuite chargés exactement comme un dépôt manuel l'aurait
+fait : mêmes contrôles (colonnes nom/prénom retirées, aucune correction
+automatique), mêmes analyses disponibles ensuite dans le chat.
 
 **Le dossier étant restreint à des comptes précis** (pas un lien public),
 l'accès se fait via un **compte de service Google** (un compte technique,
@@ -207,7 +218,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-202 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+210 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export

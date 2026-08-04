@@ -29,6 +29,7 @@ import io
 import json
 import os
 import re
+import zipfile
 from datetime import datetime
 from pathlib import Path
 
@@ -43,6 +44,19 @@ FOLDER_ID_PAR_DEFAUT = "1qjV_hHhGIE5klnQYUzxLT-OJQp827v0l"
 CONFIG_PATH = Path(__file__).parent / "service_account.json"
 
 EXTENSIONS_RECONNUES = (".csv", ".xlsx", ".xls", ".dta")
+
+# Le processus d'export externe peut organiser les exports de trois facons
+# differentes, toutes reconnues automatiquement sans configuration :
+#   1. des fichiers CSV/Excel/Stata directement dans le dossier, un par
+#      table, avec la date d'export dans le nom ;
+#   2. un SOUS-DOSSIER par export (ex. "export_2026-07-30_12-50-37"),
+#      contenant les fichiers de chaque table pour ce jour-la (organisation
+#      constatee en pratique sur le dossier "opo_db_exports" - Drive
+#      propose de telecharger un dossier sous forme de .zip, ce qui peut
+#      donner l'impression que l'export "est" un fichier zip) ;
+#   3. une ARCHIVE .zip par export (a la racine du dossier ou dans un
+#      sous-dossier), contenant les CSV de chaque table.
+DOSSIER_MIME = "application/vnd.google-apps.folder"
 
 # --- Detection de la date d'export a partir du nom de fichier -------------
 
@@ -87,6 +101,37 @@ def nom_base_table(nom_fichier: str) -> str:
     return base or nom_fichier
 
 
+def _parser_date_drive(valeur):
+    """Convertit une date fournie par l'API Drive (chaine ISO 8601, ex.
+    "2026-08-04T10:00:00.000Z") en datetime naif ; renvoie None si absente
+    ou illisible plutot que de lever une exception sur une valeur inattendue."""
+    if valeur is None or isinstance(valeur, datetime):
+        return valeur
+    try:
+        return datetime.fromisoformat(str(valeur).replace("Z", "+00:00")).replace(tzinfo=None)
+    except ValueError:
+        return None
+
+
+def _est_dossier(item: dict) -> bool:
+    return item.get("mimeType") == DOSSIER_MIME
+
+
+def _plus_recent(items: list[dict]):
+    """Choisit l'element le plus recent d'une liste (fichiers ou dossiers) :
+    d'abord par date detectee dans son nom, sinon par date de derniere
+    modification, sinon par date de creation Drive."""
+    if not items:
+        return None
+
+    def cle(item):
+        date_nom = extraire_date_export(item.get("name", ""))
+        modifie = _parser_date_drive(item.get("modifiedTime") or item.get("createdTime"))
+        return (date_nom or modifie or datetime.min, modifie or datetime.min)
+
+    return max(items, key=cle)
+
+
 def derniers_fichiers_par_table(fichiers: list[dict]) -> dict[str, dict]:
     """`fichiers` : liste de dicts {"id", "name", "modifiedTime"} tels que
     renvoyes par l'API Drive (ou un mock de test) - "modifiedTime" peut etre
@@ -108,16 +153,11 @@ def derniers_fichiers_par_table(fichiers: list[dict]) -> dict[str, dict]:
             continue
         table = nom_base_table(nom)
         date_nom = extraire_date_export(nom)
-        modifie = f.get("modifiedTime")
-        if isinstance(modifie, str):
-            try:
-                modifie = datetime.fromisoformat(modifie.replace("Z", "+00:00")).replace(tzinfo=None)
-            except ValueError:
-                modifie = None
+        modifie = _parser_date_drive(f.get("modifiedTime"))
         cle_tri = (date_nom or modifie or datetime.min, modifie or datetime.min)
         candidat = dict(f)
         candidat["table"] = table
-        candidat["date_export"] = date_nom
+        candidat["date_export"] = date_nom or f.get("date_lot")
         candidat["modifiedTime"] = modifie
         candidat["_cle_tri"] = cle_tri
         actuel = retenus.get(table)
@@ -198,9 +238,10 @@ def construire_service():
 
 
 def lister_fichiers_dossier(service, folder_id: str) -> list[dict]:
-    """Liste tous les fichiers directement presents dans le dossier Drive
-    (avec pagination, au cas ou le dossier depasse 200 fichiers a terme)."""
-    fichiers: list[dict] = []
+    """Liste tous les elements (fichiers ET sous-dossiers) directement
+    presents dans un dossier Drive donne (avec pagination, au cas ou le
+    dossier depasse 200 elements a terme)."""
+    elements: list[dict] = []
     page_token = None
     requete = f"'{folder_id}' in parents and trashed = false"
     while True:
@@ -208,17 +249,17 @@ def lister_fichiers_dossier(service, folder_id: str) -> list[dict]:
             service.files()
             .list(
                 q=requete,
-                fields="nextPageToken, files(id, name, modifiedTime, mimeType)",
+                fields="nextPageToken, files(id, name, modifiedTime, createdTime, mimeType)",
                 pageToken=page_token,
                 pageSize=200,
             )
             .execute()
         )
-        fichiers.extend(reponse.get("files", []))
+        elements.extend(reponse.get("files", []))
         page_token = reponse.get("nextPageToken")
         if not page_token:
             break
-    return fichiers
+    return elements
 
 
 def telecharger_contenu(service, file_id: str) -> bytes:
@@ -231,6 +272,71 @@ def telecharger_contenu(service, file_id: str) -> bytes:
     while not termine:
         _, termine = telechargeur.next_chunk()
     return tampon.getvalue()
+
+
+def _extraire_tables_dune_archive(octets_zip: bytes) -> dict[str, bytes]:
+    """Extrait, en memoire (sans jamais rien ecrire sur disque), les fichiers
+    de table (CSV/Excel/Stata) contenus dans une archive .zip d'export.
+    Ignore les dossiers internes, les fichiers caches et les artefacts
+    macOS (__MACOSX) parfois presents dans un zip cree depuis un Mac."""
+    resultat: dict[str, bytes] = {}
+    with zipfile.ZipFile(io.BytesIO(octets_zip)) as archive:
+        for info in archive.infolist():
+            if info.is_dir():
+                continue
+            nom = Path(info.filename).name
+            if not nom or nom.startswith(".") or "__MACOSX" in info.filename:
+                continue
+            if not nom.lower().endswith(EXTENSIONS_RECONNUES):
+                continue
+            resultat[nom] = archive.read(info)
+    return resultat
+
+
+def resoudre_elements_du_dernier_export(service, folder_id: str) -> tuple[list[dict], dict | None]:
+    """Determine ou se trouvent les fichiers du DERNIER export, quelle que
+    soit l'organisation retenue par le processus d'export externe (voir les
+    trois organisations possibles documentees en tete de module) :
+
+    1. Si le dossier contient des SOUS-DOSSIERS (un par export, ex.
+       "export_2026-07-30_12-50-37"), le plus recent est choisi (date dans
+       son nom, sinon date de modification/creation), et on regarde a
+       l'interieur de CE sous-dossier plutot qu'a la racine.
+    2. Parmi les elements ainsi retenus (racine ou sous-dossier choisi), si
+       on trouve des fichiers de table (CSV/Excel/Stata) directement
+       visibles, ils sont renvoyes tels quels (organisation "a plat").
+    3. Sinon, si on trouve une archive .zip (et aucun fichier de table
+       visible), c'est elle qui est renvoyee seule, a charge pour
+       `synchroniser` de la telecharger et de l'extraire.
+
+    Renvoie (elements_candidats, date_du_lot) : `date_du_lot` est la date
+    detectee sur le sous-dossier d'export choisi (ou None si les fichiers
+    sont directement a la racine sans regroupement par sous-dossier), pour
+    permettre d'afficher une date d'export meme quand les fichiers
+    individuels a l'interieur n'en portent pas dans leur propre nom."""
+    elements = lister_fichiers_dossier(service, folder_id)
+    sous_dossiers = [e for e in elements if _est_dossier(e)]
+    fichiers_racine = [e for e in elements if not _est_dossier(e)]
+
+    date_du_lot = None
+    if sous_dossiers:
+        dernier_dossier = _plus_recent(sous_dossiers)
+        candidats = [e for e in lister_fichiers_dossier(service, dernier_dossier["id"]) if not _est_dossier(e)]
+        date_du_lot = extraire_date_export(dernier_dossier.get("name", "")) or _parser_date_drive(
+            dernier_dossier.get("modifiedTime") or dernier_dossier.get("createdTime")
+        )
+    else:
+        candidats = fichiers_racine
+
+    tables_visibles = [c for c in candidats if c.get("name", "").lower().endswith(EXTENSIONS_RECONNUES)]
+    if tables_visibles:
+        return tables_visibles, date_du_lot
+
+    zips = [c for c in candidats if c.get("name", "").lower().endswith(".zip")]
+    if zips:
+        return [_plus_recent(zips)], date_du_lot
+
+    return [], date_du_lot
 
 
 # --- Point d'entree principal ----------------------------------------------
@@ -258,12 +364,48 @@ def synchroniser(folder_id: str | None = None, service=None):
     """
     service = service or construire_service()
     fid = folder_id or obtenir_folder_id()
-    fichiers = lister_fichiers_dossier(service, fid)
-    retenus = derniers_fichiers_par_table(fichiers)
+
+    candidats, date_du_lot = resoudre_elements_du_dernier_export(service, fid)
 
     contenus: dict[str, bytes] = {}
     meta: dict[str, dict] = {}
     avertissements: list[str] = []
+
+    if not candidats:
+        return contenus, meta, avertissements
+
+    est_archive = candidats[0].get("name", "").lower().endswith(".zip")
+    if est_archive:
+        archive = candidats[0]
+        try:
+            octets_zip = telecharger_contenu(service, archive["id"])
+        except Exception as e:
+            return {}, {}, [f"Impossible de télécharger l'archive {archive['name']} : {e}"]
+        try:
+            extraits = _extraire_tables_dune_archive(octets_zip)
+        except zipfile.BadZipFile as e:
+            return {}, {}, [f"Archive {archive['name']} illisible (fichier zip corrompu ?) : {e}"]
+        date_archive = date_du_lot or extraire_date_export(archive.get("name", "")) or _parser_date_drive(
+            archive.get("modifiedTime")
+        )
+        if not extraits:
+            avertissements.append(
+                f"L'archive {archive['name']} ne contient aucun fichier CSV/Excel/Stata reconnu."
+            )
+        for nom_fichier, contenu in extraits.items():
+            contenus[nom_fichier] = contenu
+            meta[nom_fichier] = {
+                "id": archive["id"],
+                "name": nom_fichier,
+                "table": nom_base_table(nom_fichier),
+                "date_export": date_archive,
+                "modifiedTime": _parser_date_drive(archive.get("modifiedTime")),
+            }
+        return contenus, meta, avertissements
+
+    for c in candidats:
+        c.setdefault("date_lot", date_du_lot)
+    retenus = derniers_fichiers_par_table(candidats)
     for table, info in sorted(retenus.items()):
         try:
             contenus[info["name"]] = telecharger_contenu(service, info["id"])
