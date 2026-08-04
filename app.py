@@ -71,7 +71,11 @@ for _cle in ("ANTHROPIC_API_KEY", "GROQ_API_KEY"):
         if _valeur:
             os.environ[_cle] = _valeur
 
-st.set_page_config(page_title="Assistant OPO", page_icon="📊", layout="wide")
+# Icone d'onglet du navigateur : utilise le logo ISSP s'il a ete depose
+# (voir auth.LOGO_PATH), sinon retombe sur l'emoji par defaut - ne bloque
+# jamais le demarrage si le logo n'est pas encore fourni.
+_icone_page = str(auth.LOGO_PATH) if auth.LOGO_PATH.exists() else "📊"
+st.set_page_config(page_title="Assistant OPO", page_icon=_icone_page, layout="wide")
 
 # Ecran de connexion : bloque tout le reste de la page (st.stop() dans
 # auth.verifier_acces) tant que l'utilisateur n'est pas authentifie. Doit

@@ -11,6 +11,7 @@ JAMAIS contenir de vrais mots de passe si le depot est public - voir les
 instructions en tete de ce fichier de configuration).
 """
 
+import base64
 from pathlib import Path
 
 import streamlit as st
@@ -19,8 +20,21 @@ import yaml
 
 CONFIG_PATH = Path(__file__).parent / "auth_config.yaml"
 
+# Emplacement attendu du logo de l'Institut Superieur des Sciences de la
+# Population (ISSP) : depose le fichier ici (PNG de preference, fond
+# transparent si possible) pour qu'il apparaisse automatiquement sur l'ecran
+# de connexion, sans autre modification de code.
+LOGO_PATH = Path(__file__).parent / "assets" / "logo_issp.png"
+
 MOTS_DE_PASSE_PLACEHOLDER = {"ChangezMoi123!", "ChangezMoiAussi123!"}
 CLE_COOKIE_PLACEHOLDER = "REMPLACER_PAR_UNE_CLE_SECRETE_ALEATOIRE"
+
+CHAMPS_FORMULAIRE_FR = {
+    "Form name": "Connexion",
+    "Username": "Nom d'utilisateur",
+    "Password": "Mot de passe",
+    "Login": "Se connecter",
+}
 
 
 def _en_dict_modifiable(objet):
@@ -94,6 +108,104 @@ def _construire_authenticator(
     return stauth.Authenticate(identifiants, nom_cookie, cle_cookie, expiry_days)
 
 
+def _css_ecran_connexion() -> str:
+    """Style de l'ecran de connexion, dans la meme identite visuelle
+    (couleurs navy/teal/sable) que l'en-tete du reste de l'application
+    (voir app.py) : carte centree avec ombre douce, degrade sur le bouton de
+    connexion, au lieu du formulaire brut par defaut de la bibliotheque."""
+    return """
+    <style>
+    :root {
+        --opo-navy: #0B2545;
+        --opo-teal: #13795B;
+        --opo-sand: #F4EDE4;
+    }
+    .opo-login-header {
+        text-align: center;
+        margin: 2.4rem auto 0.2rem auto;
+        max-width: 420px;
+    }
+    .opo-login-header img {
+        max-height: 96px;
+        margin-bottom: 0.9rem;
+    }
+    .opo-login-header h1 {
+        color: var(--opo-navy);
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.35;
+    }
+    .opo-login-header p {
+        color: #4b5563;
+        font-size: 0.9rem;
+        margin: 0.4rem 0 0 0;
+    }
+    div[data-testid="stForm"] {
+        max-width: 420px;
+        margin: 1.2rem auto 2.5rem auto;
+        background: #FFFFFF;
+        border-radius: 16px;
+        padding: 2rem 2.2rem 1.6rem 2.2rem;
+        box-shadow: 0 10px 30px rgba(11, 37, 69, 0.14);
+        border: 1px solid rgba(11, 37, 69, 0.07);
+    }
+    div[data-testid="stForm"] h3 {
+        color: var(--opo-navy);
+        text-align: center;
+        font-weight: 700;
+        margin-bottom: 1.2rem;
+    }
+    div[data-testid="stForm"] label p {
+        color: var(--opo-navy);
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    div[data-testid="stForm"] input {
+        border-radius: 8px !important;
+    }
+    div[data-testid="stForm"] button {
+        background: linear-gradient(135deg, var(--opo-navy) 0%, var(--opo-teal) 100%);
+        color: #FFFFFF !important;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        width: 100%;
+        padding: 0.55rem 0;
+        margin-top: 0.5rem;
+        transition: opacity 0.15s ease-in-out;
+    }
+    div[data-testid="stForm"] button:hover {
+        opacity: 0.9;
+        color: #FFFFFF !important;
+    }
+    </style>
+    """
+
+
+def _afficher_entete_connexion() -> None:
+    """Logo (si depose - voir LOGO_PATH) + titre institutionnel au-dessus du
+    formulaire de connexion. N'echoue jamais si le logo est absent : affiche
+    simplement le titre seul en attendant qu'il soit fourni."""
+    st.markdown(_css_ecran_connexion(), unsafe_allow_html=True)
+
+    logo_html = ""
+    if LOGO_PATH.exists():
+        encode = base64.b64encode(LOGO_PATH.read_bytes()).decode()
+        logo_html = f'<img src="data:image/png;base64,{encode}" alt="Logo ISSP">'
+
+    st.markdown(
+        f"""
+        <div class="opo-login-header">
+            {logo_html}
+            <h1>Assistant IA — Observatoire de Population de Ouagadougou</h1>
+            <p>Institut Supérieur des Sciences de la Population (ISSP)</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def verifier_acces() -> dict:
     """Affiche l'ecran de connexion et bloque l'execution du reste de l'appli
     (st.stop()) tant que l'utilisateur n'est pas authentifie avec succes.
@@ -116,7 +228,8 @@ def verifier_acces() -> dict:
     )
 
     if st.session_state.get("authentication_status") is not True:
-        authenticator.login(location="main")
+        _afficher_entete_connexion()
+        authenticator.login(location="main", fields=CHAMPS_FORMULAIRE_FR)
         statut = st.session_state.get("authentication_status")
 
         if statut is False:
