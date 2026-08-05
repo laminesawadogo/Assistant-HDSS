@@ -739,3 +739,15 @@ volume de questions est important.
   pas encore de workflow de validation/application des corrections dans
   l'outil lui-même (les corrections restent consignées et appliquées en
   dehors de l'application, par une personne habilitée).
+- **Erreur frontend Streamlit "Failed to execute 'removeChild' on 'Node'"**
+  (rencontrée en production) : bug de réconciliation React côté navigateur,
+  documenté chez Streamlit, le plus souvent déclenché par un `st.rerun()`
+  manuel juste après une modification de `session_state`, dans une appli qui
+  utilise aussi `st.chat_input`. Le seul appel `st.rerun()` du fichier (après
+  l'analyse d'image dans la barre latérale) a été retiré : il était en fait
+  redondant, puisque ce bloc s'exécute déjà dans le même passage de script
+  que la boucle d'affichage des messages plus bas — les nouveaux messages
+  s'affichent donc naturellement, sans relance forcée. Si l'erreur revient
+  malgré tout, c'est un bug frontend générique de Streamlit (pas propre à ce
+  code) : recharger la page suffit, et il vaut la peine de vérifier si une
+  mise à jour de la version de Streamlit installée est disponible.

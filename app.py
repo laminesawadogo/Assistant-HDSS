@@ -394,7 +394,15 @@ with st.sidebar:
             {"role": "user", "content": f"[Image déposée : {image_deposee.name}] {question_image}".strip()}
         )
         st.session_state["messages"].append({"role": "assistant", "content": reponse_image})
-        st.rerun()
+        # Pas de st.rerun() ici : ce bloc est deja dans la meme execution de
+        # script que la boucle d'affichage des messages plus bas (ligne
+        # ~452) - les deux nouveaux messages s'affichent donc naturellement
+        # a la suite, sans avoir besoin de relancer le script. Un st.rerun()
+        # juste apres une modification de session_state, dans une appli qui
+        # utilise aussi st.chat_input, est un des declencheurs connus du bug
+        # frontend Streamlit "Failed to execute 'removeChild' on 'Node'"
+        # (deux rendus qui se chevauchent avant que le navigateur ait fini
+        # de reconcilier le premier) - a eviter sauf necessite reelle.
 
 # --- Historique de chat ------------------------------------------------------
 
