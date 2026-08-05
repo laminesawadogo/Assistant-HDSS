@@ -284,6 +284,26 @@ def test_generer_requete_sql_appel_llm_echoue_renvoie_none(monkeypatch):
     assert resultat is None
 
 
+def test_generer_requete_sql_transmet_lerreur_precedente_au_prompt(monkeypatch):
+    # Auto-correction en un aller-retour : la requete fautive et l'erreur
+    # DuckDB doivent apparaitre dans le prompt envoye au LLM pour la
+    # deuxieme tentative.
+    prompts_recus = []
+
+    def _capture(prompt, groq_key=None, anthropic_key=None):
+        prompts_recus.append(prompt)
+        return "SELECT 1"
+
+    monkeypatch.setattr(rag, "call_llm", _capture)
+    rag.generer_requete_sql(
+        "test", "- t(x)", groq_key="fake",
+        tentative_precedente="SELECT colonne_qui_nexiste_pas FROM t",
+        erreur_precedente="Erreur d'exécution SQL : colonne introuvable",
+    )
+    assert "SELECT colonne_qui_nexiste_pas FROM t" in prompts_recus[0]
+    assert "colonne introuvable" in prompts_recus[0]
+
+
 # --- Reformulation de requete en cas de score de recherche trop faible -----
 
 def test_answer_reformule_la_requete_si_le_premier_score_est_faible(monkeypatch):

@@ -218,7 +218,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-264 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+268 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
@@ -604,6 +604,23 @@ instruction, qui doit commencer par `SELECT`/`WITH`, et ne doit contenir
 aucun mot-clé de modification (`INSERT`/`UPDATE`/`DROP`/`ATTACH`...) — jamais
 d'exécution de code généré par le LLM sans validation. Résultat limité à
 200 lignes. Voir `app.py:tenter_requete_sql` / `rag.generer_requete_sql`.
+
+Trois garde-fous supplémentaires pour que ce résultat reste fiable :
+
+- **Indices de jointure** : le schéma transmis au LLM inclut les colonnes
+  réellement communes à chaque paire de tables (`dt.detecter_cles_communes`),
+  en excluant volontairement une simple colonne `id` partagée par hasard
+  (chaque table a sa propre clé primaire locale `id`, jamais une référence
+  vers une autre table dans ce schéma) — réduit le risque d'une jointure
+  inventée ou faite sur la mauvaise colonne.
+- **Auto-correction en un aller-retour** : si la requête échoue à
+  l'exécution (colonne/syntaxe), l'erreur DuckDB est renvoyée au LLM pour une
+  deuxième tentative avant d'abandonner.
+- **Alerte de sur-jointure** : si le résultat contient plus de lignes que la
+  plus grande table utilisée, un avertissement est ajouté à la réponse —
+  signe possible d'une jointure qui multiplie les lignes au lieu de les
+  relier correctement, plutôt que de présenter un chiffre comme fiable sans
+  réserve.
 
 **Question de cohérence croisée formulée naturellement** (ex : *"il y a des
 décédés dans presence ?"*) : une table comme "présence" ne porte elle-même

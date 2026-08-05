@@ -369,15 +369,28 @@ def _parser_reponse_requete(reponse: str, colonnes: list[str]) -> tuple[str, dic
 
 
 def generer_requete_sql(
-    question: str, schema: str, groq_key: str | None = None, anthropic_key: str | None = None
+    question: str,
+    schema: str,
+    groq_key: str | None = None,
+    anthropic_key: str | None = None,
+    tentative_precedente: str | None = None,
+    erreur_precedente: str | None = None,
 ) -> str | None:
     """Demande au LLM d'ecrire une requete SQL en LECTURE SEULE repondant a
     la question, a partir du SCHEMA REEL de TOUTES les tables chargees
     (fourni par l'appelant : nom de chaque table et liste exacte de ses
-    colonnes) - capacite GENERALE permettant de croiser 2, 3, 4 tables ou
-    plus dans une seule requete (jointures, filtres, agregations, groupby),
-    la ou l'action REQUETE de `classifier_intention` ne sait interroger
-    qu'UNE seule table a la fois, sans jointure.
+    colonnes, avec si possible des indices de jointure - voir
+    `app.py:_description_schema`) - capacite GENERALE permettant de croiser
+    2, 3, 4 tables ou plus dans une seule requete (jointures, filtres,
+    agregations, groupby), la ou l'action REQUETE de `classifier_intention`
+    ne sait interroger qu'UNE seule table a la fois, sans jointure.
+
+    `tentative_precedente`/`erreur_precedente` : si une premiere requete a
+    echoue a l'execution (voir `data_tools.executer_sql`), l'appelant peut
+    redemander une correction en transmettant la requete fautive et le
+    message d'erreur DuckDB - permet une auto-correction en un aller-retour
+    plutot que d'abandonner directement sur une simple faute de syntaxe ou un
+    nom de colonne legerement incorrect.
 
     Renvoie la requete SQL brute (str) si le LLM en propose une, ou None si
     aucune cle LLM n'est configuree, si le modele indique ne pas pouvoir
@@ -396,13 +409,23 @@ def generer_requete_sql(
         f"{schema}\n\n"
         f"Question : {question}\n\n"
         "Si la question necessite de croiser plusieurs tables, utilise des JOIN sur les colonnes "
-        "d'identifiant communes visibles dans le schema (ex: individu_id, enquete_id, agent_id...). "
+        "d'identifiant communes indiquees dans le schema - jamais sur une simple colonne \"id\" "
+        "partagee par hasard entre deux tables non liees (chaque table a sa propre cle primaire "
+        "locale \"id\", ce n'est presque jamais une reference vers une autre table). "
         "Limite le resultat a 200 lignes (LIMIT 200) sauf pour un simple COUNT/AVG/SUM/MIN/MAX qui "
         "renvoie une seule ligne. Reponds UNIQUEMENT avec la requete SQL brute, sans backticks, sans "
         "explication, sans point-virgule final. Si la question ne peut pas etre traduite en requete "
         "SQL exploitable avec ce schema (aucune table/colonne pertinente pour y repondre), reponds "
         "exactement : AUCUNE"
     )
+    if tentative_precedente and erreur_precedente:
+        prompt += (
+            "\n\nUne premiere tentative a echoue a l'execution :\n"
+            f"Requete : {tentative_precedente}\n"
+            f"Erreur : {erreur_precedente}\n"
+            "Corrige la requete en tenant compte de cette erreur (ex: nom de colonne/table exact, "
+            "syntaxe de jointure), toujours en te limitant strictement aux tables/colonnes listees."
+        )
 
     try:
         reponse = call_llm(prompt, groq_key=groq_key, anthropic_key=anthropic_key).strip()

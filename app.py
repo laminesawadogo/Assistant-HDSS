@@ -761,11 +761,30 @@ def tenter_requete_donnees_multi_table(
 
 
 def _description_schema(tables: dict) -> str:
-    """Decrit le schema (nom de table + colonnes) de TOUTES les tables
-    chargees, pour le fournir au LLM dans `tenter_requete_sql` - c'est ce
-    schema REEL, et lui seul, qui doit guider la requete SQL generee (jamais
-    un nom de table/colonne invente)."""
-    return "\n".join(f"- {nom}({', '.join(str(c) for c in df.columns)})" for nom, df in tables.items())
+    """Decrit le schema (nom de table + colonnes, PUIS indices de jointure)
+    de TOUTES les tables chargees, pour le fournir au LLM dans
+    `tenter_requete_sql` - c'est ce schema REEL, et lui seul, qui doit guider
+    la requete SQL generee (jamais un nom de table/colonne invente).
+
+    Les indices de jointure (colonnes reellement communes a deux tables,
+    voir `dt.detecter_cles_communes`) reduisent le risque d'une jointure
+    inventee ou faite a tort - notamment le piege classique d'une colonne
+    "id" partagee par hasard entre deux tables SANS lien reel entre elles
+    (chaque table du schema reel a sa propre cle primaire locale "id" - ce
+    n'est jamais, dans ce schema, une reference vers une autre table),
+    volontairement exclue de ces indices."""
+    lignes = [f"- {nom}({', '.join(str(c) for c in df.columns)})" for nom, df in tables.items()]
+
+    indices = []
+    for (a, b), communes in dt.detecter_cles_communes(tables).items():
+        candidates = [c for c in communes if str(c).strip().lower() != "id"]
+        if candidates:
+            indices.append(f"- {a} <-> {b} sur : {', '.join(candidates)}")
+    if indices:
+        lignes.append("\nColonnes candidates pour les jointures entre tables (détectées automatiquement) :")
+        lignes.extend(indices)
+
+    return "\n".join(lignes)
 
 
 def tenter_requete_sql(question: str, tables: dict, groq_key: str | None, anthropic_key: str | None) -> dict | None:
@@ -775,25 +794,44 @@ def tenter_requete_sql(question: str, tables: dict, groq_key: str | None, anthro
     croise fixe deces/depart (`reponse_statut_croise_dans_table`).
 
     Le LLM ecrit une requete SQL en lecture seule a partir du schema REEL de
-    toutes les tables chargees (`_description_schema`), executee via DuckDB
-    directement sur les DataFrame en memoire (`dt.executer_sql`, qui revalide
-    que la requete est bien un SELECT avant toute execution - jamais
-    d'execution de code LLM arbitraire). Renvoie None si aucune cle LLM
-    n'est configuree, si le modele ne propose rien d'exploitable, ou si la
-    requete echoue - l'appelant retombe alors sur son propre repli."""
+    toutes les tables chargees (`_description_schema`, avec indices de
+    jointure), executee via DuckDB directement sur les DataFrame en memoire
+    (`dt.executer_sql`, qui revalide que la requete est bien un SELECT avant
+    toute execution - jamais d'execution de code LLM arbitraire).
+
+    Deux garde-fous supplementaires pour rester fiable :
+    - Auto-correction en un aller-retour : si la premiere requete echoue a
+      l'execution (colonne/syntaxe), l'erreur DuckDB est renvoyee au LLM pour
+      une deuxieme tentative avant d'abandonner.
+    - Alerte de sur-jointure : si le resultat contient plus de lignes que la
+      plus grande table utilisee, un avertissement est ajoute (indice d'une
+      jointure qui multiplie les lignes au lieu de les relier correctement -
+      jamais une simple table par defaut a la place d'un vrai controle).
+
+    Renvoie None si aucune cle LLM n'est configuree, si le modele ne propose
+    rien d'exploitable, ou si les deux tentatives echouent - l'appelant
+    retombe alors sur son propre repli."""
     if not tables or not rag.has_llm_configured(groq_key, anthropic_key):
         return None
 
-    requete_sql = rag.generer_requete_sql(
-        question, _description_schema(tables), groq_key=groq_key, anthropic_key=anthropic_key
-    )
-    if not requete_sql:
-        return None
-
-    try:
-        resultat = dt.executer_sql(tables, requete_sql)
-    except dt.RequeteSQLInvalide:
-        return None
+    schema = _description_schema(tables)
+    requete_sql, erreur = None, None
+    for tentative in range(2):
+        requete_precedente = requete_sql
+        requete_sql = rag.generer_requete_sql(
+            question, schema, groq_key=groq_key, anthropic_key=anthropic_key,
+            tentative_precedente=requete_precedente, erreur_precedente=erreur,
+        )
+        if not requete_sql:
+            return None
+        try:
+            resultat = dt.executer_sql(tables, requete_sql)
+            erreur = None
+            break
+        except dt.RequeteSQLInvalide as e:
+            erreur = str(e)
+            if tentative == 1:
+                return None
 
     if resultat.empty:
         contenu = f"Aucun résultat trouvé.\n\n_Requête utilisée (sur les données réellement chargées) :_ `{requete_sql}`"
@@ -803,6 +841,13 @@ def tenter_requete_sql(question: str, tables: dict, groq_key: str | None, anthro
         f"{resultat.to_markdown(index=False)}\n\n"
         f"_Requête utilisée (sur les données réellement chargées) :_ `{requete_sql}`"
     )
+    plus_grande_table = max((len(df) for df in tables.values()), default=0)
+    if plus_grande_table and len(resultat) > plus_grande_table:
+        contenu += (
+            "\n\n⚠️ _Ce résultat contient plus de lignes que la plus grande table utilisée : "
+            "vérifie la jointure avant de t'y fier (indice possible d'une jointure qui multiplie "
+            "les lignes au lieu de les relier correctement)._"
+        )
     return {"content": contenu, "table": resultat, "table_label": "requete_sql"}
 
 

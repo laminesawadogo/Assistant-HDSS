@@ -658,6 +658,78 @@ def test_requete_sql_generale_croise_trois_tables(monkeypatch):
     assert "Requête utilisée" in reponse
 
 
+def test_schema_sql_inclut_les_indices_de_jointure_et_exclut_id_seul(monkeypatch):
+    # Les deux tables partagent "id" ET "individu_id" : le schema fourni au
+    # LLM doit suggerer "individu_id" comme cle de jointure, jamais "id" seul
+    # (chaque table a sa propre cle primaire locale "id", sans lien reel
+    # entre elles dans ce schema - un piege classique de jointure a tort).
+    tables = {
+        "opo_hypervel_presences": pd.DataFrame({"id": [1, 2], "individu_id": [10, 20]}),
+        "opo_hypervel_d_e_c_e_s": pd.DataFrame({"id": [1, 2], "individu_id": [10, 30]}),
+    }
+    prompts = []
+
+    def _capture(prompt, groq_key=None, anthropic_key=None):
+        prompts.append(prompt)
+        return "AUCUNE"
+
+    monkeypatch.setenv("GROQ_API_KEY", "fake-key")
+    monkeypatch.setattr(rag, "call_llm", _capture)
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value("je voudrais un chiffre très précis basé sur toutes les données").run()
+
+    prompt_sql = next(p for p in prompts if "SQL" in p)
+    assert "individu_id" in prompt_sql
+    assert "sur : id" not in prompt_sql
+    assert "sur : id," not in prompt_sql
+
+
+def test_requete_sql_se_corrige_apres_un_premier_echec(monkeypatch):
+    # Auto-correction en un aller-retour : une premiere requete qui echoue a
+    # l'execution (colonne inexistante) doit declencher une deuxieme
+    # tentative avec l'erreur transmise, plutot que d'abandonner directement.
+    tables = {"opo_hypervel_d_e_c_e_s": pd.DataFrame({"individu_id": [1, 2, 3]})}
+    appels = {"n": 0}
+
+    def _faux_call_llm(prompt, groq_key=None, anthropic_key=None):
+        if "SQL" not in prompt:
+            return "AUCUNE"
+        appels["n"] += 1
+        if appels["n"] == 1:
+            return "SELECT colonne_qui_nexiste_pas FROM opo_hypervel_d_e_c_e_s"
+        assert "colonne_qui_nexiste_pas" in prompt  # l'erreur precedente doit avoir ete transmise
+        return "SELECT COUNT(*) AS n FROM opo_hypervel_d_e_c_e_s"
+
+    monkeypatch.setenv("GROQ_API_KEY", "fake-key")
+    monkeypatch.setattr(rag, "call_llm", _faux_call_llm)
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value("combien de décès au total ?").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "3" in reponse
+    assert appels["n"] == 2
+
+
+def test_requete_sql_alerte_si_le_resultat_a_plus_de_lignes_que_la_plus_grande_table(monkeypatch):
+    # Jointure sans condition (produit cartesien) : le resultat a plus de
+    # lignes que la plus grande table utilisee - doit declencher l'alerte,
+    # jamais presenter le chiffre comme fiable sans reserve.
+    tables = {
+        "opo_hypervel_presences": pd.DataFrame({"individu_id": [1, 2]}),
+        "opo_hypervel_emplois": pd.DataFrame({"individu_id": [1, 2, 3]}),
+    }
+    sql_cartesienne = "SELECT * FROM opo_hypervel_presences, opo_hypervel_emplois"
+
+    def _faux_call_llm(prompt, groq_key=None, anthropic_key=None):
+        return sql_cartesienne if "SQL" in prompt else "AUCUNE"
+
+    monkeypatch.setenv("GROQ_API_KEY", "fake-key")
+    monkeypatch.setattr(rag, "call_llm", _faux_call_llm)
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value("je voudrais un chiffre très précis basé sur toutes les données").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "plus de lignes que la plus grande table" in reponse
+
+
 def test_table_specifique_encore_ciblable_directement(tables_ambigues):
     # Nommer explicitement une table doit toujours fonctionner comme avant -
     # la suppression de la table par defaut ne doit pas empecher de cibler
