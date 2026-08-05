@@ -12,6 +12,8 @@ python-pptx>=1.0   # lecture des fichiers PowerPoint .ppt/.pptx deposes dans dat
 pdfplumber>=0.11   # repli pour lire les PDF si pdftotext (poppler) n'est pas installe
 google-api-python-client>=2.100   # synchronisation automatique des tables depuis Google Drive (drive_sync.py)
 google-auth>=2.23                 # authentification par compte de service pour l'API Drive (lecture seule)
+duckdb>=1.0        # execution SQL en lecture seule sur les tables chargees, pour repondre a des
+                    # questions qui croisent 2, 3, 4 tables ou plus a la fois (voir data_tools.executer_sql)
 
 # Un seul des deux suffit, selon le fournisseur de LLM choisi :
 groq>=0.9        # gratuit, rapide (recommande pour demarrer)

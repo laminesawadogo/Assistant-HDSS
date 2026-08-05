@@ -510,6 +510,65 @@ def test_executer_requete_filtre_colonne_absente_est_ignore(table_requete):
     assert resultat["filtres_appliques"] == []
 
 
+# --- Requete SQL en lecture seule sur plusieurs tables (jointures) ---------
+# (repli general pour une question qui doit croiser 2, 3, 4 tables ou plus -
+# voir app.py:tenter_requete_sql / rag.generer_requete_sql)
+
+@pytest.fixture
+def tables_trois_bases():
+    return {
+        "opo_hypervel_presences": pd.DataFrame({"individu_id": [1, 2, 3, 4], "enquete_id": [10, 10, 20, 20]}),
+        "opo_hypervel_d_e_c_e_s": pd.DataFrame({"individu_id": [2, 5]}),
+        "opo_hypervel_enquete_or_visites": pd.DataFrame({"id": [10, 20], "agent_id": ["A", "B"]}),
+    }
+
+
+def test_executer_sql_jointure_sur_trois_tables(tables_trois_bases):
+    sql = (
+        "SELECT e.agent_id, COUNT(*) AS n_deces "
+        "FROM opo_hypervel_presences p "
+        "JOIN opo_hypervel_d_e_c_e_s d ON p.individu_id = d.individu_id "
+        "JOIN opo_hypervel_enquete_or_visites e ON p.enquete_id = e.id "
+        "GROUP BY e.agent_id"
+    )
+    resultat = dt.executer_sql(tables_trois_bases, sql)
+    assert list(resultat["agent_id"]) == ["A"]
+    assert list(resultat["n_deces"]) == [1]
+
+
+def test_executer_sql_simple_select(tables_trois_bases):
+    resultat = dt.executer_sql(tables_trois_bases, "SELECT COUNT(*) AS n FROM opo_hypervel_presences")
+    assert resultat["n"].iloc[0] == 4
+
+
+def test_executer_sql_refuse_les_instructions_non_select(tables_trois_bases):
+    for requete in [
+        "DROP TABLE opo_hypervel_presences",
+        "DELETE FROM opo_hypervel_presences",
+        "UPDATE opo_hypervel_presences SET individu_id = 0",
+        "ATTACH 'x.db'",
+        "SELECT 1; DROP TABLE opo_hypervel_presences",
+    ]:
+        with pytest.raises(dt.RequeteSQLInvalide):
+            dt.executer_sql(tables_trois_bases, requete)
+
+
+def test_executer_sql_requete_vide_leve_erreur(tables_trois_bases):
+    with pytest.raises(dt.RequeteSQLInvalide):
+        dt.executer_sql(tables_trois_bases, "")
+
+
+def test_executer_sql_erreur_de_syntaxe_leve_requete_invalide(tables_trois_bases):
+    with pytest.raises(dt.RequeteSQLInvalide):
+        dt.executer_sql(tables_trois_bases, "SELECT colonne_qui_nexiste_pas FROM opo_hypervel_presences")
+
+
+def test_executer_sql_limite_a_200_lignes():
+    grande_table = {"t": pd.DataFrame({"x": range(500)})}
+    resultat = dt.executer_sql(grande_table, "SELECT * FROM t")
+    assert len(resultat) == 200
+
+
 def test_dates_incoherentes_detecte_futur_et_avant_1900(table_exemple):
     df = dt.load_table(table_exemple)
     bad = dt.dates_incoherentes(df, "birth_date")

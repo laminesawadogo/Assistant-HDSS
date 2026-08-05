@@ -368,6 +368,53 @@ def _parser_reponse_requete(reponse: str, colonnes: list[str]) -> tuple[str, dic
     return "REQUETE", {"operation": operation, "colonne_cible": colonne_cible, "filtres": filtres_valides}
 
 
+def generer_requete_sql(
+    question: str, schema: str, groq_key: str | None = None, anthropic_key: str | None = None
+) -> str | None:
+    """Demande au LLM d'ecrire une requete SQL en LECTURE SEULE repondant a
+    la question, a partir du SCHEMA REEL de TOUTES les tables chargees
+    (fourni par l'appelant : nom de chaque table et liste exacte de ses
+    colonnes) - capacite GENERALE permettant de croiser 2, 3, 4 tables ou
+    plus dans une seule requete (jointures, filtres, agregations, groupby),
+    la ou l'action REQUETE de `classifier_intention` ne sait interroger
+    qu'UNE seule table a la fois, sans jointure.
+
+    Renvoie la requete SQL brute (str) si le LLM en propose une, ou None si
+    aucune cle LLM n'est configuree, si le modele indique ne pas pouvoir
+    repondre avec ce schema, ou si l'appel echoue. La requete renvoyee n'est
+    PAS revalidee ici : c'est `data_tools.executer_sql` qui verifie qu'il
+    s'agit bien d'une simple lecture (SELECT) avant toute execution - cette
+    fonction ne fait que demander au modele et nettoyer le texte renvoye."""
+    if not has_llm_configured(groq_key, anthropic_key):
+        return None
+
+    prompt = (
+        "Tu ecris UNE SEULE requete SQL (dialecte DuckDB, proche de PostgreSQL standard) EN LECTURE "
+        "SEULE (SELECT, ou WITH ... SELECT) pour repondre a la question - jamais INSERT/UPDATE/"
+        "DELETE/DROP/CREATE/ALTER/PRAGMA/ATTACH. Utilise UNIQUEMENT les tables et colonnes listees "
+        "ci-dessous, avec leur nom exact (jamais un nom invente) :\n\n"
+        f"{schema}\n\n"
+        f"Question : {question}\n\n"
+        "Si la question necessite de croiser plusieurs tables, utilise des JOIN sur les colonnes "
+        "d'identifiant communes visibles dans le schema (ex: individu_id, enquete_id, agent_id...). "
+        "Limite le resultat a 200 lignes (LIMIT 200) sauf pour un simple COUNT/AVG/SUM/MIN/MAX qui "
+        "renvoie une seule ligne. Reponds UNIQUEMENT avec la requete SQL brute, sans backticks, sans "
+        "explication, sans point-virgule final. Si la question ne peut pas etre traduite en requete "
+        "SQL exploitable avec ce schema (aucune table/colonne pertinente pour y repondre), reponds "
+        "exactement : AUCUNE"
+    )
+
+    try:
+        reponse = call_llm(prompt, groq_key=groq_key, anthropic_key=anthropic_key).strip()
+    except Exception:
+        return None
+
+    reponse = re.sub(r"^```(?:sql)?\s*|\s*```\s*$", "", reponse, flags=re.IGNORECASE).strip()
+    if not reponse or reponse.upper() == "AUCUNE":
+        return None
+    return reponse
+
+
 # En dessous de ce score pour le meilleur resultat, on considere que la
 # recherche TF-IDF n'a probablement pas bien "compris" la question (question
 # trop reformulee, vocabulaire different du corpus) et on tente une seule

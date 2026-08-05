@@ -623,6 +623,41 @@ def test_requete_precise_moyenne_multi_table_sans_rien_nommer(monkeypatch):
     assert "FNewEducation" not in reponse
 
 
+def test_requete_sql_generale_croise_trois_tables(monkeypatch):
+    # Question qui necessite de croiser TROIS tables a la fois (presence,
+    # emplois, enquete_or_visites - via l'agent responsable de l'enquete) :
+    # ni l'action REQUETE mono-table ni le controle croise fixe deces/depart
+    # ne peuvent y repondre - seul le repli SQL general le peut.
+    tables = {
+        "opo_hypervel_presences": pd.DataFrame({"individu_id": [1, 2, 3, 4], "enquete_id": [10, 10, 20, 20]}),
+        "opo_hypervel_emplois": pd.DataFrame({"individu_id": [1, 2, 3], "secteur": ["informel", "informel", "formel"]}),
+        "opo_hypervel_enquete_or_visites": pd.DataFrame({"id": [10, 20], "agent_id": ["A", "B"]}),
+    }
+    sql_attendue = (
+        "SELECT e.agent_id, COUNT(*) AS n "
+        "FROM opo_hypervel_presences p "
+        "JOIN opo_hypervel_emplois em ON p.individu_id = em.individu_id "
+        "JOIN opo_hypervel_enquete_or_visites e ON p.enquete_id = e.id "
+        "WHERE em.secteur = 'informel' "
+        "GROUP BY e.agent_id"
+    )
+
+    def _faux_call_llm(prompt, groq_key=None, anthropic_key=None):
+        # Distingue l'appel classifier_intention (mono-table, doit echouer
+        # ici pour laisser la place au repli SQL) de l'appel
+        # generer_requete_sql (contient "SQL" dans son prompt).
+        return sql_attendue if "SQL" in prompt else "AUCUNE"
+
+    monkeypatch.setenv("GROQ_API_KEY", "fake-key")
+    monkeypatch.setattr(rag, "call_llm", _faux_call_llm)
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value("quel agent a le plus d'individus en emploi informel parmi ceux qu'il a suivis ?").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "A" in reponse
+    assert "2" in reponse
+    assert "Requête utilisée" in reponse
+
+
 def test_table_specifique_encore_ciblable_directement(tables_ambigues):
     # Nommer explicitement une table doit toujours fonctionner comme avant -
     # la suppression de la table par defaut ne doit pas empecher de cibler

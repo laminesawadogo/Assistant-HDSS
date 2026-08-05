@@ -760,6 +760,52 @@ def tenter_requete_donnees_multi_table(
     return resultat_final
 
 
+def _description_schema(tables: dict) -> str:
+    """Decrit le schema (nom de table + colonnes) de TOUTES les tables
+    chargees, pour le fournir au LLM dans `tenter_requete_sql` - c'est ce
+    schema REEL, et lui seul, qui doit guider la requete SQL generee (jamais
+    un nom de table/colonne invente)."""
+    return "\n".join(f"- {nom}({', '.join(str(c) for c in df.columns)})" for nom, df in tables.items())
+
+
+def tenter_requete_sql(question: str, tables: dict, groq_key: str | None, anthropic_key: str | None) -> dict | None:
+    """Repli GENERAL pour une question qui necessite de croiser PLUSIEURS
+    tables a la fois (2, 3, 4 ou plus) - au-dela de ce que couvrent l'action
+    REQUETE mono-table (`tenter_requete_donnees_multi_table`) ou le controle
+    croise fixe deces/depart (`reponse_statut_croise_dans_table`).
+
+    Le LLM ecrit une requete SQL en lecture seule a partir du schema REEL de
+    toutes les tables chargees (`_description_schema`), executee via DuckDB
+    directement sur les DataFrame en memoire (`dt.executer_sql`, qui revalide
+    que la requete est bien un SELECT avant toute execution - jamais
+    d'execution de code LLM arbitraire). Renvoie None si aucune cle LLM
+    n'est configuree, si le modele ne propose rien d'exploitable, ou si la
+    requete echoue - l'appelant retombe alors sur son propre repli."""
+    if not tables or not rag.has_llm_configured(groq_key, anthropic_key):
+        return None
+
+    requete_sql = rag.generer_requete_sql(
+        question, _description_schema(tables), groq_key=groq_key, anthropic_key=anthropic_key
+    )
+    if not requete_sql:
+        return None
+
+    try:
+        resultat = dt.executer_sql(tables, requete_sql)
+    except dt.RequeteSQLInvalide:
+        return None
+
+    if resultat.empty:
+        contenu = f"Aucun résultat trouvé.\n\n_Requête utilisée (sur les données réellement chargées) :_ `{requete_sql}`"
+        return {"content": contenu}
+
+    contenu = (
+        f"{resultat.to_markdown(index=False)}\n\n"
+        f"_Requête utilisée (sur les données réellement chargées) :_ `{requete_sql}`"
+    )
+    return {"content": contenu, "table": resultat, "table_label": "requete_sql"}
+
+
 # Les quatre fonctions ci-dessous centralisent le calcul ET la syntaxe R/Stata
 # equivalente pour chaque operation sur une table (repartition, echantillon,
 # doublons, coherence), pour que les DEUX chemins qui y menent (mots-cles
@@ -1505,6 +1551,13 @@ def route_question(question: str) -> dict:
         if reponse_requete is not None:
             return reponse_requete
 
+        # Toujours rien : tente le repli GENERAL (requete SQL sur le schema
+        # complet, capable de croiser 2, 3, 4 tables ou plus) avant de
+        # demander de preciser ou de retomber sur le dictionnaire.
+        reponse_sql = tenter_requete_sql(question, tables, groq_key_input, anthropic_key_input)
+        if reponse_sql is not None:
+            return reponse_sql
+
         # Repartition/bivarie/correlation/multivarie ont besoin d'au moins
         # une colonne reconnue quelque part pour ne rien calculer au hasard :
         # si la question semble viser une de ces analyses mais qu'aucune
@@ -1611,6 +1664,15 @@ def route_question(question: str) -> dict:
                 return formater_reponse_requete(resultat, nom_table)
             except dt.RequeteInvalide:
                 pass  # colonne cible invalide malgre la validation du classifieur : repli documentaire ci-dessous
+
+        # La table resolue seule ne suffit pas (ex: question qui necessite de
+        # croiser avec une AUTRE table non consideree ci-dessus) : tente le
+        # repli GENERAL (requete SQL sur le schema de TOUTES les tables
+        # chargees, capable de croiser 2, 3, 4 tables ou plus) avant
+        # d'abandonner sur le dictionnaire documentaire.
+        reponse_sql = tenter_requete_sql(question, tables, groq_key_input, anthropic_key_input)
+        if reponse_sql is not None:
+            return reponse_sql
 
         # Le classifieur a conclu que ce n'est pas une action sur la table (ou
         # aucune clé LLM n'est configurée pour trancher) : on tente la piste

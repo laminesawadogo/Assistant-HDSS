@@ -241,6 +241,49 @@ def test_classifier_intention_requete_operation_inconnue_renvoie_aucune(monkeypa
     assert param is None
 
 
+# --- Requete SQL generale (repli pour croiser plusieurs tables a la fois) --
+
+def test_generer_requete_sql_sans_cle_llm_renvoie_none(monkeypatch):
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    resultat = rag.generer_requete_sql("combien de deces ?", "- table_a(x, y)")
+    assert resultat is None
+
+
+def test_generer_requete_sql_renvoie_la_requete_du_llm(monkeypatch):
+    monkeypatch.setattr(
+        rag, "call_llm",
+        lambda prompt, groq_key=None, anthropic_key=None: "SELECT COUNT(*) FROM opo_hypervel_d_e_c_e_s",
+    )
+    resultat = rag.generer_requete_sql(
+        "combien de décès ?", "- opo_hypervel_d_e_c_e_s(individu_id)", groq_key="fake"
+    )
+    assert resultat == "SELECT COUNT(*) FROM opo_hypervel_d_e_c_e_s"
+
+
+def test_generer_requete_sql_retire_les_backticks_markdown(monkeypatch):
+    monkeypatch.setattr(
+        rag, "call_llm",
+        lambda prompt, groq_key=None, anthropic_key=None: "```sql\nSELECT 1\n```",
+    )
+    resultat = rag.generer_requete_sql("test", "- t(x)", groq_key="fake")
+    assert resultat == "SELECT 1"
+
+
+def test_generer_requete_sql_aucune_renvoie_none(monkeypatch):
+    monkeypatch.setattr(rag, "call_llm", lambda prompt, groq_key=None, anthropic_key=None: "AUCUNE")
+    resultat = rag.generer_requete_sql("question hors sujet", "- t(x)", groq_key="fake")
+    assert resultat is None
+
+
+def test_generer_requete_sql_appel_llm_echoue_renvoie_none(monkeypatch):
+    def _echoue(prompt, groq_key=None, anthropic_key=None):
+        raise RuntimeError("panne réseau")
+    monkeypatch.setattr(rag, "call_llm", _echoue)
+    resultat = rag.generer_requete_sql("test", "- t(x)", groq_key="fake")
+    assert resultat is None
+
+
 # --- Reformulation de requete en cas de score de recherche trop faible -----
 
 def test_answer_reformule_la_requete_si_le_premier_score_est_faible(monkeypatch):

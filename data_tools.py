@@ -226,6 +226,69 @@ def executer_requete_donnees(
     }
 
 
+class RequeteSQLInvalide(ValueError):
+    """Levee quand une requete SQL (generee par le LLM, voir
+    `rag.generer_requete_sql`) n'est pas une simple lecture (SELECT/WITH) ou
+    echoue a l'execution - jamais d'execution aveugle d'une instruction
+    potentiellement destructive ou d'une requete syntaxiquement invalide."""
+
+
+# Mots-cles qui, s'ils apparaissent n'importe ou dans la requete, la rendent
+# refusee d'office - une deuxieme ligne de defense en plus de l'exigence
+# "commence par SELECT/WITH", au cas ou le LLM glisserait une instruction de
+# modification dans une sous-requete ou un commentaire.
+_SQL_INTERDIT = re.compile(
+    r"\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|ATTACH|DETACH|COPY|PRAGMA|CALL|EXPORT|IMPORT|"
+    r"INSTALL|LOAD|SET|GRANT|REVOKE|VACUUM|CHECKPOINT)\b",
+    re.IGNORECASE,
+)
+
+
+def executer_sql(tables: dict, requete_sql: str) -> pd.DataFrame:
+    """Execute une requete SQL en LECTURE SEULE sur les tables reellement
+    chargees, via DuckDB (qui sait interroger directement des DataFrame
+    pandas enregistres, sans copie sur disque) - c'est ce qui permet de
+    repondre a une question qui doit croiser 2, 3, 4 tables ou plus a la fois
+    (jointures, filtres, agregations, groupby), au-dela de ce que l'action
+    REQUETE mono-table (`executer_requete_donnees`) ou le controle croise
+    fixe deces/depart (`controle_deces_present`) peuvent couvrir.
+
+    Garde-fous avant toute execution : une seule instruction, qui doit
+    commencer par SELECT ou WITH, et ne doit contenir aucun mot-cle de
+    modification/administration (voir `_SQL_INTERDIT`) - la requete est
+    TOUJOURS generee par un LLM (jamais tapee par un utilisateur final dans
+    ce flux), mais ne doit jamais etre executee sans validation.
+
+    Leve `RequeteSQLInvalide` si la requete ne passe pas ces garde-fous ou si
+    son execution echoue (colonne/table inexistante, erreur de syntaxe...) -
+    jamais d'exception DuckDB brute propagee a l'appelant."""
+    requete_sql = (requete_sql or "").strip().rstrip(";").strip()
+    if not requete_sql:
+        raise RequeteSQLInvalide("Requête vide.")
+    if ";" in requete_sql:
+        raise RequeteSQLInvalide("Plusieurs instructions ne sont pas autorisées en une seule requête.")
+    if not re.match(r"^(SELECT|WITH)\b", requete_sql, re.IGNORECASE):
+        raise RequeteSQLInvalide("Seules les requêtes SELECT (ou WITH ... SELECT) sont autorisées.")
+    if _SQL_INTERDIT.search(requete_sql):
+        raise RequeteSQLInvalide("Instruction non autorisée détectée dans la requête.")
+
+    import duckdb  # importe seulement ici : evite le cout de chargement pour
+    # tout le reste du module quand cette fonctionnalite n'est pas utilisee.
+
+    connexion = duckdb.connect(database=":memory:")
+    try:
+        for nom, df in tables.items():
+            connexion.register(nom, df)
+        resultat = connexion.execute(requete_sql).fetchdf()
+    except RequeteSQLInvalide:
+        raise
+    except Exception as e:
+        raise RequeteSQLInvalide(f"Erreur d'exécution SQL : {e}") from e
+    finally:
+        connexion.close()
+    return resultat.head(200).reset_index(drop=True)
+
+
 def dates_incoherentes(df: pd.DataFrame, colonne: str, borne_min: str = "1900-01-01") -> pd.DataFrame:
     parsed = pd.to_datetime(df[colonne], errors="coerce", dayfirst=True)
     aujourdhui = pd.Timestamp(datetime.now())

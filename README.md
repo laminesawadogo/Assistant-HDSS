@@ -218,7 +218,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-252 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+264 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
@@ -589,6 +589,21 @@ essayée sur TOUTES les tables chargées qui possèdent les colonnes
 nécessaires (`app.py:tenter_requete_donnees_multi_table`), jamais une seule
 table par défaut. Ne se déclenche qu'avec une clé LLM configurée ; sinon,
 repli sur le message habituel de précision ou la recherche documentaire.
+
+**Question qui doit croiser plusieurs tables à la fois (2, 3, 4 ou plus)** :
+l'action `REQUETE` ci-dessus n'interroge qu'UNE seule table (sans jointure).
+Pour une question qui nécessite de croiser plusieurs tables (ex : *"quel
+agent a le plus de décès parmi les individus qu'il a suivis ?"*, qui
+croise présence + décès + enquêtes/visites), le dernier repli avant le
+dictionnaire documentaire est une requête SQL en lecture seule : le LLM
+reçoit le schéma réel de TOUTES les tables chargées (nom de table et
+colonnes exactes) et écrit une requête `SELECT` (avec `JOIN` si besoin),
+exécutée directement sur les DataFrame en mémoire via DuckDB
+(`data_tools.executer_sql`). Garde-fous avant toute exécution : une seule
+instruction, qui doit commencer par `SELECT`/`WITH`, et ne doit contenir
+aucun mot-clé de modification (`INSERT`/`UPDATE`/`DROP`/`ATTACH`...) — jamais
+d'exécution de code généré par le LLM sans validation. Résultat limité à
+200 lignes. Voir `app.py:tenter_requete_sql` / `rag.generer_requete_sql`.
 
 **Question de cohérence croisée formulée naturellement** (ex : *"il y a des
 décédés dans presence ?"*) : une table comme "présence" ne porte elle-même
