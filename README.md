@@ -711,10 +711,13 @@ recherche et plus comme une vraie conversation :
 clé Groq ou Anthropic dans la barre latérale, l'assistant se contente
 d'afficher le contexte brut retrouvé — ce qui explique l'impression de ne pas
 être un "vrai" assistant. Pour un rendu le plus proche de Claude, utiliser la
-clé Anthropic (modèle `claude-sonnet-5`, changé depuis `claude-haiku-4-5`
-suite à des réponses jugées pas assez précises sur le contenu des bases de
-données) : elle est maintenant prioritaire sur Groq quand les deux sont
-renseignées.
+clé Anthropic (modèle `claude-opus-5`, le plus capable de la gamme Claude —
+utilisé d'abord `claude-haiku-4-5` puis `claude-sonnet-5`, avant ce dernier
+passage sur Opus 5 pour la meilleure précision possible sur les questions
+qui croisent plusieurs tables) : elle est maintenant prioritaire sur Groq
+quand les deux sont renseignées. Coût API plus élevé que Sonnet 5 (5$/25$
+le million de tokens en entrée/sortie, contre 2$/10$) — à surveiller si le
+volume de questions est important.
 
 ## Limites connues
 

@@ -152,7 +152,7 @@ def call_llm(prompt: str, groq_key: str | None = None, anthropic_key: str | None
 
         client = anthropic.Anthropic(api_key=anthropic_key)
         resp = client.messages.create(
-            model="claude-sonnet-5",
+            model="claude-opus-5",
             max_tokens=1200,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -199,7 +199,7 @@ def analyser_image(
     client = anthropic.Anthropic(api_key=anthropic_key)
     image_b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
     resp = client.messages.create(
-        model="claude-sonnet-5",
+        model="claude-opus-5",
         max_tokens=1200,
         messages=[
             {
