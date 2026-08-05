@@ -356,14 +356,33 @@ def _parser_reponse_requete(reponse: str, colonnes: list[str]) -> tuple[str, dic
         return "AUCUNE", None
 
     filtres_valides = []
+    filtre_sans_valeur_exploitable = False
     for f in specification.get("filtres") or []:
         if not isinstance(f, dict):
             continue
         col = correspondance_colonne.get(str(f.get("colonne", "")).lower())
         op = f.get("operateur")
-        if not col or op not in OPERATEURS_REQUETE_CONNUS or "valeur" not in f:
+        if not col or op not in OPERATEURS_REQUETE_CONNUS:
+            # Colonne halluc inee ou operateur inconnu : filtre ignore en
+            # silence, comme avant (l'operation reste exploitable sans lui).
             continue
-        filtres_valides.append({"colonne": col, "operateur": op, "valeur": f["valeur"]})
+        valeur = f.get("valeur")
+        if "valeur" not in f or valeur is None or (isinstance(valeur, str) and not valeur.strip()):
+            # Colonne et operateur valides, mais aucune valeur exploitable :
+            # signe que le LLM essaie d'exprimer quelque chose que cette
+            # action MONO-TABLE ne sait pas representer (ex: "existe aussi
+            # dans une autre table" -> comparaison sans valeur reelle, comme
+            # observe sur "individid != "). Plutot que de renvoyer un compte
+            # non filtre en le faisant passer pour une reponse precise,
+            # on abandonne cette action pour laisser la main au repli plus
+            # capable (voir app.py:tenter_requete_sql, qui sait joindre
+            # plusieurs tables).
+            filtre_sans_valeur_exploitable = True
+            continue
+        filtres_valides.append({"colonne": col, "operateur": op, "valeur": valeur})
+
+    if filtre_sans_valeur_exploitable:
+        return "AUCUNE", None
 
     return "REQUETE", {"operation": operation, "colonne_cible": colonne_cible, "filtres": filtres_valides}
 

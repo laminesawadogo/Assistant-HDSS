@@ -590,6 +590,20 @@ nécessaires (`app.py:tenter_requete_donnees_multi_table`), jamais une seule
 table par défaut. Ne se déclenche qu'avec une clé LLM configurée ; sinon,
 repli sur le message habituel de précision ou la recherche documentaire.
 
+**Garde-fou : un filtre sans valeur exploitable invalide toute l'action** —
+bug réel observé : une question d'intersection entre deux tables (*"des
+individus dans A qui sont aussi dans B ?"*), que cette action mono-table ne
+sait pas exprimer, a fait renvoyer par le LLM un filtre du type
+`individid != ""` (valeur vide) au lieu d'un vrai filtre. Accepté tel quel,
+ça donnait un compte NON filtré (donc faux) présenté comme une réponse
+précise. `rag._parser_reponse_requete` rejette maintenant toute l'action
+REQUETE dès qu'un filtre a une colonne/opérateur valides mais une valeur
+vide/absente (signe que le LLM essaie d'exprimer quelque chose que ce format
+ne peut pas représenter), plutôt que de l'ignorer en silence et de renvoyer
+un chiffre non filtré comme s'il répondait à la question — l'appelant
+retombe alors sur le repli SQL général, qui sait vraiment croiser les
+tables.
+
 **Question qui doit croiser plusieurs tables à la fois (2, 3, 4 ou plus)** :
 l'action `REQUETE` ci-dessus n'interroge qu'UNE seule table (sans jointure).
 Pour une question qui nécessite de croiser plusieurs tables (ex : *"quel

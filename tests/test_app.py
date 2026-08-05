@@ -700,6 +700,44 @@ def test_question_de_relation_sans_solution_retombe_sur_message_structurel(monke
     assert "Aucune colonne commune" in reponse
 
 
+def test_question_intersection_deux_tables_ne_renvoie_plus_un_filtre_vide(monkeypatch):
+    # Bug reel signale par l'utilisateur : "je veux savoir s'il y a des
+    # individus dans opo_hypervel_d_e_c_e_s et qui sont dans
+    # opo_hypervel_presences" donnait "140 ligne(s)... (individid != )" - un
+    # filtre a valeur vide invente par le classifieur mono-table (qui ne
+    # sait pas exprimer une intersection entre deux tables), accepte tel
+    # quel et presente comme une reponse precise alors qu'il ne filtrait
+    # rien du tout. Doit maintenant retomber sur le repli SQL general, qui
+    # sait vraiment croiser les deux tables.
+    tables = {
+        "opo_hypervel_d_e_c_e_s": pd.DataFrame({"individid": list(range(1, 141))}),
+        "opo_hypervel_presences": pd.DataFrame({"individid": [1, 2, 3, 999, 1000]}),
+    }
+
+    def _faux_call_llm(prompt, groq_key=None, anthropic_key=None):
+        if "SQL" in prompt:
+            return (
+                "SELECT COUNT(*) AS n FROM opo_hypervel_d_e_c_e_s d "
+                "WHERE d.individid IN (SELECT individid FROM opo_hypervel_presences)"
+            )
+        # Reproduit exactement la reponse LLM buguee observee en production.
+        return (
+            'REQUETE:{"operation": "compter", "colonne_cible": null, '
+            '"filtres": [{"colonne": "individid", "operateur": "!=", "valeur": ""}]}'
+        )
+
+    monkeypatch.setenv("GROQ_API_KEY", "fake-key")
+    monkeypatch.setattr(rag, "call_llm", _faux_call_llm)
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value(
+        "je veux savoir s'il y a des individus dans opo_hypervel_d_e_c_e_s et qui sont dans opo_hypervel_presences"
+    ).run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "individid != " not in reponse
+    assert "140" not in reponse
+    assert "3" in reponse
+
+
 def test_prompt_sql_inclut_le_contexte_du_dictionnaire_reel_indexe(monkeypatch):
     # Le dictionnaire/manuels/fiches deja indexes (index reel du depot,
     # voir 00_schema_relations) documentent precisement le role de

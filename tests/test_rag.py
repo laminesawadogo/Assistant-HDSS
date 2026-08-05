@@ -226,6 +226,37 @@ def test_classifier_intention_requete_filtre_colonne_inexistante_est_retire(monk
     assert param["filtres"] == []
 
 
+def test_classifier_intention_requete_filtre_a_valeur_vide_est_rejetee(monkeypatch):
+    # Bug reel observe : une question de type "des individus dans A et qui
+    # sont aussi dans B" (intersection entre deux tables, que cette action
+    # MONO-table ne sait pas exprimer) a fait renvoyer par le LLM un filtre
+    # "individid != ''" (valeur vide) au lieu d'un vrai filtre - accepte tel
+    # quel, ca donnait un compte non filtre (donc faux) presente comme une
+    # reponse precise ("140 ligne(s)... (individid != )"). Toute l'action
+    # REQUETE doit etre rejetee dans ce cas, pour laisser la main au repli
+    # SQL general qui, lui, sait vraiment croiser les deux tables.
+    reponse_llm = (
+        'REQUETE:{"operation": "compter", "colonne_cible": null, '
+        '"filtres": [{"colonne": "individid", "operateur": "!=", "valeur": ""}]}'
+    )
+    monkeypatch.setattr(rag, "call_llm", lambda prompt, groq_key=None, anthropic_key=None: reponse_llm)
+    action, param = rag.classifier_intention("des individus dans A et aussi dans B ?", ["individid"], groq_key="fake")
+    assert action == "AUCUNE"
+    assert param is None
+
+
+def test_classifier_intention_requete_filtre_sans_cle_valeur_est_rejetee(monkeypatch):
+    # Meme cas mais avec la cle "valeur" carrement absente du filtre.
+    reponse_llm = (
+        'REQUETE:{"operation": "compter", "colonne_cible": null, '
+        '"filtres": [{"colonne": "individid", "operateur": "!="}]}'
+    )
+    monkeypatch.setattr(rag, "call_llm", lambda prompt, groq_key=None, anthropic_key=None: reponse_llm)
+    action, param = rag.classifier_intention("combien ?", ["individid"], groq_key="fake")
+    assert action == "AUCUNE"
+    assert param is None
+
+
 def test_classifier_intention_requete_json_invalide_renvoie_aucune(monkeypatch):
     monkeypatch.setattr(rag, "call_llm", lambda prompt, groq_key=None, anthropic_key=None: "REQUETE:pas du json")
     action, param = rag.classifier_intention("combien ?", ["individu_id"], groq_key="fake")
