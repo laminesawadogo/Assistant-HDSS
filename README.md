@@ -218,7 +218,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-230 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+249 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
@@ -568,6 +568,27 @@ active (la lecture d'image n'est pas gérée par le modèle Groq gratuit). Cette
 lecture est ponctuelle (pas d'indexation permanente de l'image, contrairement
 aux documents texte) : pour une question ultérieure sur la même image, il
 faut la redéposer.
+
+## Répondre à une question de calcul précis sur les données réelles
+
+Au-delà des 4 analyses fixes (répartition, échantillon, doublons, cohérence)
+et des modules dédiés (performance de terrain, audit avancé...), l'assistant
+sait répondre à une question de calcul précis formulée en langage libre — par
+exemple *"combien de naissances à Ouahigouya en 2026 ?"*, *"liste des
+individus dont l'âge dépasse 60 ans"*, *"âge moyen des mères"* — en
+interrogeant réellement les tables chargées, pas le dictionnaire.
+
+Fonctionnement (`rag.classifier_intention`, action `REQUETE`) : quand aucun
+mot-clé fixe ne matche, le LLM classe la question en une spécification JSON
+(`{"operation": "compter"|"lister"|"moyenne"|"somme"|"min"|"max",
+"colonne_cible": ..., "filtres": [...]}`) — chaque colonne citée est vérifiée
+contre les colonnes réellement chargées (jamais un nom inventé exécuté tel
+quel), puis `data_tools.executer_requete_donnees` calcule le résultat. Si
+aucune table n'a pu être résolue explicitement, la même spécification est
+essayée sur TOUTES les tables chargées qui possèdent les colonnes
+nécessaires (`app.py:tenter_requete_donnees_multi_table`), jamais une seule
+table par défaut. Ne se déclenche qu'avec une clé LLM configurée ; sinon,
+repli sur le message habituel de précision ou la recherche documentaire.
 
 ## Conversation naturelle (mémoire, rédaction, reformulation)
 

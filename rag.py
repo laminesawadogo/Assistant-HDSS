@@ -5,6 +5,7 @@ construit le prompt, appelle le LLM, renvoie la reponse + les sources
 pas - cf. etape d'evaluation du RAG).
 """
 
+import json
 import os
 import pickle
 import re
@@ -216,12 +217,17 @@ def analyser_image(
     return resp.content[0].text
 
 
-ACTIONS_CONNUES = {"REPARTITION", "ECHANTILLON", "DOUBLONS", "COHERENCE", "LISTE_TABLES", "AUCUNE"}
+ACTIONS_CONNUES = {"REPARTITION", "ECHANTILLON", "DOUBLONS", "COHERENCE", "LISTE_TABLES", "REQUETE", "AUCUNE"}
+
+# Operateurs de filtre reconnus par `data_tools.executer_requete_donnees` -
+# dupliques ici uniquement pour construire le prompt (garder les deux listes
+# synchronisees si un operateur est ajoute).
+OPERATEURS_REQUETE_CONNUS = ["==", "!=", ">", "<", ">=", "<=", "contient"]
 
 
 def classifier_intention(
     question: str, colonnes: list[str], groq_key: str | None = None, anthropic_key: str | None = None
-) -> tuple[str, str | int | None]:
+) -> tuple[str, str | int | dict | None]:
     """Demande au LLM de classer une question en une action exploitable sur la
     table chargee, plutot que de se fier uniquement a des mots-cles figes.
 
@@ -231,6 +237,14 @@ def classifier_intention(
       ("DOUBLONS", None)
       ("COHERENCE", None)
       ("LISTE_TABLES", None)  -> question sur le nombre/la liste des tables chargees
+      ("REQUETE", specification)  -> calcul precis (compter/lister/moyenne/
+        somme/min/max), eventuellement filtre - specification est un dict
+        {"operation": ..., "colonne_cible": str|None, "filtres": [...]}
+        a executer via `data_tools.executer_requete_donnees` - c'est ce qui
+        permet de repondre a une question comme "combien de naissances a
+        Ouahigouya en 2026 ?" directement a partir des donnees reellement
+        chargees, au lieu de se limiter aux 4 analyses fixes ci-dessus ou de
+        retomber sur le dictionnaire documentaire.
       ("AUCUNE", None)   -> la question ne concerne pas une action sur la table
 
     Si aucune cle LLM n'est configuree, ou si la reponse du modele est
@@ -241,20 +255,33 @@ def classifier_intention(
         return "AUCUNE", None
 
     prompt = (
-        "Tu classes une question posee sur une table de donnees en UNE SEULE action, "
-        "parmi exactement ces formats de reponse possibles :\n"
+        "Tu classes une question posee sur des donnees reellement chargees (une ou plusieurs tables) "
+        "en UNE SEULE action, parmi exactement ces formats de reponse possibles :\n"
         "REPARTITION:<nom_de_colonne>\n"
         "ECHANTILLON:<nombre_de_lignes>\n"
         "DOUBLONS\n"
         "COHERENCE\n"
         "LISTE_TABLES\n"
+        "REQUETE:<JSON>\n"
         "AUCUNE\n\n"
-        f"Colonnes disponibles dans la table : {', '.join(colonnes)}\n"
+        f"Colonnes disponibles : {', '.join(colonnes)}\n"
         f"Question : {question}\n\n"
-        "Reponds uniquement avec l'une de ces lignes, sans aucune explication. "
+        "Reponds uniquement avec l'une de ces lignes, sans aucune explication, sans backticks. "
         "Utilise LISTE_TABLES des que la question porte sur les tables/fichiers/feuilles "
         "actuellement charges eux-memes (combien il y en a, lesquels, si tu les as bien recus, "
-        "confirmation de ce qui a ete envoye...) plutot que sur le contenu d'une table precise. "
+        "confirmation de ce qui a ete envoye...) plutot que sur le contenu d'une table precise.\n\n"
+        "Utilise REQUETE des que la question demande un CALCUL PRECIS a partir des donnees reelles : "
+        "compter des lignes, lister des lignes, ou calculer une moyenne/somme/min/max d'une colonne "
+        "numerique - eventuellement avec une ou plusieurs conditions (ex: \"combien de naissances a "
+        "Ouahigouya en 2026 ?\", \"liste des individus dont l'age > 60\", \"age moyen des mères\"). "
+        "Le JSON qui suit REQUETE: doit avoir EXACTEMENT cette forme, sur une seule ligne, "
+        "avec uniquement des noms de colonnes qui existent reellement dans la liste ci-dessus "
+        "(jamais un nom invente) :\n"
+        '{"operation": "compter", "colonne_cible": null, "filtres": '
+        '[{"colonne": "<nom_colonne_existante>", "operateur": "==", "valeur": "<valeur>"}]}\n'
+        "operation est l'une de : compter, lister, moyenne, somme, min, max. "
+        "colonne_cible est requis (nom de colonne existante) pour moyenne/somme/min/max, sinon null. "
+        f"operateur est l'un de : {', '.join(OPERATEURS_REQUETE_CONNUS)}. filtres peut etre une liste vide.\n\n"
         "Si la question ne correspond a aucune de ces actions (par exemple une question "
         "sur la signification d'une variable), reponds AUCUNE."
     )
@@ -263,6 +290,9 @@ def classifier_intention(
         reponse = call_llm(prompt, groq_key=groq_key, anthropic_key=anthropic_key).strip()
     except Exception:
         return "AUCUNE", None
+
+    if re.match(r"^REQUETE\s*:", reponse, re.IGNORECASE):
+        return _parser_reponse_requete(reponse, colonnes)
 
     m = re.search(
         r"\b(REPARTITION|ECHANTILLON|DOUBLONS|COHERENCE|LISTE_TABLES|AUCUNE)\b\s*:?\s*([\w À-ÿ]*)",
@@ -292,6 +322,50 @@ def classifier_intention(
         return action, None
 
     return "AUCUNE", None
+
+
+def _parser_reponse_requete(reponse: str, colonnes: list[str]) -> tuple[str, dict | None]:
+    """Extrait et valide le JSON d'une reponse `REQUETE:<JSON>` du
+    classifieur - jamais de confiance aveugle dans un JSON genere par un LLM :
+    toute colonne (cible ou de filtre) qui ne correspond a aucune colonne
+    reellement chargee est silencieusement retiree plutot que transmise telle
+    quelle a `data_tools.executer_requete_donnees` (qui revalide de toute
+    facon, mais autant ne pas propager un nom invente jusque-la). Renvoie
+    ("AUCUNE", None) si le JSON est absent/invalide/vide apres nettoyage."""
+    correspondance_colonne = {c.lower(): c for c in colonnes}
+
+    bloc = re.sub(r"^REQUETE\s*:", "", reponse, flags=re.IGNORECASE).strip()
+    m_json = re.search(r"\{.*\}", bloc, re.DOTALL)
+    if not m_json:
+        return "AUCUNE", None
+    try:
+        specification = json.loads(m_json.group(0))
+    except (json.JSONDecodeError, ValueError):
+        return "AUCUNE", None
+    if not isinstance(specification, dict):
+        return "AUCUNE", None
+
+    operation = str(specification.get("operation", "")).strip().lower()
+    if operation not in ("compter", "lister", "moyenne", "somme", "min", "max"):
+        return "AUCUNE", None
+
+    colonne_cible = specification.get("colonne_cible")
+    if colonne_cible:
+        colonne_cible = correspondance_colonne.get(str(colonne_cible).lower())
+    if operation in ("moyenne", "somme", "min", "max") and not colonne_cible:
+        return "AUCUNE", None
+
+    filtres_valides = []
+    for f in specification.get("filtres") or []:
+        if not isinstance(f, dict):
+            continue
+        col = correspondance_colonne.get(str(f.get("colonne", "")).lower())
+        op = f.get("operateur")
+        if not col or op not in OPERATEURS_REQUETE_CONNUS or "valeur" not in f:
+            continue
+        filtres_valides.append({"colonne": col, "operateur": op, "valeur": f["valeur"]})
+
+    return "REQUETE", {"operation": operation, "colonne_cible": colonne_cible, "filtres": filtres_valides}
 
 
 # En dessous de ce score pour le meilleur resultat, on considere que la

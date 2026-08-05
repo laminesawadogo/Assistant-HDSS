@@ -133,6 +133,99 @@ def doublons(df: pd.DataFrame, colonne: str | None = None) -> pd.DataFrame:
     return df[df[colonne].isin(dup_values)].sort_values(colonne)
 
 
+class RequeteInvalide(ValueError):
+    """Levee quand la specification de requete (operation/colonne/valeur)
+    ne correspond a rien d'exploitable dans la table chargee - jamais
+    d'execution "au hasard" sur une colonne qui n'existe pas ou une
+    operation non reconnue."""
+
+
+def _valeur_numerique(valeur) -> float:
+    try:
+        return float(str(valeur).strip().replace(",", "."))
+    except (TypeError, ValueError):
+        return float("nan")
+
+
+# Chaque operateur prend la Series de la colonne filtree et la valeur brute
+# (fournie par le classifieur LLM, jamais executee comme du code) et renvoie
+# un masque booleen - comparaison textuelle insensible a la casse/aux espaces
+# pour "=="/"!="/"contient" (les identifiants/modalites de l'observatoire sont
+# souvent des codes ou libelles), conversion numerique pour les comparaisons
+# d'ordre.
+OPERATEURS_REQUETE = {
+    "==": lambda s, v: s.astype(str).str.strip().str.lower() == str(v).strip().lower(),
+    "!=": lambda s, v: s.astype(str).str.strip().str.lower() != str(v).strip().lower(),
+    ">": lambda s, v: pd.to_numeric(s, errors="coerce") > _valeur_numerique(v),
+    "<": lambda s, v: pd.to_numeric(s, errors="coerce") < _valeur_numerique(v),
+    ">=": lambda s, v: pd.to_numeric(s, errors="coerce") >= _valeur_numerique(v),
+    "<=": lambda s, v: pd.to_numeric(s, errors="coerce") <= _valeur_numerique(v),
+    "contient": lambda s, v: s.astype(str).str.contains(str(v), case=False, na=False, regex=False),
+}
+
+
+def executer_requete_donnees(
+    df: pd.DataFrame, operation: str, colonne_cible: str | None, filtres: list[dict] | None
+) -> dict:
+    """Execute une requete de type filtre + agregat (compter/lister/moyenne/
+    somme/min/max) sur une table REELLEMENT chargee, a partir d'une
+    specification produite par `rag.classifier_intention` (action REQUETE).
+
+    C'est ce qui permet de repondre a une question de calcul precis sur les
+    donnees reelles ("combien de naissances a Ouahigouya en 2026 ?", "age
+    moyen des mères dont la grossesse est en cours") sans se limiter aux
+    analyses fixes (repartition/echantillon/doublons/coherence) ni retomber
+    sur le dictionnaire documentaire des que la question sort de ces 4 cas.
+
+    Toute colonne de `filtres`/`colonne_cible` qui n'existe pas reellement
+    dans `df` est ignoree (filtre) ou leve `RequeteInvalide` (colonne_cible
+    d'une agregation) plutot que d'echouer silencieusement sur un mauvais
+    calcul - jamais de confiance aveugle dans ce qu'a produit le LLM."""
+    operation = (operation or "").strip().lower()
+    if operation not in ("compter", "lister", "moyenne", "somme", "min", "max"):
+        raise RequeteInvalide(f"Opération « {operation} » non reconnue.")
+
+    masque = pd.Series(True, index=df.index)
+    filtres_appliques = []
+    for f in filtres or []:
+        col = f.get("colonne")
+        op = f.get("operateur", "==")
+        val = f.get("valeur")
+        if col not in df.columns or op not in OPERATEURS_REQUETE:
+            continue
+        try:
+            masque &= OPERATEURS_REQUETE[op](df[col], val)
+        except Exception:
+            continue
+        filtres_appliques.append(f"{col} {op} {val}")
+
+    sous_ensemble = df.loc[masque]
+
+    if operation == "compter":
+        return {"operation": operation, "resultat": int(len(sous_ensemble)), "filtres_appliques": filtres_appliques}
+
+    if operation == "lister":
+        return {
+            "operation": operation, "resultat": sous_ensemble.head(50).reset_index(drop=True),
+            "n_total": int(len(sous_ensemble)), "filtres_appliques": filtres_appliques,
+        }
+
+    if colonne_cible not in df.columns:
+        raise RequeteInvalide(f"Colonne cible « {colonne_cible} » introuvable pour l'opération « {operation} ».")
+
+    valeurs = pd.to_numeric(sous_ensemble[colonne_cible], errors="coerce").dropna()
+    if valeurs.empty:
+        return {
+            "operation": operation, "resultat": None, "colonne_cible": colonne_cible,
+            "filtres_appliques": filtres_appliques,
+        }
+    fonction = {"moyenne": "mean", "somme": "sum", "min": "min", "max": "max"}[operation]
+    return {
+        "operation": operation, "resultat": float(getattr(valeurs, fonction)()), "colonne_cible": colonne_cible,
+        "n_valeurs": int(len(valeurs)), "filtres_appliques": filtres_appliques,
+    }
+
+
 def dates_incoherentes(df: pd.DataFrame, colonne: str, borne_min: str = "1900-01-01") -> pd.DataFrame:
     parsed = pd.to_datetime(df[colonne], errors="coerce", dayfirst=True)
     aujourdhui = pd.Timestamp(datetime.now())

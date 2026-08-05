@@ -424,6 +424,92 @@ def test_doublons_detecte_le_bon_identifiant(table_exemple):
     assert len(dups) == 2
 
 
+# --- Requete precise (compter/lister/moyenne/somme/min/max, avec filtres) --
+# (action REQUETE du classifieur, voir rag.classifier_intention)
+
+@pytest.fixture
+def table_requete():
+    return pd.DataFrame({
+        "individu_id": [1, 2, 3, 4, 5],
+        "commune": ["Ouahigouya", "Ouahigouya", "Kaya", "Kaya", "Ouahigouya"],
+        "age": [10, 25, 40, None, 60],
+    })
+
+
+def test_executer_requete_compter_sans_filtre(table_requete):
+    resultat = dt.executer_requete_donnees(table_requete, "compter", None, None)
+    assert resultat == {"operation": "compter", "resultat": 5, "filtres_appliques": []}
+
+
+def test_executer_requete_compter_avec_filtre_egalite(table_requete):
+    resultat = dt.executer_requete_donnees(
+        table_requete, "compter", None, [{"colonne": "commune", "operateur": "==", "valeur": "Ouahigouya"}]
+    )
+    assert resultat["resultat"] == 3
+    assert resultat["filtres_appliques"] == ["commune == Ouahigouya"]
+
+
+def test_executer_requete_compter_filtre_insensible_a_la_casse(table_requete):
+    resultat = dt.executer_requete_donnees(
+        table_requete, "compter", None, [{"colonne": "commune", "operateur": "==", "valeur": "ouahigouya"}]
+    )
+    assert resultat["resultat"] == 3
+
+
+def test_executer_requete_lister_renvoie_le_sous_ensemble(table_requete):
+    resultat = dt.executer_requete_donnees(
+        table_requete, "lister", None, [{"colonne": "commune", "operateur": "==", "valeur": "Kaya"}]
+    )
+    assert resultat["n_total"] == 2
+    assert set(resultat["resultat"]["individu_id"]) == {3, 4}
+
+
+def test_executer_requete_moyenne_ignore_les_valeurs_manquantes(table_requete):
+    resultat = dt.executer_requete_donnees(table_requete, "moyenne", "age", None)
+    # (10 + 25 + 40 + 60) / 4, la valeur manquante (individu 4) est exclue
+    assert resultat["resultat"] == pytest.approx(33.75)
+    assert resultat["n_valeurs"] == 4
+
+
+def test_executer_requete_somme_avec_filtre_numerique(table_requete):
+    resultat = dt.executer_requete_donnees(
+        table_requete, "somme", "age", [{"colonne": "age", "operateur": ">", "valeur": "20"}]
+    )
+    assert resultat["resultat"] == pytest.approx(25 + 40 + 60)
+
+
+def test_executer_requete_min_max(table_requete):
+    assert dt.executer_requete_donnees(table_requete, "min", "age", None)["resultat"] == 10
+    assert dt.executer_requete_donnees(table_requete, "max", "age", None)["resultat"] == 60
+
+
+def test_executer_requete_moyenne_sans_valeur_numerique_renvoie_none(table_requete):
+    vide = table_requete[table_requete["commune"] == "commune_inexistante"]
+    resultat = dt.executer_requete_donnees(vide, "moyenne", "age", None)
+    assert resultat["resultat"] is None
+
+
+def test_executer_requete_colonne_cible_absente_leve_erreur(table_requete):
+    with pytest.raises(dt.RequeteInvalide):
+        dt.executer_requete_donnees(table_requete, "moyenne", "colonne_qui_nexiste_pas", None)
+
+
+def test_executer_requete_operation_inconnue_leve_erreur(table_requete):
+    with pytest.raises(dt.RequeteInvalide):
+        dt.executer_requete_donnees(table_requete, "supprimer", None, None)
+
+
+def test_executer_requete_filtre_colonne_absente_est_ignore(table_requete):
+    # Un filtre sur une colonne inexistante est simplement ignore (deja
+    # filtre en amont par rag.classifier_intention, mais re-verifie ici) :
+    # ne doit jamais faire planter le calcul.
+    resultat = dt.executer_requete_donnees(
+        table_requete, "compter", None, [{"colonne": "colonne_absente", "operateur": "==", "valeur": "x"}]
+    )
+    assert resultat["resultat"] == 5
+    assert resultat["filtres_appliques"] == []
+
+
 def test_dates_incoherentes_detecte_futur_et_avant_1900(table_exemple):
     df = dt.load_table(table_exemple)
     bad = dt.dates_incoherentes(df, "birth_date")

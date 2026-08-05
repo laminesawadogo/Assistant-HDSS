@@ -667,6 +667,99 @@ def formater_rapport_coherence_avancee(rapport: dict) -> str:
     return "\n".join(lignes)
 
 
+def formater_reponse_requete(resultat: dict, nom_table: str) -> dict:
+    """Met en forme le resultat de `dt.executer_requete_donnees` (action
+    REQUETE du classifieur) - calcul precis sur les donnees reelles
+    (compter/lister/moyenne/somme/min/max, avec filtres), par opposition aux
+    4 analyses fixes (repartition/echantillon/doublons/coherence)."""
+    filtres_txt = (
+        " (" + ", ".join(resultat["filtres_appliques"]) + ")" if resultat.get("filtres_appliques") else ""
+    )
+    operation = resultat["operation"]
+
+    if operation == "compter":
+        return {"content": f"**{resultat['resultat']}** ligne(s) dans **{nom_table}**{filtres_txt}."}
+
+    if operation == "lister":
+        table_resultat = resultat["resultat"]
+        apercu = "aperçu des 50 premières" if resultat["n_total"] > 50 else "liste complète"
+        contenu = (
+            f"**{resultat['n_total']}** ligne(s) trouvée(s) dans **{nom_table}**{filtres_txt} ({apercu}) :\n\n"
+            + table_resultat.to_markdown(index=False)
+        )
+        return {"content": contenu, "table": table_resultat, "table_label": f"requete_{nom_table}"}
+
+    if resultat["resultat"] is None:
+        return {
+            "content": (
+                f"Aucune valeur numérique exploitable pour `{resultat.get('colonne_cible')}` "
+                f"dans **{nom_table}**{filtres_txt}."
+            )
+        }
+    libelles = {"moyenne": "Moyenne", "somme": "Somme", "min": "Minimum", "max": "Maximum"}
+    contenu = (
+        f"**{libelles[operation]}** de `{resultat['colonne_cible']}` dans **{nom_table}**{filtres_txt} : "
+        f"**{resultat['resultat']:.2f}** (calculé sur {resultat['n_valeurs']} valeur(s))."
+    )
+    return {"content": contenu}
+
+
+def tenter_requete_donnees_multi_table(
+    question: str, tables: dict, groq_key: str | None, anthropic_key: str | None
+) -> dict | None:
+    """Tente de repondre a une question de calcul precis (compter/lister/
+    moyenne/somme/min/max, avec filtres) meme quand aucune table n'a pu etre
+    resolue explicitement (voir `dt.resoudre_table_ciblee`) - en interrogeant
+    le classifieur LLM avec l'union de TOUTES les colonnes chargees, puis en
+    executant la requete sur CHAQUE table qui possede reellement les colonnes
+    necessaires (jamais une seule table par defaut, meme principe que le
+    reste de l'assistant). Renvoie None si le classifieur ne renvoie pas
+    REQUETE ou si aucune table ne convient, pour laisser l'appelant retomber
+    sur son propre repli (message de precision ou recherche documentaire)."""
+    toutes_colonnes, vues = [], set()
+    for df in tables.values():
+        for c in df.columns:
+            if str(c).lower() not in vues:
+                vues.add(str(c).lower())
+                toutes_colonnes.append(str(c))
+    if not toutes_colonnes:
+        return None
+
+    action, parametre = rag.classifier_intention(
+        question, toutes_colonnes, groq_key=groq_key, anthropic_key=anthropic_key
+    )
+    if action != "REQUETE" or not parametre:
+        return None
+
+    colonnes_necessaires = [f["colonne"] for f in (parametre.get("filtres") or []) if f.get("colonne")]
+    if parametre.get("colonne_cible"):
+        colonnes_necessaires.append(parametre["colonne_cible"])
+    if not colonnes_necessaires:
+        return None
+
+    morceaux, table_resultat, label_resultat = [], None, None
+    for nom, df in tables.items():
+        if not all(c in df.columns for c in colonnes_necessaires):
+            continue
+        try:
+            resultat = dt.executer_requete_donnees(
+                df, parametre.get("operation"), parametre.get("colonne_cible"), parametre.get("filtres")
+            )
+        except dt.RequeteInvalide:
+            continue
+        reponse = formater_reponse_requete(resultat, nom)
+        morceaux.append(reponse["content"])
+        if "table" in reponse:
+            table_resultat, label_resultat = reponse["table"], reponse["table_label"]
+
+    if not morceaux:
+        return None
+    resultat_final = {"content": "\n\n---\n\n".join(morceaux)}
+    if table_resultat is not None:
+        resultat_final["table"], resultat_final["table_label"] = table_resultat, label_resultat
+    return resultat_final
+
+
 # Les quatre fonctions ci-dessous centralisent le calcul ET la syntaxe R/Stata
 # equivalente pour chaque operation sur une table (repartition, echantillon,
 # doublons, coherence), pour que les DEUX chemins qui y menent (mots-cles
@@ -1335,6 +1428,19 @@ def route_question(question: str) -> dict:
             n_ech = int(m_ech.group()) if m_ech else 100
             morceaux = [reponse_echantillon(tables[n], n, n_ech)["content"] for n in tables]
             return {"content": "\n\n---\n\n".join(morceaux)}
+
+        # Aucun mot-cle simple n'a matche : avant de demander de preciser ou
+        # de retomber sur le dictionnaire, tente une requete precise
+        # (compter/lister/moyenne/somme/min/max, avec filtres) via le
+        # classifieur LLM sur TOUTES les tables chargees - c'est ce qui
+        # permet de repondre a une question sur les donnees reelles ("combien
+        # de X ont Y ?") meme quand aucune table n'a pu etre resolue
+        # explicitement (nom non cite, colonne ambigue entre plusieurs
+        # tables...), sans jamais se limiter a une seule table par defaut.
+        reponse_requete = tenter_requete_donnees_multi_table(question, tables, groq_key_input, anthropic_key_input)
+        if reponse_requete is not None:
+            return reponse_requete
+
         # Repartition/bivarie/correlation/multivarie ont besoin d'au moins
         # une colonne reconnue quelque part pour ne rien calculer au hasard :
         # si la question semble viser une de ces analyses mais qu'aucune
@@ -1429,6 +1535,18 @@ def route_question(question: str) -> dict:
             # et complete plutot que de laisser le LLM deviner a partir d'un
             # historique qui ne mentionne jamais qu'une seule table a la fois.
             return {"content": dt.resume_tables_chargees(tables)}
+        if action == "REQUETE" and parametre:
+            # Calcul precis (compter/lister/moyenne/somme/min/max, avec
+            # filtres) directement sur la table resolue - repond a une
+            # question sur les donnees reelles ("combien de X ont Y ?") sans
+            # se limiter aux 4 analyses fixes ci-dessus.
+            try:
+                resultat = dt.executer_requete_donnees(
+                    df, parametre.get("operation"), parametre.get("colonne_cible"), parametre.get("filtres")
+                )
+                return formater_reponse_requete(resultat, nom_table)
+            except dt.RequeteInvalide:
+                pass  # colonne cible invalide malgre la validation du classifieur : repli documentaire ci-dessous
 
         # Le classifieur a conclu que ce n'est pas une action sur la table (ou
         # aucune clé LLM n'est configurée pour trancher) : on tente la piste

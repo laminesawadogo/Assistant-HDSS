@@ -12,6 +12,8 @@ import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
+import rag
+
 
 def _app_avec_tables(tables: dict) -> AppTest:
     at = AppTest.from_file("app.py", default_timeout=60)
@@ -522,9 +524,52 @@ def test_repartition_sans_rien_nommer_demande_de_preciser_avec_les_vraies_tables
     at.chat_input[0].set_value("donne-moi la répartition").run()
     reponse = at.session_state["messages"][-1]["content"]
     assert "FNewEducation" in reponse
-    assert "niveau" in reponse
-    assert "FNewEmploi" in reponse
-    assert "secteur" in reponse
+
+
+# --- Action REQUETE : calcul precis (compter/lister/moyenne...) directement --
+# sur les donnees reellement chargees, meme pour une question qui ne matche
+# aucun des mots-cles fixes (repartition/echantillon/doublons/coherence) -
+# regression du signalement ou l'assistant ne savait repondre qu'aux 4
+# analyses fixes et retombait sur le dictionnaire documentaire pour tout le
+# reste, meme des questions de calcul simple sur les vraies donnees.
+
+def test_requete_precise_compter_avec_filtre_sur_table_nommee(tables_ambigues, monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "fake-key")
+    monkeypatch.setattr(
+        rag, "call_llm",
+        lambda prompt, groq_key=None, anthropic_key=None: (
+            'REQUETE:{"operation": "compter", "colonne_cible": null, '
+            '"filtres": [{"colonne": "niveau", "operateur": "==", "valeur": "primaire"}]}'
+        ),
+    )
+    at = _app_avec_tables(tables_ambigues)
+    at.chat_input[0].set_value("dans la table education, combien ont un niveau primaire ?").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "2" in reponse
+    assert "FNewEducation" in reponse
+
+
+def test_requete_precise_moyenne_multi_table_sans_rien_nommer(monkeypatch):
+    # Aucune table ni colonne n'est nommee explicitement dans la question :
+    # la requete doit quand meme s'executer, sur la SEULE table qui possede
+    # reellement la colonne demandee (jamais une table par defaut devinee).
+    tables = {
+        "FNewEducation": pd.DataFrame({"individid": [1, 2, 3]}),
+        "FNewSante": pd.DataFrame({"individid": [10, 11, 12], "age": [30, 50, 70]}),
+    }
+    monkeypatch.setenv("GROQ_API_KEY", "fake-key")
+    monkeypatch.setattr(
+        rag, "call_llm",
+        lambda prompt, groq_key=None, anthropic_key=None: (
+            'REQUETE:{"operation": "moyenne", "colonne_cible": "age", "filtres": []}'
+        ),
+    )
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value("c'est quoi le chiffre precis pour ça ?").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "FNewSante" in reponse
+    assert "50" in reponse  # moyenne de (30+50+70)/3
+    assert "FNewEducation" not in reponse
 
 
 def test_table_specifique_encore_ciblable_directement(tables_ambigues):

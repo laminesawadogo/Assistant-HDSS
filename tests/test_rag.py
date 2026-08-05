@@ -177,6 +177,70 @@ def test_classifier_intention_liste_tables(monkeypatch):
     assert param is None
 
 
+# --- Action REQUETE (calcul precis compter/lister/moyenne..., avec filtres) -
+
+def test_classifier_intention_requete_compter_avec_filtre(monkeypatch):
+    reponse_llm = (
+        'REQUETE:{"operation": "compter", "colonne_cible": null, '
+        '"filtres": [{"colonne": "commune", "operateur": "==", "valeur": "Ouahigouya"}]}'
+    )
+    monkeypatch.setattr(rag, "call_llm", lambda prompt, groq_key=None, anthropic_key=None: reponse_llm)
+    action, param = rag.classifier_intention(
+        "combien de naissances a Ouahigouya ?", ["individu_id", "commune"], groq_key="fake"
+    )
+    assert action == "REQUETE"
+    assert param["operation"] == "compter"
+    assert param["colonne_cible"] is None
+    assert param["filtres"] == [{"colonne": "commune", "operateur": "==", "valeur": "Ouahigouya"}]
+
+
+def test_classifier_intention_requete_moyenne_avec_colonne_cible(monkeypatch):
+    reponse_llm = 'REQUETE:{"operation": "moyenne", "colonne_cible": "age", "filtres": []}'
+    monkeypatch.setattr(rag, "call_llm", lambda prompt, groq_key=None, anthropic_key=None: reponse_llm)
+    action, param = rag.classifier_intention("age moyen ?", ["individu_id", "age"], groq_key="fake")
+    assert action == "REQUETE"
+    assert param["operation"] == "moyenne"
+    assert param["colonne_cible"] == "age"
+
+
+def test_classifier_intention_requete_moyenne_sans_colonne_cible_est_rejetee(monkeypatch):
+    # "moyenne"/"somme"/"min"/"max" exigent une colonne_cible reelle : sans
+    # elle, le calcul n'aurait rien de precis a agreger.
+    reponse_llm = 'REQUETE:{"operation": "moyenne", "colonne_cible": null, "filtres": []}'
+    monkeypatch.setattr(rag, "call_llm", lambda prompt, groq_key=None, anthropic_key=None: reponse_llm)
+    action, param = rag.classifier_intention("moyenne ?", ["individu_id", "age"], groq_key="fake")
+    assert action == "AUCUNE"
+    assert param is None
+
+
+def test_classifier_intention_requete_filtre_colonne_inexistante_est_retire(monkeypatch):
+    # Un filtre sur une colonne qui n'existe pas reellement (hallucination du
+    # LLM) doit etre retire, jamais transmis tel quel a l'execution.
+    reponse_llm = (
+        'REQUETE:{"operation": "compter", "colonne_cible": null, '
+        '"filtres": [{"colonne": "colonne_qui_nexiste_pas", "operateur": "==", "valeur": "x"}]}'
+    )
+    monkeypatch.setattr(rag, "call_llm", lambda prompt, groq_key=None, anthropic_key=None: reponse_llm)
+    action, param = rag.classifier_intention("combien ?", ["individu_id"], groq_key="fake")
+    assert action == "REQUETE"
+    assert param["filtres"] == []
+
+
+def test_classifier_intention_requete_json_invalide_renvoie_aucune(monkeypatch):
+    monkeypatch.setattr(rag, "call_llm", lambda prompt, groq_key=None, anthropic_key=None: "REQUETE:pas du json")
+    action, param = rag.classifier_intention("combien ?", ["individu_id"], groq_key="fake")
+    assert action == "AUCUNE"
+    assert param is None
+
+
+def test_classifier_intention_requete_operation_inconnue_renvoie_aucune(monkeypatch):
+    reponse_llm = 'REQUETE:{"operation": "supprimer", "colonne_cible": null, "filtres": []}'
+    monkeypatch.setattr(rag, "call_llm", lambda prompt, groq_key=None, anthropic_key=None: reponse_llm)
+    action, param = rag.classifier_intention("efface tout ?", ["individu_id"], groq_key="fake")
+    assert action == "AUCUNE"
+    assert param is None
+
+
 # --- Reformulation de requete en cas de score de recherche trop faible -----
 
 def test_answer_reformule_la_requete_si_le_premier_score_est_faible(monkeypatch):
