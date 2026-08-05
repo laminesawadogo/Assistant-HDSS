@@ -605,7 +605,7 @@ aucun mot-clé de modification (`INSERT`/`UPDATE`/`DROP`/`ATTACH`...) — jamais
 d'exécution de code généré par le LLM sans validation. Résultat limité à
 200 lignes. Voir `app.py:tenter_requete_sql` / `rag.generer_requete_sql`.
 
-Trois garde-fous supplémentaires pour que ce résultat reste fiable :
+Quatre garde-fous supplémentaires pour que ce résultat reste fiable :
 
 - **Indices de jointure** : le schéma transmis au LLM inclut les colonnes
   réellement communes à chaque paire de tables (`dt.detecter_cles_communes`),
@@ -613,6 +613,19 @@ Trois garde-fous supplémentaires pour que ce résultat reste fiable :
   (chaque table a sa propre clé primaire locale `id`, jamais une référence
   vers une autre table dans ce schéma) — réduit le risque d'une jointure
   inventée ou faite sur la mauvaise colonne.
+- **Contexte du dictionnaire de données** : en plus du schéma structurel,
+  `app.py:_contexte_dictionnaire_pour_sql` va chercher dans le dictionnaire/
+  manuels/fiches déjà indexés (`rag.retrieve`) les extraits pertinents pour
+  la question posée, et les transmet au LLM (`rag.generer_requete_sql`,
+  paramètre `contexte_dictionnaire`). L'observatoire y documente déjà
+  précisément le rôle de chaque identifiant utilisé pour relier les tables
+  (`respondid` = répondant, `locationid` = UCH, `socialgpid` = ménage,
+  `individid` = individu, `observationid` = observation d'un individu dans
+  le ménage, etc. — voir le document `00_schema_relations` de l'index) : le
+  LLM dispose ainsi d'une source faisant autorité sur le sens des colonnes de
+  jointure, pas seulement d'une coïncidence de nom entre deux tables.
+  N'échoue jamais silencieusement si l'index n'est pas construit (repli sur
+  le seul schéma structurel).
 - **Auto-correction en un aller-retour** : si la requête échoue à
   l'exécution (colonne/syntaxe), l'erreur DuckDB est renvoyée au LLM pour une
   deuxième tentative avant d'abandonner.

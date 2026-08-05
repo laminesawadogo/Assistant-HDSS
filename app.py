@@ -787,6 +787,29 @@ def _description_schema(tables: dict) -> str:
     return "\n".join(lignes)
 
 
+def _contexte_dictionnaire_pour_sql(question: str, k: int = 4) -> str | None:
+    """Va chercher, dans le dictionnaire de donnees/manuels/fiches deja
+    indexes (`rag.retrieve`), les extraits les plus pertinents pour la
+    question - l'observatoire y documente deja precisement le sens de
+    chaque identifiant et les tables qu'il relie (ex: respondid = repondant,
+    locationid = UCH, socialgpid = menage, individid = individu,
+    observationid = observation d'un individu dans le menage). Ce contexte
+    est transmis a `rag.generer_requete_sql` en plus des indices purement
+    structurels (`_description_schema`) : il donne au LLM une source
+    autorisee sur le sens des colonnes, pas seulement une coincidence de nom.
+
+    Renvoie None si l'index n'existe pas encore ou si la recherche echoue -
+    ne doit jamais faire echouer `tenter_requete_sql` pour autant, la requete
+    SQL reste generable avec le seul schema structurel."""
+    try:
+        chunks = rag.retrieve(question, k=k)
+    except Exception:
+        return None
+    if not chunks:
+        return None
+    return "\n".join(f"- ({c.get('source', '?')}) {c['text']}" for c in chunks)
+
+
 def tenter_requete_sql(question: str, tables: dict, groq_key: str | None, anthropic_key: str | None) -> dict | None:
     """Repli GENERAL pour une question qui necessite de croiser PLUSIEURS
     tables a la fois (2, 3, 4 ou plus) - au-dela de ce que couvrent l'action
@@ -799,7 +822,14 @@ def tenter_requete_sql(question: str, tables: dict, groq_key: str | None, anthro
     (`dt.executer_sql`, qui revalide que la requete est bien un SELECT avant
     toute execution - jamais d'execution de code LLM arbitraire).
 
-    Deux garde-fous supplementaires pour rester fiable :
+    Trois garde-fous supplementaires pour rester fiable :
+    - Contexte dictionnaire : les extraits pertinents du dictionnaire de
+      donnees/manuels/fiches deja indexes (`_contexte_dictionnaire_pour_sql`)
+      sont transmis au LLM en plus du schema structurel - l'observatoire y
+      documente deja le sens exact des identifiants (respondid, locationid,
+      socialgpid, individid, observationid, etc.) et les tables qu'ils
+      relient, une source plus fiable qu'une simple coincidence de nom de
+      colonne.
     - Auto-correction en un aller-retour : si la premiere requete echoue a
       l'execution (colonne/syntaxe), l'erreur DuckDB est renvoyee au LLM pour
       une deuxieme tentative avant d'abandonner.
@@ -815,12 +845,14 @@ def tenter_requete_sql(question: str, tables: dict, groq_key: str | None, anthro
         return None
 
     schema = _description_schema(tables)
+    contexte_dictionnaire = _contexte_dictionnaire_pour_sql(question)
     requete_sql, erreur = None, None
     for tentative in range(2):
         requete_precedente = requete_sql
         requete_sql = rag.generer_requete_sql(
             question, schema, groq_key=groq_key, anthropic_key=anthropic_key,
             tentative_precedente=requete_precedente, erreur_precedente=erreur,
+            contexte_dictionnaire=contexte_dictionnaire,
         )
         if not requete_sql:
             return None

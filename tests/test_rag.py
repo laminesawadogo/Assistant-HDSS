@@ -304,6 +304,26 @@ def test_generer_requete_sql_transmet_lerreur_precedente_au_prompt(monkeypatch):
     assert "colonne introuvable" in prompts_recus[0]
 
 
+def test_generer_requete_sql_transmet_le_contexte_dictionnaire_au_prompt(monkeypatch):
+    # Les extraits du dictionnaire de donnees (voir `retrieve` /
+    # `app.py:_contexte_dictionnaire_pour_sql`) doivent apparaitre dans le
+    # prompt envoye au LLM, en plus du schema structurel - c'est cette
+    # documentation qui explique le sens exact des identifiants de jointure
+    # (respondid, locationid, socialgpid, individid, observationid...).
+    prompts_recus = []
+
+    def _capture(prompt, groq_key=None, anthropic_key=None):
+        prompts_recus.append(prompt)
+        return "SELECT 1"
+
+    monkeypatch.setattr(rag, "call_llm", _capture)
+    rag.generer_requete_sql(
+        "quel identifiant relie individu et menage ?", "- t(individid, socialgpid)", groq_key="fake",
+        contexte_dictionnaire="- (00_schema_relations) socialgpid -> TSocialgp (menage), individid -> TIndividual",
+    )
+    assert "socialgpid -> TSocialgp" in prompts_recus[0]
+
+
 # --- Reformulation de requete en cas de score de recherche trop faible -----
 
 def test_answer_reformule_la_requete_si_le_premier_score_est_faible(monkeypatch):

@@ -658,6 +658,54 @@ def test_requete_sql_generale_croise_trois_tables(monkeypatch):
     assert "Requête utilisée" in reponse
 
 
+def test_prompt_sql_inclut_le_contexte_du_dictionnaire_reel_indexe(monkeypatch):
+    # Le dictionnaire/manuels/fiches deja indexes (index reel du depot,
+    # voir 00_schema_relations) documentent precisement le role de
+    # socialgpid/locationid/individid pour relier les tables - ce contexte
+    # (recupere via rag.retrieve, non mocke ici) doit apparaitre dans le
+    # prompt de generation SQL, en plus du schema structurel des colonnes.
+    tables = {
+        "opo_hypervel_presences": pd.DataFrame({"individu_id": [1, 2]}),
+        "opo_hypervel_socialgp": pd.DataFrame({"socialgpid": [1, 2]}),
+    }
+    prompts = []
+
+    def _capture(prompt, groq_key=None, anthropic_key=None):
+        prompts.append(prompt)
+        return "AUCUNE"
+
+    monkeypatch.setenv("GROQ_API_KEY", "fake-key")
+    monkeypatch.setattr(rag, "call_llm", _capture)
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value(
+        "à quel socialgpid appartient chaque individu enregistré dans la base ?"
+    ).run()
+
+    prompt_sql = next(p for p in prompts if "SQL" in p)
+    assert "TSocialgp" in prompt_sql
+
+
+def test_requete_sql_resiste_a_un_echec_de_recuperation_du_dictionnaire(monkeypatch):
+    # Si la recuperation du contexte dictionnaire echoue (index absent,
+    # erreur quelconque), la requete SQL doit quand meme s'executer avec le
+    # seul schema structurel plutot que de faire planter toute la reponse.
+    tables = {"opo_hypervel_d_e_c_e_s": pd.DataFrame({"individu_id": [1, 2, 3]})}
+
+    def _retrieve_echoue(query, k=5):
+        raise RuntimeError("index indisponible")
+
+    def _faux_call_llm(prompt, groq_key=None, anthropic_key=None):
+        return "SELECT COUNT(*) AS n FROM opo_hypervel_d_e_c_e_s" if "SQL" in prompt else "AUCUNE"
+
+    monkeypatch.setenv("GROQ_API_KEY", "fake-key")
+    monkeypatch.setattr(rag, "retrieve", _retrieve_echoue)
+    monkeypatch.setattr(rag, "call_llm", _faux_call_llm)
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value("combien de décès au total ?").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "3" in reponse
+
+
 def test_schema_sql_inclut_les_indices_de_jointure_et_exclut_id_seul(monkeypatch):
     # Les deux tables partagent "id" ET "individu_id" : le schema fourni au
     # LLM doit suggerer "individu_id" comme cle de jointure, jamais "id" seul

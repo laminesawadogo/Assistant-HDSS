@@ -375,6 +375,7 @@ def generer_requete_sql(
     anthropic_key: str | None = None,
     tentative_precedente: str | None = None,
     erreur_precedente: str | None = None,
+    contexte_dictionnaire: str | None = None,
 ) -> str | None:
     """Demande au LLM d'ecrire une requete SQL en LECTURE SEULE repondant a
     la question, a partir du SCHEMA REEL de TOUTES les tables chargees
@@ -391,6 +392,15 @@ def generer_requete_sql(
     message d'erreur DuckDB - permet une auto-correction en un aller-retour
     plutot que d'abandonner directement sur une simple faute de syntaxe ou un
     nom de colonne legerement incorrect.
+
+    `contexte_dictionnaire` : extraits du dictionnaire de donnees/manuels/
+    fiches deja indexes (voir `retrieve`), pertinents pour la question -
+    l'observatoire documente deja precisement le sens et le role de chaque
+    identifiant (ex: respondid = repondant, locationid = UCH, socialgpid =
+    menage, individid = individu, observationid = observation d'un individu
+    dans le menage). Ce contexte donne au modele une source autorisee pour
+    choisir les bonnes colonnes de jointure, en plus des indices purement
+    structurels (colonnes de meme nom) deja presents dans `schema`.
 
     Renvoie la requete SQL brute (str) si le LLM en propose une, ou None si
     aucune cle LLM n'est configuree, si le modele indique ne pas pouvoir
@@ -418,6 +428,13 @@ def generer_requete_sql(
         "SQL exploitable avec ce schema (aucune table/colonne pertinente pour y repondre), reponds "
         "exactement : AUCUNE"
     )
+    if contexte_dictionnaire:
+        prompt += (
+            "\n\nExtraits du dictionnaire de donnees/manuels/fiches de l'observatoire, pertinents "
+            "pour cette question (utilise-les pour bien choisir les colonnes de jointure et le sens "
+            "des identifiants, ex: quel identifiant relie quelles tables) :\n"
+            f"{contexte_dictionnaire}"
+        )
     if tentative_precedente and erreur_precedente:
         prompt += (
             "\n\nUne premiere tentative a echoue a l'execution :\n"
