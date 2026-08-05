@@ -490,7 +490,8 @@ MOTS_FUSION = ["fusion", "fusionner", "fusionne", "jointure", "joindre", "joins"
 MOTS_DIFFERENCE = [
     "mais pas dans", "et pas dans", "pas dans", "absent de", "absents de", "absente de", "absentes de",
     "sauf", "n'est pas dans", "ne sont pas dans", "n'apparaissent pas dans", "n'apparait pas dans",
-    "n'apparaît pas dans",
+    "n'apparaît pas dans", "non dans", "ni dans", "non present dans", "non presents dans",
+    "non presente dans", "non presentes dans", "non inclus dans", "non incluses dans",
 ]
 MOTS_VICE_VERSA = ["vice versa", "vice-versa", "et inversement", "et l'inverse", "et réciproquement", "et reciproquement"]
 

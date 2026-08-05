@@ -179,6 +179,26 @@ def test_classifier_intention_liste_tables(monkeypatch):
 
 # --- Action REQUETE (calcul precis compter/lister/moyenne..., avec filtres) -
 
+def test_classifier_intention_previent_le_llm_que_les_colonnes_sont_dune_seule_table(monkeypatch):
+    # Defense en profondeur (en plus du filtrage post-hoc dans
+    # _parser_reponse_requete et des mots-cles dedies MOTS_DIFFERENCE/
+    # MOTS_RELATION cote app.py) : le prompt doit explicitement dire au LLM
+    # de repondre AUCUNE plutot que d'inventer un filtre/listing approximatif
+    # quand la question compare avec une autre table non representee ici -
+    # cause racine des reponses fausses observees ("individus dans A et
+    # non dans B" -> listing complet non filtre de A presente comme reponse).
+    prompts = []
+
+    def _capture(prompt, groq_key=None, anthropic_key=None):
+        prompts.append(prompt)
+        return "AUCUNE"
+
+    monkeypatch.setattr(rag, "call_llm", _capture)
+    rag.classifier_intention("combien ?", ["individid"], groq_key="fake")
+    assert "AUCUNE" in prompts[0]
+    assert "UNE SEULE table" in prompts[0]
+
+
 def test_classifier_intention_requete_compter_avec_filtre(monkeypatch):
     reponse_llm = (
         'REQUETE:{"operation": "compter", "colonne_cible": null, '

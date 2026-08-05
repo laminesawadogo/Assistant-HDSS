@@ -282,6 +282,12 @@ def classifier_intention(
         "operation est l'une de : compter, lister, moyenne, somme, min, max. "
         "colonne_cible est requis (nom de colonne existante) pour moyenne/somme/min/max, sinon null. "
         f"operateur est l'un de : {', '.join(OPERATEURS_REQUETE_CONNUS)}. filtres peut etre une liste vide.\n\n"
+        "IMPORTANT : les colonnes listees ci-dessus appartiennent A UNE SEULE table. Si la question "
+        "necessite de comparer avec le contenu d'une AUTRE table non representee ici (ex : \"qui sont "
+        "aussi dans...\", \"qui ne sont pas dans...\", \"present dans X mais pas dans Y\", \"en commun "
+        "avec...\"), ne propose JAMAIS de filtre ou de listing approximatif pour t'en approcher (ex : un "
+        "filtre sans valeur reelle, ou un listing complet non filtre) : reponds AUCUNE, une autre methode "
+        "plus capable (qui voit toutes les tables a la fois) prendra le relais.\n\n"
         "Si la question ne correspond a aucune de ces actions (par exemple une question "
         "sur la signification d'une variable), reponds AUCUNE."
     )

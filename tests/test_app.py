@@ -53,6 +53,24 @@ def test_difference_reconnait_les_noms_informels_de_table(tables_education_prese
     assert "Précise les deux tables" not in reponse
 
 
+def test_difference_reconnait_le_mot_non_dans(tables_education_presence):
+    # Bug reel signale par l'utilisateur : "les individus qui sont dans
+    # opo_hypervel_education et non dans opo_hypervel_presences" ne
+    # declenchait PAS la fonction dediee difference_tables (seuls "pas dans",
+    # "n'est pas dans"... etc etaient reconnus, pas "non dans") - la question
+    # tombait alors sur le classifieur mono-table, qui renvoyait un simple
+    # listing NON filtre de la premiere table (13281 lignes, sans aucun
+    # filtre) presente comme si c'etait la reponse. Doit maintenant
+    # declencher directement le vrai calcul de difference (anti-jointure).
+    at = _app_avec_tables(tables_education_presence)
+    at.chat_input[0].set_value(
+        "donne moi les individus qui sont dans education et non dans presences"
+    ).run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "3" in reponse
+    assert "n'ont pas de correspondance" in reponse
+
+
 def test_difference_resout_seule_avec_exactement_deux_tables_chargees(tables_education_presence):
     # Une seule table est nommee, mais il n'y en a que deux au total : l'autre
     # est evidente, pas besoin de redemander en repetant la phrase standard.

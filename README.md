@@ -604,6 +604,21 @@ un chiffre non filtré comme s'il répondait à la question — l'appelant
 retombe alors sur le repli SQL général, qui sait vraiment croiser les
 tables.
 
+**Autre bug de la même famille, corrigé dans la foulée** : *"les individus
+qui sont dans opo_hypervel_education et non dans opo_hypervel_presences"*
+renvoyait un simple listing NON filtré de la première table (comme si
+aucune condition n'avait été posée), car ce phrasé ("non dans") ne
+déclenchait pas la fonction dédiée `dt.difference_tables` (anti-jointure) —
+seuls "pas dans", "n'est pas dans"... étaient reconnus dans
+`MOTS_DIFFERENCE`. Corrections :
+- `MOTS_DIFFERENCE` reconnaît maintenant aussi "non dans", "ni dans", "non
+  présent(e)(s) dans", "non inclus(es) dans".
+- Défense en profondeur côté LLM : le prompt de `rag.classifier_intention`
+  précise explicitement que les colonnes fournies appartiennent à UNE SEULE
+  table, et qu'il doit répondre `AUCUNE` (jamais inventer un filtre ou un
+  listing non filtré) dès que la question compare avec une autre table —
+  laissant la main au repli SQL général plutôt que de deviner.
+
 **Question qui doit croiser plusieurs tables à la fois (2, 3, 4 ou plus)** :
 l'action `REQUETE` ci-dessus n'interroge qu'UNE seule table (sans jointure).
 Pour une question qui nécessite de croiser plusieurs tables (ex : *"quel
