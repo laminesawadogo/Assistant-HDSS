@@ -658,6 +658,48 @@ def test_requete_sql_generale_croise_trois_tables(monkeypatch):
     assert "Requête utilisée" in reponse
 
 
+def test_question_de_relation_sans_colonne_commune_retombe_sur_le_sql_general(monkeypatch):
+    # "quel est le lien entre X et Y" declenche le controle structurel
+    # MOTS_RELATION (colonnes de meme nom). Si aucune colonne commune
+    # n'existe (cas frequent : le vrai lien passe par des noms de colonnes
+    # differents, documentes dans le dictionnaire), il ne faut pas abandonner
+    # tout de suite sur "aucune colonne commune detectee" : il faut d'abord
+    # tenter le repli SQL general, plus sophistique, avant de renoncer.
+    tables = {
+        "opo_hypervel_presences": pd.DataFrame({"individu_id": [1, 2, 3]}),
+        "opo_hypervel_socialgp": pd.DataFrame({"socialgpid": [100, 200]}),
+    }
+
+    def _faux_call_llm(prompt, groq_key=None, anthropic_key=None):
+        return "SELECT COUNT(*) AS n FROM opo_hypervel_socialgp" if "SQL" in prompt else "AUCUNE"
+
+    monkeypatch.setenv("GROQ_API_KEY", "fake-key")
+    monkeypatch.setattr(rag, "call_llm", _faux_call_llm)
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value(
+        "quel est le lien entre opo_hypervel_presences et opo_hypervel_socialgp ?"
+    ).run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "Aucune colonne commune" not in reponse
+    assert "2" in reponse
+    assert "Requête utilisée" in reponse
+
+
+def test_question_de_relation_sans_solution_retombe_sur_message_structurel(monkeypatch):
+    # Si le repli SQL general echoue aussi (pas de cle LLM), on doit quand
+    # meme obtenir le message structurel habituel plutot qu'une erreur.
+    tables = {
+        "opo_hypervel_presences": pd.DataFrame({"individu_id": [1, 2, 3]}),
+        "opo_hypervel_socialgp": pd.DataFrame({"socialgpid": [100, 200]}),
+    }
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value(
+        "quel est le lien entre opo_hypervel_presences et opo_hypervel_socialgp ?"
+    ).run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "Aucune colonne commune" in reponse
+
+
 def test_prompt_sql_inclut_le_contexte_du_dictionnaire_reel_indexe(monkeypatch):
     # Le dictionnaire/manuels/fiches deja indexes (index reel du depot,
     # voir 00_schema_relations) documentent precisement le role de

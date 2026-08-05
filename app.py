@@ -1513,8 +1513,22 @@ def route_question(question: str) -> dict:
     )
     if relation_demandee:
         if len(tables_mentionnees) >= 2:
-            return {"content": dt.relation_entre_tables(tables_mentionnees[0], tables_mentionnees[1], tables)}
-        return {"content": dt.rapport_relations(tables)}
+            reponse_relation = dt.relation_entre_tables(tables_mentionnees[0], tables_mentionnees[1], tables)
+        else:
+            reponse_relation = dt.rapport_relations(tables)
+        # Le controle structurel ci-dessus ne detecte qu'un lien "de meme nom
+        # de colonne" entre les tables. Beaucoup de vrais liens du schema OPO
+        # passent par des colonnes de noms differents (ex: headid -> individid,
+        # documentes dans le dictionnaire, voir 00_schema_relations) : avant
+        # d'abandonner sur ce controle structurel, on tente le repli SQL
+        # general (qui, lui, s'appuie aussi sur le dictionnaire indexe) -
+        # jamais de reponse "aucun lien trouve" alors qu'une reponse precise
+        # est possible avec les vraies donnees chargees.
+        if "Aucune colonne commune détectée" in reponse_relation:
+            reponse_sql = tenter_requete_sql(question, tables, groq_key_input, anthropic_key_input)
+            if reponse_sql:
+                return reponse_sql
+        return {"content": reponse_relation}
 
     # Si aucune table n'est nommee explicitement et qu'une colonne mentionnee
     # existe dans PLUSIEURS tables a la fois (ex: `individid` present dans 20

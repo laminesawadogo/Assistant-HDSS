@@ -635,6 +635,18 @@ Quatre garde-fous supplémentaires pour que ce résultat reste fiable :
   relier correctement, plutôt que de présenter un chiffre comme fiable sans
   réserve.
 
+**Question de "relation"/"lien" entre tables sans colonne de même nom** :
+une question contenant "relié", "lien", "en commun"... déclenche d'abord un
+contrôle structurel simple (colonnes de même nom entre les deux tables,
+`dt.relation_entre_tables`/`dt.rapport_relations`). Si ce contrôle ne trouve
+rien (le vrai lien passe par des colonnes de noms différents, ex :
+`headid -> individid`, documenté dans le dictionnaire), la question ne
+s'arrête plus là : `route_question` tente ensuite le repli SQL général
+ci-dessus (avec son contexte dictionnaire) avant de renvoyer le message
+"aucune colonne commune détectée" — une simple coïncidence de nom de colonne
+ne doit jamais être la seule façon de répondre à une question de lien entre
+tables.
+
 **Question de cohérence croisée formulée naturellement** (ex : *"il y a des
 décédés dans presence ?"*) : une table comme "présence" ne porte elle-même
 aucune colonne de statut décès/départ, donc ni une analyse fixe ni l'action
