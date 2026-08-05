@@ -1112,6 +1112,15 @@ def _table_correspond(nom: str, mots_cles: list[str]) -> bool:
     return any(m in n or m in n_normalise for m in mots_cles)
 
 
+def trouver_table_par_role(tables: dict, mots_cles: list[str]) -> str | None:
+    """Trouve la premiere table chargee dont le nom correspond a un role
+    donne (ex: `["death", "deces"]` -> la table des deces, quel que soit son
+    nom technique reel) - helper public (contrairement a `_table_correspond`)
+    pour que les modules appelants (ex: app.py) puissent identifier une table
+    par son role plutot que d'avoir a connaitre son nom exact."""
+    return next((n for n in tables if _table_correspond(n, mots_cles)), None)
+
+
 def rapport_coherence_avancee(tables: dict, nom_table: str | None = None) -> dict:
     """Execute le catalogue de controles de coherence avances sur une table
     precise (si `nom_table` est fourni) ou sur TOUTES les tables chargees,

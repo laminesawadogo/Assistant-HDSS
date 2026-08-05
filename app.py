@@ -1081,6 +1081,55 @@ MOTS_COHERENCE_AVANCEE = [
     "controle qualite complet", "verification complete", "controles de coherence avances",
 ]
 
+# Question de coherence CROISEE entre deux tables ("il y a des décédés dans
+# presence ?", "des individus partis qu'on retrouve encore en présence ?")
+# formulee en langage naturel, SANS la phrase figee "audit complet" -
+# reutilise le meme controle deja calcule par rapport_coherence_avancee
+# (dt.controle_deces_present) au lieu d'exiger cette phrase precise pour y
+# acceder. Necessaire car la table ciblee (ex: "presence") ne porte ELLE-MEME
+# aucune colonne de statut deces/depart : un simple calcul sur ses propres
+# colonnes (action REQUETE) ne peut jamais repondre a ce type de question,
+# qui necessite de croiser avec une AUTRE table (ici la table deces/departs).
+# Chaque entree : (mots-cles de la question, mots-cles du role de la table de
+# statut a chercher - meme principe que CATEGORIES_PERFORMANCE_TERRAIN,
+# libelle affiche).
+STATUTS_CROISES_TABLE = [
+    (["decede", "décédé", "deces", "décès", "mort"], ["death", "deces"], "décès"),
+    (["depart", "parti", "partie", "migration"], ["migration_out", "migrationout", "depart"], "départ"),
+]
+
+
+def reponse_statut_croise_dans_table(q: str, nom_table_cible: str, tables: dict) -> dict | None:
+    """Repond a une question de coherence croisee ("des décédés dans
+    <table> ?") en reutilisant `dt.controle_deces_present`. Renvoie None si
+    la question ne correspond a aucun statut connu, si aucune table de statut
+    n'est chargee, si c'est la table de statut elle-meme qui est ciblee
+    (question directe sur les décès, pas une question croisee), ou si aucune
+    cle de jointure n'est detectee - pour laisser l'appelant retomber sur son
+    propre repli plutot que d'echouer."""
+    for mots_question, mots_table_statut, libelle in STATUTS_CROISES_TABLE:
+        if not contient_mot_cle(q, mots_question):
+            continue
+        nom_statut = dt.trouver_table_par_role(tables, mots_table_statut)
+        if nom_statut is None or nom_statut == nom_table_cible:
+            continue
+        resultat = dt.controle_deces_present(tables, nom_statut, nom_table_cible)
+        if resultat is None:
+            continue
+        cle = resultat["colonnes_verifiees"][0]
+        n = resultat["n_anomalies"]
+        contenu = (
+            f"**{n}** individu(s) apparaissent à la fois dans **{nom_statut}** ({libelle}) et "
+            f"**{nom_table_cible}** (sur la clé `{cle}`)."
+            + (
+                " Cela peut indiquer une incohérence à vérifier (ex : décédé/parti mais toujours "
+                "marqué présent)."
+                if n > 0 else " Aucune incohérence détectée sur ce point."
+            )
+        )
+        return {"content": contenu}
+    return None
+
 # Module "Performances" : volume d'activite de terrain par agent (menages/UCH
 # visites, naissances/deces/grossesses enregistres), distinct du controle
 # qualite (est_question_agents/MOTS_AGENT_QUALITE, qui mesure les
@@ -1215,6 +1264,21 @@ def route_question(question: str) -> dict:
         nom_cible = tables_mentionnees[0] if tables_mentionnees else None
         rapport_avance = dt.rapport_coherence_avancee(tables, nom_table=nom_cible)
         return {"content": formater_rapport_coherence_avancee(rapport_avance)}
+
+    # Question de coherence croisee formulee naturellement ("il y a des
+    # décédés dans presence ?"), sans la phrase figee "audit complet" -
+    # verifie tot pour la meme raison que l'audit complet (la table ciblee ne
+    # porte elle-meme aucune colonne de statut deces/depart, un simple calcul
+    # sur ses propres colonnes ne peut jamais y repondre). Necessite qu'une
+    # table soit identifiable (nommee, ou resolue via nom/colonne/historique).
+    if contient_mot_cle(q, [m for mots, _, _ in STATUTS_CROISES_TABLE for m in mots]):
+        nom_cible_croise = tables_mentionnees[0] if tables_mentionnees else dt.resoudre_table_ciblee(
+            question, tables, historique=historique_recent()
+        )[0]
+        if nom_cible_croise:
+            reponse_croisee = reponse_statut_croise_dans_table(q, nom_cible_croise, tables)
+            if reponse_croisee is not None:
+                return reponse_croisee
 
     # Historique des actualisations de cette session : ne depend d'aucune
     # table en particulier, verifie tot pour ne pas etre masque par la

@@ -218,7 +218,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-249 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
+252 tests couvrent `ingest.py` (découpage en chunks), `prepare_corpus.py`
 (conversion Word/PowerPoint/PDF/Excel/texte, non-reconversion si déjà à jour, exclusion du
 dictionnaire xlsx principal), `data_tools.py` (répartitions, échantillon reproductible,
 doublons, dates invraisemblables, suppression des colonnes nominatives, export
@@ -589,6 +589,17 @@ essayée sur TOUTES les tables chargées qui possèdent les colonnes
 nécessaires (`app.py:tenter_requete_donnees_multi_table`), jamais une seule
 table par défaut. Ne se déclenche qu'avec une clé LLM configurée ; sinon,
 repli sur le message habituel de précision ou la recherche documentaire.
+
+**Question de cohérence croisée formulée naturellement** (ex : *"il y a des
+décédés dans presence ?"*) : une table comme "présence" ne porte elle-même
+aucune colonne de statut décès/départ, donc ni une analyse fixe ni l'action
+`REQUETE` (qui ne lit que les colonnes de la table ciblée) ne peuvent y
+répondre. `app.py:reponse_statut_croise_dans_table` détecte ce type de
+question par mots-clés (sans exiger la phrase figée "audit complet") et
+réutilise le contrôle croisé déjà existant (`dt.controle_deces_present`)
+entre la table ciblée et la table décès/départs détectée automatiquement par
+son rôle — ne se déclenche jamais si la question porte directement sur la
+table de statut elle-même (repli normal vers le routage habituel).
 
 ## Conversation naturelle (mémoire, rédaction, reformulation)
 

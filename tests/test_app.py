@@ -549,6 +549,57 @@ def test_requete_precise_compter_avec_filtre_sur_table_nommee(tables_ambigues, m
     assert "FNewEducation" in reponse
 
 
+# --- Coherence croisee formulee naturellement (sans "audit complet") -------
+# Une table comme "presence" ne porte elle-meme aucune colonne de statut
+# deces/depart : une question comme "il y a des décédés dans presence ?" ne
+# peut etre repondue qu'en croisant avec la table deces - regression du
+# signalement ou ce type de question tombait sur le dictionnaire documentaire
+# faute de la phrase figee "audit complet".
+
+@pytest.fixture
+def tables_deces_presence():
+    return {
+        "opo_hypervel_presences": pd.DataFrame({"individu_id": [1, 2, 3, 4]}),
+        "opo_hypervel_d_e_c_e_s": pd.DataFrame({"individu_id": [2, 5]}),
+    }
+
+
+def test_deces_dans_presence_repond_directement_sans_llm(tables_deces_presence):
+    # Aucune cle LLM configuree dans ce test : la reponse doit quand meme
+    # etre calculee directement (mots-cles + jointure), pas de repli sur le
+    # dictionnaire documentaire.
+    at = _app_avec_tables(tables_deces_presence)
+    at.chat_input[0].set_value("est ce qu'il y a des individus decede dans presence").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "opo_hypervel_d_e_c_e_s" in reponse
+    assert "opo_hypervel_presences" in reponse
+    assert "1" in reponse  # individu_id=2 est present dans les deux tables
+    assert "dictionnaire" not in reponse.lower()
+    assert "fichier excel" not in reponse.lower()
+
+
+def test_deces_dans_presence_aucune_incoherence(tables_deces_presence):
+    tables = {
+        "opo_hypervel_presences": pd.DataFrame({"individu_id": [1, 3, 4]}),
+        "opo_hypervel_d_e_c_e_s": pd.DataFrame({"individu_id": [2, 5]}),
+    }
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value("est ce qu'il y a des individus decede dans presence").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "Aucune incohérence détectée" in reponse
+
+
+def test_question_directe_sur_la_table_deces_nest_pas_interceptee_a_tort(tables_deces_presence):
+    # Une question DIRECTE sur la table deces elle-meme (pas une question
+    # croisee avec une autre table) ne doit pas etre interceptee par le
+    # controle croise - le garde-fou `nom_statut == nom_table_cible` doit
+    # laisser passer vers le routage normal.
+    at = _app_avec_tables(tables_deces_presence)
+    at.chat_input[0].set_value("combien de décès dans la table deces ?").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "individu(s) apparaissent à la fois" not in reponse
+
+
 def test_requete_precise_moyenne_multi_table_sans_rien_nommer(monkeypatch):
     # Aucune table ni colonne n'est nommee explicitement dans la question :
     # la requete doit quand meme s'executer, sur la SEULE table qui possede
