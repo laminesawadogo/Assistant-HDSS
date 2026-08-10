@@ -122,6 +122,28 @@ def has_llm_configured(groq_key: str | None = None, anthropic_key: str | None = 
     return bool(groq_key or os.getenv("GROQ_API_KEY") or anthropic_key or os.getenv("ANTHROPIC_API_KEY"))
 
 
+def _texte_reponse_anthropic(resp) -> str:
+    """Extrait le texte d'une reponse `client.messages.create(...)` Anthropic.
+
+    Bug reel corrige ici : `resp.content[0].text` supposait que le PREMIER
+    bloc de `resp.content` est toujours le texte - vrai avec les anciens
+    modeles, mais Claude Opus 5 (modele de raisonnement hybride) peut
+    renvoyer un ou plusieurs blocs `ThinkingBlock` (son raisonnement interne,
+    attribut `.thinking`, pas `.text`) AVANT le bloc de texte reel. Prendre
+    `content[0]` sans distinction faisait planter l'appli en production
+    (`AttributeError: 'ThinkingBlock' object has no attribute 'text'`) a
+    chaque reponse ou le modele activait la reflexion etendue - tres
+    probablement aussi la cause des erreurs frontend "removeChild" observees
+    juste avant (le script Python plantait en cours de rendu, laissant le
+    DOM du navigateur dans un etat incoherent).
+
+    Ne fait plus confiance a la position du bloc : ne garde que les blocs
+    dont `type == \"text\"` (il peut y en avoir plusieurs, concatenes)."""
+    return "".join(
+        bloc.text for bloc in (resp.content or []) if getattr(bloc, "type", None) == "text"
+    )
+
+
 def call_llm(prompt: str, groq_key: str | None = None, anthropic_key: str | None = None) -> str:
     """Appel au LLM. Choisit le fournisseur selon la cle d'API disponible.
 
@@ -141,12 +163,11 @@ def call_llm(prompt: str, groq_key: str | None = None, anthropic_key: str | None
     # petit modele Groq gratuit - Groq ne sert de repli que si aucune cle
     # Anthropic n'est renseignee.
     #
-    # Modele Claude Sonnet 5 (et non Haiku) : demande explicite de
-    # l'observatoire suite a des reponses jugees pas assez precises,
-    # notamment sur le contenu des bases de donnees - Haiku privilegie la
-    # vitesse/le cout, Sonnet est nettement meilleur en comprehension/
-    # raisonnement pour un cout par requete qui reste raisonnable au volume
-    # d'un observatoire (pas besoin d'Opus, plus cher, pour cet usage).
+    # Modele Claude Opus 5 : demande explicite de l'observatoire pour la
+    # meilleure precision possible, notamment sur les questions qui croisent
+    # plusieurs tables - historique : Haiku (jugee pas assez precise) puis
+    # Sonnet 5, avant ce dernier passage sur Opus 5 (le plus capable de la
+    # gamme, mais aussi le plus cher).
     if anthropic_key:
         import anthropic
 
@@ -156,7 +177,7 @@ def call_llm(prompt: str, groq_key: str | None = None, anthropic_key: str | None
             max_tokens=1200,
             messages=[{"role": "user", "content": prompt}],
         )
-        return resp.content[0].text
+        return _texte_reponse_anthropic(resp)
 
     if groq_key:
         from groq import Groq
@@ -214,7 +235,7 @@ def analyser_image(
             }
         ],
     )
-    return resp.content[0].text
+    return _texte_reponse_anthropic(resp)
 
 
 ACTIONS_CONNUES = {"REPARTITION", "ECHANTILLON", "DOUBLONS", "COHERENCE", "LISTE_TABLES", "REQUETE", "AUCUNE"}

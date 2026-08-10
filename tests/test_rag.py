@@ -3,6 +3,7 @@ Tests du module rag.py : recuperation documentaire (TF-IDF) et garde-fous
 (index non construit, absence de cle de LLM).
 """
 
+import anthropic
 import pytest
 
 import rag
@@ -31,6 +32,69 @@ def test_analyser_image_sans_cle_anthropic_renvoie_message_explicite(monkeypatch
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     reponse = rag.analyser_image(b"faux-contenu-image", "image/png", "Que vois-tu ?")
     assert "clé Anthropic" in reponse or "cle Anthropic" in reponse
+
+
+# --- Extraction du texte d'une reponse Anthropic (bug reel Opus 5) ---------
+#
+# Bug reel observe en production : `AttributeError: 'ThinkingBlock' object
+# has no attribute 'text'`. Claude Opus 5 (modele de raisonnement hybride)
+# peut renvoyer un ou plusieurs blocs `ThinkingBlock` AVANT le bloc de texte
+# reel dans `resp.content` - prendre `content[0].text` sans distinction
+# plantait l'appli a chaque reponse ou le modele activait la reflexion
+# etendue. Ces tests utilisent de faux blocs (duck-typing sur l'attribut
+# `type`, comme le fait `rag._texte_reponse_anthropic`) plutot que les vraies
+# classes du SDK, pour ne pas dependre d'un comportement interne d'Anthropic
+# susceptible de changer.
+
+class _FauxBlocThinking:
+    type = "thinking"
+    thinking = "je reflechis avant de repondre..."
+
+
+class _FauxBlocTexte:
+    def __init__(self, texte):
+        self.type = "text"
+        self.text = texte
+
+
+class _FauxReponseAnthropic:
+    def __init__(self, content):
+        self.content = content
+
+
+def test_texte_reponse_anthropic_ignore_les_blocs_thinking():
+    resp = _FauxReponseAnthropic([_FauxBlocThinking(), _FauxBlocTexte("Voici la réponse.")])
+    assert rag._texte_reponse_anthropic(resp) == "Voici la réponse."
+
+
+def test_texte_reponse_anthropic_concatene_plusieurs_blocs_texte():
+    resp = _FauxReponseAnthropic([_FauxBlocTexte("Première partie. "), _FauxBlocTexte("Deuxième partie.")])
+    assert rag._texte_reponse_anthropic(resp) == "Première partie. Deuxième partie."
+
+
+def test_texte_reponse_anthropic_sans_bloc_texte_renvoie_chaine_vide():
+    # Ne doit jamais planter, meme si (cas limite) la reponse ne contient
+    # que de la reflexion sans texte final.
+    resp = _FauxReponseAnthropic([_FauxBlocThinking()])
+    assert rag._texte_reponse_anthropic(resp) == ""
+
+
+def test_call_llm_anthropic_ne_plante_plus_avec_un_bloc_thinking_avant_le_texte(monkeypatch):
+    # Reproduit exactement le crash de production : le premier bloc de la
+    # reponse est un ThinkingBlock, le texte reel arrive apres.
+    contenu = [_FauxBlocThinking(), _FauxBlocTexte("Réponse du modèle.")]
+
+    class _FauxMessages:
+        def create(self, **kwargs):
+            return _FauxReponseAnthropic(contenu)
+
+    class _FauxAnthropic:
+        def __init__(self, api_key=None):
+            self.messages = _FauxMessages()
+
+    monkeypatch.setattr(anthropic, "Anthropic", _FauxAnthropic)
+    resultat = rag.call_llm("une question", anthropic_key="fake-cle")
+    assert resultat == "Réponse du modèle."
 
 
 def test_retrieve_renvoie_le_bon_chunk_en_tete():

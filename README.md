@@ -719,6 +719,19 @@ quand les deux sont renseignées. Coût API plus élevé que Sonnet 5 (5$/25$
 le million de tokens en entrée/sortie, contre 2$/10$) — à surveiller si le
 volume de questions est important.
 
+**Crash de production réel corrigé au passage sur Opus 5** :
+`AttributeError: 'ThinkingBlock' object has no attribute 'text'`. Opus 5 est
+un modèle de raisonnement hybride qui peut renvoyer un ou plusieurs blocs de
+réflexion interne (`ThinkingBlock`) AVANT le bloc de texte réel dans la
+réponse — `resp.content[0].text` supposait à tort que le premier bloc est
+toujours le texte, ce qui faisait planter l'application à chaque réponse où
+le modèle activait sa réflexion étendue. C'est très probablement aussi la
+cause des erreurs frontend "removeChild" observées juste avant ce
+correctif : le script Python plantait en cours de rendu, laissant le DOM du
+navigateur dans un état incohérent. Corrigé via `rag._texte_reponse_anthropic`,
+qui ne garde que les blocs de type `"text"` (peu importe leur position),
+utilisé par `call_llm` et `analyser_image`.
+
 ## Limites connues
 
 - La recherche documentaire utilise du TF-IDF (mots-clés pondérés), pas des
