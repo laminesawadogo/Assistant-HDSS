@@ -317,6 +317,34 @@ def test_fusionner_tables_leve_erreur_si_seule_id_est_commune():
         dt.fusionner_tables("A", "B", tables)
 
 
+# --- Consigne repetee de l'observatoire : "id", "menage_id", "round_id",
+# "enquete_id"... ne sont JAMAIS des identifiants a utiliser, meme en dernier
+# recours quand c'est la SEULE colonne commune. Bug reel signale : l'app
+# continuait a s'en servir comme cle de jointure silencieusement.
+
+def test_fusionner_tables_refuse_menage_id_meme_en_dernier_recours():
+    tables = {
+        "opo_hypervel_enquete_or_visites": pd.DataFrame({"menage_id": [1, 2], "note": ["a", "b"]}),
+        "opo_hypervel_menages": pd.DataFrame({"menage_id": [1, 2], "region": ["x", "y"]}),
+    }
+    with pytest.raises(ValueError, match="CONFIRMÉE"):
+        dt.fusionner_tables("opo_hypervel_enquete_or_visites", "opo_hypervel_menages", tables)
+
+
+def test_difference_tables_refuse_round_id_et_enquete_id_meme_en_dernier_recours():
+    tables = {
+        "opo_hypervel_enquete_or_visites": pd.DataFrame({"round_id": [1, 2], "enquete_id": [10, 20]}),
+        "opo_hypervel_presences": pd.DataFrame({"round_id": [1, 2], "enquete_id": [10, 30]}),
+    }
+    with pytest.raises(ValueError, match="CONFIRMÉE"):
+        dt.difference_tables("opo_hypervel_enquete_or_visites", "opo_hypervel_presences", tables)
+
+
+def test_meilleure_cle_jointure_none_si_seulement_des_colonnes_laravel_non_confirmees():
+    communes = ["id", "menage_id", "individu_id", "round_id", "enquete_id"]
+    assert dt._meilleure_cle_jointure(communes) is None
+
+
 def test_relation_entre_tables_recommande_individid_pas_id():
     tables = {
         "opo_hypervel_education": pd.DataFrame({"id": [1, 2], "individid": [10, 20]}),
@@ -324,7 +352,7 @@ def test_relation_entre_tables_recommande_individid_pas_id():
     }
     texte = dt.relation_entre_tables("opo_hypervel_education", "opo_hypervel_presences", tables)
     assert "`individid`" in texte
-    assert "candidate la plus probable comme clé de jointure" in texte
+    assert "clé de jointure à utiliser" in texte
     assert "identifiant confirmé" in texte
 
 
@@ -334,7 +362,22 @@ def test_relation_entre_tables_avertit_si_seule_id_est_commune():
         "B": pd.DataFrame({"id": [1, 2], "y": [1, 2]}),
     }
     texte = dt.relation_entre_tables("A", "B", tables)
-    assert "Aucune de ces colonnes communes n'est fiable" in texte
+    assert "Aucune de ces colonnes communes n'est un identifiant confirmé" in texte
+
+
+def test_relation_entre_tables_avertit_meme_pour_menage_id_et_round_id():
+    # Bug reel signale par l'observatoire : ces colonnes de type Laravel
+    # RESSEMBLENT a des identifiants mais ne sont pas documentees comme
+    # telles - ne doivent jamais etre presentees comme une cle fiable, meme
+    # quand elles sont la SEULE colonne commune (pas de "faux d'abandon" en
+    # tombant dessus par defaut).
+    tables = {
+        "opo_hypervel_enquete_or_visites": pd.DataFrame({"menage_id": [1, 2], "round_id": [1, 1]}),
+        "opo_hypervel_menages": pd.DataFrame({"menage_id": [1, 2], "round_id": [1, 2]}),
+    }
+    texte = dt.relation_entre_tables("opo_hypervel_enquete_or_visites", "opo_hypervel_menages", tables)
+    assert "Aucune de ces colonnes communes n'est un identifiant confirmé" in texte
+    assert "menage_id" in texte and "round_id" in texte
 
 
 # --- Ne pas confondre "individus" mot generique et table opo_hypervel_individus
@@ -1361,9 +1404,13 @@ def test_tranches_age_reconnait_histoire_marietales_reelle():
 
 
 def test_rapport_coherence_avancee_grossesse_reelle_exclut_issue_grossesses():
+    # individid (pas individu_id, colonne Laravel non confirmee) : depuis
+    # que la jointure exige un identifiant confirme par le dictionnaire,
+    # cette fixture doit utiliser la vraie cle documentee pour que le
+    # controle croise se declenche.
     tables = {
-        "opo_hypervel_grossesses": pd.DataFrame({"individu_id": [1, 2]}),
-        "opo_hypervel_issue_grossesses": pd.DataFrame({"individu_id": [1]}),
+        "opo_hypervel_grossesses": pd.DataFrame({"individid": [1, 2]}),
+        "opo_hypervel_issue_grossesses": pd.DataFrame({"individid": [1]}),
     }
     resultat = dt.rapport_coherence_avancee(tables)
     croises = resultat["croises"]
@@ -1378,9 +1425,11 @@ def test_rapport_coherence_avancee_grossesse_reelle_exclut_issue_grossesses():
 
 
 def test_rapport_coherence_avancee_depart_reconnu_comme_migration_out():
+    # individid (pas individu_id, colonne Laravel non confirmee) : meme
+    # raison que ci-dessus.
     tables = {
-        "opo_hypervel_presences": pd.DataFrame({"individu_id": [1, 2]}),
-        "opo_hypervel_departs": pd.DataFrame({"individu_id": [1]}),
+        "opo_hypervel_presences": pd.DataFrame({"individid": [1, 2]}),
+        "opo_hypervel_departs": pd.DataFrame({"individid": [1]}),
     }
     resultat = dt.rapport_coherence_avancee(tables)
     correspondances = [c for c in resultat["croises"] if "départ" in c[0].lower()]

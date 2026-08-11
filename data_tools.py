@@ -749,31 +749,34 @@ def _colonnes_communes(df1: pd.DataFrame, df2: pd.DataFrame) -> list[str]:
 
 
 def _meilleure_cle_jointure(communes: list[str]) -> str | None:
-    """Choisit, parmi des colonnes communes a deux tables, la plus fiable a
-    utiliser comme cle de jointure - PAS simplement la premiere trouvee.
+    """Choisit, parmi des colonnes communes a deux tables, la seule fiable a
+    utiliser comme cle de jointure - PAS simplement la premiere trouvee, et
+    JAMAIS une colonne qui n'est pas documentee, meme en dernier recours.
 
-    Bug reel corrige ici : `communes[0]` choisissait bien souvent "id" (quasi
-    toujours la premiere colonne des vraies tables opo_hypervel_*), une cle
-    primaire LOCALE a chaque table qui n'est jamais une reference vers une
-    autre table dans ce schema - une jointure sur "id" ne relie que deux
-    compteurs auto-incrementes sans lien reel, produisant un resultat qui a
-    l'air precis (ex: "15630 lignes sans correspondance") mais qui ne
-    repond a rien de reel.
+    Bug reel corrige ici (episode 1) : `communes[0]` choisissait bien souvent
+    "id" (quasi toujours la premiere colonne des vraies tables
+    opo_hypervel_*), une cle primaire LOCALE a chaque table qui n'est jamais
+    une reference vers une autre table dans ce schema.
 
-    Ordre de priorite :
-    1. Un identifiant CONFIRME par le dictionnaire de donnees de
-       l'observatoire (`IDENTIFIANTS_REELS_DOCUMENTES`), dans l'ordre ou il
-       apparait parmi les colonnes communes.
-    2. A defaut, la premiere colonne commune qui n'est PAS la cle primaire
-       locale "id" (mieux qu'un abandon pur, mais a utiliser avec prudence -
-       cf. les nombreuses colonnes `<table>_id` de type Laravel/Hypervel qui
-       ressemblent a des identifiants sans etre documentees comme tels).
-    3. None si la seule colonne commune est "id" (aucune cle fiable)."""
+    Bug reel corrige ici (episode 2, consigne explicite et repetee de
+    l'observatoire - "id, menage_id, round_id, enquete_id... ne sont pas des
+    identifiants a utiliser") : la version precedente de cette fonction
+    retombait, a defaut d'identifiant confirme, sur "la premiere colonne
+    commune qui n'est pas *id*" - ce qui choisissait encore silencieusement
+    des colonnes Laravel/Hypervel du type `<table>_id` (`menage_id`,
+    `round_id`, `enquete_id`, `individu_id`...) qui RESSEMBLENT a des
+    identifiants par leur nom sans etre documentees comme de vraies cles.
+    Ce filet de secours est supprime : sans identifiant confirme par le
+    dictionnaire, il n'y a PAS de cle de jointure fiable, un point c'est
+    tout - mieux vaut le dire clairement que deviner.
+
+    Renvoie l'identifiant CONFIRME par le dictionnaire de donnees de
+    l'observatoire (`IDENTIFIANTS_REELS_DOCUMENTES`) le plus tot dans l'ordre
+    des colonnes communes, ou None si aucune des colonnes communes n'est
+    confirmee (peu importe qu'elles s'appellent "id", "menage_id" ou
+    n'importe quel autre nom qui ressemble a un identifiant)."""
     for c in communes:
         if str(c).strip().lower() in IDENTIFIANTS_REELS_DOCUMENTES:
-            return c
-    for c in communes:
-        if str(c).strip().lower() != "id":
             return c
     return None
 
@@ -813,19 +816,22 @@ def relation_entre_tables(nom1: str, nom2: str, tables: dict) -> str:
     ]
     meilleure = _meilleure_cle_jointure(communes)
     if meilleure is not None:
-        confirmee = meilleure.strip().lower() in IDENTIFIANTS_REELS_DOCUMENTES
-        precision = " (identifiant confirmé par le dictionnaire de données)" if confirmee else (
-            " (⚠️ à vérifier : pas un identifiant confirmé par le dictionnaire)"
-        )
+        # `_meilleure_cle_jointure` ne renvoie plus JAMAIS qu'un identifiant
+        # confirme par le dictionnaire (voir sa docstring) - cette colonne
+        # l'est donc forcement.
         lignes.append(
-            f"`{meilleure}` est la candidate la plus probable comme clé de jointure{precision}. "
-            f"Demande « fusionne {nom1} et {nom2} » pour obtenir une table combinée."
+            f"`{meilleure}` est la clé de jointure à utiliser (identifiant confirmé par le "
+            f"dictionnaire de données). Demande « fusionne {nom1} et {nom2} » pour obtenir une "
+            "table combinée."
         )
     else:
+        non_confirmees = ", ".join(f"`{c}`" for c in communes)
         lignes.append(
-            "Aucune de ces colonnes communes n'est fiable comme clé de jointure : seule 'id' est "
-            "partagée, or c'est une clé primaire locale à chaque table, jamais une référence vers "
-            "une autre table dans ce schéma."
+            f"Aucune de ces colonnes communes n'est un identifiant confirmé par le dictionnaire de "
+            f"données de l'observatoire ({non_confirmees}) : un nom de colonne qui ressemble à un "
+            "identifiant (ex: `id`, `menage_id`, `round_id`, `enquete_id`...) n'en est pas la preuve, "
+            "et ne doit jamais être utilisé comme clé de jointure sans confirmation. Vérifie auprès de "
+            "l'équipe/du dictionnaire de données quel identifiant relie réellement ces deux tables."
         )
     return "\n".join(lignes)
 
@@ -866,10 +872,12 @@ def fusionner_tables(nom1: str, nom2: str, tables: dict, cle: str | None = None)
             raise ValueError(f"Aucune colonne commune trouvée entre '{nom1}' et '{nom2}' pour fusionner.")
         cle = _meilleure_cle_jointure(communes)
         if cle is None:
+            non_confirmees = ", ".join(f"'{c}'" for c in communes)
             raise ValueError(
-                f"Aucune colonne commune fiable trouvée entre '{nom1}' et '{nom2}' pour fusionner "
-                "(seule colonne commune : 'id', une clé primaire locale à chaque table, jamais une "
-                "référence entre tables dans ce schéma)."
+                f"Aucune colonne commune CONFIRMÉE par le dictionnaire de données trouvée entre "
+                f"'{nom1}' et '{nom2}' pour fusionner ({non_confirmees} sont communes, mais aucune "
+                "n'est un identifiant documenté — un nom qui ressemble à un identifiant, comme 'id' "
+                "ou 'menage_id', n'en est pas la preuve)."
             )
     elif cle not in df1.columns or cle not in df2.columns:
         raise ValueError(f"La colonne '{cle}' n'existe pas dans les deux tables.")
@@ -908,7 +916,16 @@ def difference_tables(nom1: str, nom2: str, tables: dict, cle: str | None = None
     if cle is None:
         cle = detecter_cle_jointure(nom1, nom2, tables)
         if cle is None:
-            raise ValueError(f"Aucune colonne commune trouvée entre '{nom1}' et '{nom2}' pour comparer.")
+            communes = _colonnes_communes(df1, df2)
+            if not communes:
+                raise ValueError(f"Aucune colonne commune trouvée entre '{nom1}' et '{nom2}' pour comparer.")
+            non_confirmees = ", ".join(f"'{c}'" for c in communes)
+            raise ValueError(
+                f"Aucune colonne commune CONFIRMÉE par le dictionnaire de données trouvée entre "
+                f"'{nom1}' et '{nom2}' pour comparer ({non_confirmees} sont communes, mais aucune "
+                "n'est un identifiant documenté — un nom qui ressemble à un identifiant, comme 'id' "
+                "ou 'menage_id', n'en est pas la preuve)."
+            )
     elif cle not in df1.columns or cle not in df2.columns:
         raise ValueError(f"La colonne '{cle}' n'existe pas dans les deux tables.")
 

@@ -891,6 +891,51 @@ explicitement typé `Identifiant` dans le document source — c'est la même
 règle que celle déjà appliquée aux identifiants précédemment confirmés,
 appliquée maintenant de façon exhaustive plutôt que cas par cas.
 
+## Interdiction totale des clés non confirmées (`id`, `menage_id`, `round_id`, `enquete_id`...), même en dernier recours
+
+Bug réel signalé par l'observatoire, persistant malgré les correctifs
+précédents de cette même session : l'application continuait à utiliser
+`id`, `menage_id`, `round_id`, `enquete_id`... comme clé de jointure.
+
+Cause : le premier correctif (voir plus haut, section « Jointure "id" et
+mauvaise table... ») excluait bien `id`, mais gardait un filet de secours —
+« à défaut d'identifiant confirmé, prendre la première colonne commune qui
+n'est pas *id* ». Ce filet de secours choisissait donc silencieusement les
+mêmes colonnes Laravel/Hypervel de type `<table>_id` (`menage_id`,
+`round_id`, `enquete_id`, `individu_id`...) que l'observatoire avait
+explicitement écartées dès le début de ce travail (« il faut bien savoir
+qu'il faut se baser sur les identifiants donnés, les variables comme id,
+menage_id ne sont pas des identifiants à utiliser »). Le même filet de
+secours existait aussi côté génération SQL (`rag.generer_requete_sql`) : le
+prompt autorisait explicitement le LLM à utiliser une colonne non confirmée
+« en dernier recours ».
+
+Correctifs :
+
+- **`data_tools._meilleure_cle_jointure`** : le filet de secours est
+  supprimé. Sans identifiant confirmé par le dictionnaire, la fonction
+  renvoie `None` — point final, peu importe si `id`, `menage_id` ou
+  n'importe quelle autre colonne évocatrice est la SEULE colonne commune.
+  `detecter_cle_jointure`/`fusionner_tables`/`difference_tables`/
+  `relation_entre_tables` héritent tous de cette règle stricte : à défaut de
+  clé confirmée, ils échouent proprement (`ValueError` explicite listant les
+  colonnes non confirmées écartées, ou message clair côté
+  `relation_entre_tables`) plutôt que de calculer un résultat qui a l'air
+  précis mais ne repose sur rien de réel.
+- **`rag.generer_requete_sql`** (repli SQL général, piloté par le LLM) : le
+  prompt interdit maintenant explicitement d'utiliser une colonne non
+  confirmée en JOIN, y compris en dernier recours — si croiser les tables
+  nécessaires demanderait un JOIN non confirmé, le LLM doit répondre
+  `AUCUNE` plutôt que de deviner.
+- **Effet de bord attendu et voulu** : les contrôles de cohérence croisée
+  (`controle_deces_present`, `controle_eligibilite_croisee`,
+  `rapport_coherence_avancee`) qui ne trouveraient plus qu'une colonne non
+  confirmée entre deux tables ne se déclenchent plus silencieusement dessus
+  — ils remontent l'absence de lien fiable (ou, selon le point d'entrée,
+  laissent la main au repli SQL général, qui explique pourquoi aucune
+  réponse fiable n'a pu être calculée) plutôt que de risquer un chiffre
+  trompeur.
+
 ## Limites connues
 
 - La recherche documentaire utilise du TF-IDF (mots-clés pondérés), pas des

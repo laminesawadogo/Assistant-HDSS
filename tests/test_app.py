@@ -607,9 +607,13 @@ def test_requete_precise_compter_avec_filtre_sur_table_nommee(tables_ambigues, m
 
 @pytest.fixture
 def tables_deces_presence():
+    # individid (pas individu_id, colonne Laravel non confirmee) : depuis
+    # que la jointure exige un identifiant confirme par le dictionnaire, ce
+    # fixture doit utiliser la vraie cle documentee (TDeath et TPresences
+    # partagent individid -> TIndividual, voir 00_schema_relations.txt).
     return {
-        "opo_hypervel_presences": pd.DataFrame({"individu_id": [1, 2, 3, 4]}),
-        "opo_hypervel_d_e_c_e_s": pd.DataFrame({"individu_id": [2, 5]}),
+        "opo_hypervel_presences": pd.DataFrame({"individid": [1, 2, 3, 4]}),
+        "opo_hypervel_d_e_c_e_s": pd.DataFrame({"individid": [2, 5]}),
     }
 
 
@@ -622,15 +626,15 @@ def test_deces_dans_presence_repond_directement_sans_llm(tables_deces_presence):
     reponse = at.session_state["messages"][-1]["content"]
     assert "opo_hypervel_d_e_c_e_s" in reponse
     assert "opo_hypervel_presences" in reponse
-    assert "1" in reponse  # individu_id=2 est present dans les deux tables
+    assert "1" in reponse  # individid=2 est present dans les deux tables
     assert "dictionnaire" not in reponse.lower()
     assert "fichier excel" not in reponse.lower()
 
 
 def test_deces_dans_presence_aucune_incoherence(tables_deces_presence):
     tables = {
-        "opo_hypervel_presences": pd.DataFrame({"individu_id": [1, 3, 4]}),
-        "opo_hypervel_d_e_c_e_s": pd.DataFrame({"individu_id": [2, 5]}),
+        "opo_hypervel_presences": pd.DataFrame({"individid": [1, 3, 4]}),
+        "opo_hypervel_d_e_c_e_s": pd.DataFrame({"individid": [2, 5]}),
     }
     at = _app_avec_tables(tables)
     at.chat_input[0].set_value("est ce qu'il y a des individus decede dans presence").run()

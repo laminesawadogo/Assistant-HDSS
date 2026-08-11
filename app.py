@@ -821,9 +821,13 @@ def _description_schema(tables: dict) -> str:
     if indices_a_verifier:
         lignes.append(
             "\nAutres colonnes communes détectées automatiquement, mais NON confirmées comme de "
-            "vraies clés par le dictionnaire (un nom qui ressemble à un identifiant, ex: \"menage_id\", "
-            "n'en est pas la preuve) - à utiliser seulement si aucune colonne confirmée ci-dessus ne "
-            "permet de répondre, et avec prudence :"
+            "vraies clés par le dictionnaire (un nom qui ressemble à un identifiant, ex: \"id\", "
+            "\"menage_id\", \"round_id\", \"enquete_id\", n'en est PAS la preuve) - INTERDIT de les "
+            "utiliser comme clé de JOIN, MÊME en dernier recours, MÊME si aucune colonne confirmée "
+            "ci-dessus ne permet de répondre à la question. Si seules ces colonnes non confirmées "
+            "relient les tables nécessaires, ne fabrique PAS de JOIN dessus : réponds plutôt que tu "
+            "ne peux pas relier ces tables de façon fiable avec le schéma actuellement documenté. "
+            "Listées ici seulement à titre informatif :"
         )
         lignes.extend(indices_a_verifier)
 
