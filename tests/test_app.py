@@ -71,6 +71,37 @@ def test_difference_reconnait_le_mot_non_dans(tables_education_presence):
     assert "n'ont pas de correspondance" in reponse
 
 
+def test_difference_reelle_education_vs_presence_utilise_individid_pas_id():
+    # Reproduction exacte du bug reel signale par l'observatoire : la
+    # question "individus dont on a fait leur education mais qui ne se
+    # trouvent pas dans la fiche presence" avait ete jointe a tort sur
+    # opo_hypervel_individus (au lieu de opo_hypervel_presences, a cause du
+    # mot "individus" employe ici au sens general) ET sur la colonne "id"
+    # (cle primaire locale a chaque table, jamais une reference reelle -
+    # toujours la premiere colonne des vraies tables opo_hypervel_*) au lieu
+    # de `individid`. Les deux bugs sont corriges ici a la fois.
+    tables = {
+        "opo_hypervel_individus": pd.DataFrame({"id": [1, 2, 3], "individid": [10, 20, 30]}),
+        "opo_hypervel_education": pd.DataFrame({"id": [1, 2, 3, 4], "individid": [10, 20, 30, 40]}),
+        "opo_hypervel_presences": pd.DataFrame({"id": [1, 2], "individid": [10, 20]}),
+    }
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value(
+        "je veux savoir quelles sont les individus dont on a faire leur education "
+        "mais c'est c'individus ne se trouves pas dans la fiche presence"
+    ).run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "opo_hypervel_education" in reponse
+    assert "opo_hypervel_presences" in reponse
+    assert "opo_hypervel_individus" not in reponse
+    assert "`individid`" in reponse
+    assert "`id`" not in reponse
+    # Seul individid=40 (dans education) n'a pas de correspondance dans
+    # presences (individid 10 et 20 y sont, 30 n'y est pas non plus -> 2
+    # lignes attendues : individid 30 et 40).
+    assert "**2**" in reponse
+
+
 def test_difference_resout_seule_avec_exactement_deux_tables_chargees(tables_education_presence):
     # Une seule table est nommee, mais il n'y en a que deux au total : l'autre
     # est evidente, pas besoin de redemander en repetant la phrase standard.
@@ -827,6 +858,40 @@ def test_schema_sql_inclut_les_indices_de_jointure_et_exclut_id_seul(monkeypatch
     prompt_sql = next(p for p in prompts if "SQL" in p)
     assert "individu_id" in prompt_sql
     assert "sur : id" not in prompt_sql
+
+
+def test_schema_sql_distingue_les_cles_confirmees_par_le_dictionnaire(monkeypatch):
+    # Consigne explicite de l'observatoire : un nom de colonne qui RESSEMBLE
+    # a un identifiant (ex: "menage_id") n'en est pas la preuve - seul le
+    # dictionnaire de donnees (data/docs/00_schema_relations.txt) fait foi.
+    # "socialgpid" y est documente comme la vraie cle du menage ; "menage_id"
+    # n'y figure pas du tout, meme si les deux tables le partagent aussi.
+    # Le schema fourni au LLM doit donc mettre "socialgpid" dans la section
+    # CONFIRMEE et reléguer "menage_id" a une section separee, moins fiable.
+    tables = {
+        "opo_hypervel_socialgp": pd.DataFrame({"socialgpid": [1, 2], "menage_id": [1, 2]}),
+        "opo_hypervel_individual": pd.DataFrame(
+            {"individid": [10, 20], "socialgpid": [1, 2], "menage_id": [1, 2]}
+        ),
+    }
+    prompts = []
+
+    def _capture(prompt, groq_key=None, anthropic_key=None):
+        prompts.append(prompt)
+        return "AUCUNE"
+
+    monkeypatch.setenv("GROQ_API_KEY", "fake-key")
+    monkeypatch.setattr(rag, "call_llm", _capture)
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value("je voudrais un chiffre très précis basé sur toutes les données").run()
+
+    prompt_sql = next(p for p in prompts if "SQL" in p)
+    assert "CONFIRMÉES" in prompt_sql
+    section_confirmee = prompt_sql.split("CONFIRMÉES")[1].split("NON confirmées")[0]
+    assert "socialgpid" in section_confirmee
+    assert "menage_id" not in section_confirmee
+    assert "NON confirmées" in prompt_sql
+    assert "menage_id" in prompt_sql.split("NON confirmées")[1]
     assert "sur : id," not in prompt_sql
 
 

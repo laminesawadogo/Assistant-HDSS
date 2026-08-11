@@ -227,6 +227,118 @@ def test_detecter_cle_jointure_none_si_aucune_commune():
     assert dt.detecter_cle_jointure("A", "B", tables) is None
 
 
+# --- Cle de jointure fiable : ignorer "id" au profit d'un identifiant reel --
+# Bug reel corrige ici : sur les vraies tables opo_hypervel_*, "id" (cle
+# primaire LOCALE a chaque table, jamais une reference vers une autre table
+# dans ce schema) est quasi toujours la premiere colonne commune detectee -
+# une question "individus dont on a fait l'education mais pas dans la fiche
+# presence" avait ainsi ete jointe sur `id` au lieu de `individid`, donnant
+# un resultat qui a l'air precis (ex: "15630 lignes sans correspondance")
+# mais qui ne repond a rien de reel.
+
+def test_detecter_cle_jointure_ignore_id_au_profit_dun_identifiant_reel():
+    tables = {
+        "opo_hypervel_education": pd.DataFrame({"id": [1, 2], "individid": [10, 20]}),
+        "opo_hypervel_presences": pd.DataFrame({"id": [1, 2, 3], "individid": [10, 30, 40]}),
+    }
+    assert dt.detecter_cle_jointure("opo_hypervel_education", "opo_hypervel_presences", tables) == "individid"
+
+
+def test_detecter_cle_jointure_none_si_seule_id_est_commune():
+    tables = {
+        "A": pd.DataFrame({"id": [1, 2], "x": [1, 2]}),
+        "B": pd.DataFrame({"id": [1, 2], "y": [1, 2]}),
+    }
+    assert dt.detecter_cle_jointure("A", "B", tables) is None
+
+
+def test_difference_tables_utilise_individid_pas_id_sur_les_vraies_tables():
+    tables = {
+        "opo_hypervel_education": pd.DataFrame({"id": [1, 2, 3], "individid": [10, 20, 30]}),
+        "opo_hypervel_presences": pd.DataFrame({"id": [9, 8], "individid": [10, 20]}),
+    }
+    diff = dt.difference_tables("opo_hypervel_education", "opo_hypervel_presences", tables)
+    # Sur individid, seul individid=30 n'a pas de correspondance. Une
+    # jointure erronee sur "id" aurait laisse passer/exclu des lignes au
+    # hasard puisque les "id" des deux tables sont des compteurs locaux sans
+    # rapport entre eux.
+    assert sorted(diff["individid"]) == [30]
+
+
+def test_fusionner_tables_sans_cle_choisit_individid_pas_id():
+    tables = {
+        "opo_hypervel_education": pd.DataFrame({"id": [1, 2], "individid": [10, 20], "note": ["a", "b"]}),
+        "opo_hypervel_presences": pd.DataFrame({"id": [5, 6], "individid": [10, 20], "present": [1, 0]}),
+    }
+    fusion = dt.fusionner_tables("opo_hypervel_education", "opo_hypervel_presences", tables)
+    assert "present" in fusion.columns and "note" in fusion.columns
+    assert len(fusion) == 2
+
+
+def test_fusionner_tables_leve_erreur_si_seule_id_est_commune():
+    tables = {
+        "A": pd.DataFrame({"id": [1, 2], "x": [1, 2]}),
+        "B": pd.DataFrame({"id": [1, 2], "y": [1, 2]}),
+    }
+    with pytest.raises(ValueError):
+        dt.fusionner_tables("A", "B", tables)
+
+
+def test_relation_entre_tables_recommande_individid_pas_id():
+    tables = {
+        "opo_hypervel_education": pd.DataFrame({"id": [1, 2], "individid": [10, 20]}),
+        "opo_hypervel_presences": pd.DataFrame({"id": [5, 6], "individid": [10, 20]}),
+    }
+    texte = dt.relation_entre_tables("opo_hypervel_education", "opo_hypervel_presences", tables)
+    assert "`individid`" in texte
+    assert "candidate la plus probable comme clé de jointure" in texte
+    assert "identifiant confirmé" in texte
+
+
+def test_relation_entre_tables_avertit_si_seule_id_est_commune():
+    tables = {
+        "A": pd.DataFrame({"id": [1, 2], "x": [1, 2]}),
+        "B": pd.DataFrame({"id": [1, 2], "y": [1, 2]}),
+    }
+    texte = dt.relation_entre_tables("A", "B", tables)
+    assert "Aucune de ces colonnes communes n'est fiable" in texte
+
+
+# --- Ne pas confondre "individus" mot generique et table opo_hypervel_individus
+# Bug reel corrige ici : la question "les individus dont on a fait l'education
+# ne sont pas dans la fiche presence" mentionne "individus" au sens general
+# (les gens), pas la table opo_hypervel_individus - mais une correspondance
+# nue sur ce mot faisait quand meme compter cette table comme "mentionnee",
+# polluant la resolution automatique de la paire de tables visee par la
+# question (qui retenait alors education+individus au lieu d'education+presences).
+
+def test_detecter_tables_mentionnees_ignore_individus_utilise_comme_mot_courant():
+    tables = {
+        "opo_hypervel_individus": pd.DataFrame({"individid": [1]}),
+        "opo_hypervel_education": pd.DataFrame({"individid": [1]}),
+        "opo_hypervel_presences": pd.DataFrame({"individid": [1]}),
+    }
+    question = (
+        "quelles sont les individus dont on a fait leur education mais qui ne se "
+        "trouvent pas dans la fiche presence"
+    )
+    trouvees = dt.detecter_tables_mentionnees(question, tables)
+    assert "opo_hypervel_individus" not in trouvees
+    assert "opo_hypervel_education" in trouvees
+    assert "opo_hypervel_presences" in trouvees
+
+
+def test_detecter_tables_mentionnees_reconnait_individus_quand_ancre():
+    tables = {
+        "opo_hypervel_individus": pd.DataFrame({"individid": [1]}),
+        "opo_hypervel_education": pd.DataFrame({"individid": [1]}),
+    }
+    question = "fusionne la table individus avec la table education"
+    trouvees = dt.detecter_tables_mentionnees(question, tables)
+    assert "opo_hypervel_individus" in trouvees
+    assert "opo_hypervel_education" in trouvees
+
+
 def test_syntaxe_fusion_contient_r_et_stata():
     texte = dt.syntaxe_fusion("Tindividual", "TMembership", "individid")
     assert "merge(Tindividual, TMembership" in texte

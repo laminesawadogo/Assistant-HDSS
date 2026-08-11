@@ -48,6 +48,24 @@ AGENT_LIKE = re.compile(
 # plus directe possible au besoin "je veux que les noms des agents
 # apparaissent", sans meme avoir besoin d'une jointure vers une autre table.
 
+# Identifiants REELS documentes dans le schema relationnel de l'observatoire
+# (voir data/docs/00_schema_relations.txt, construit a partir du dictionnaire
+# de donnees et du document de correspondance des tables, PLUS confirmes par
+# inspection directe des 28 vraies tables exportees - jamais invente ni
+# devine par convention de nommage). Consigne explicite de l'observatoire :
+# un nom de colonne qui RESSEMBLE a un identifiant (ex: "menage_id",
+# "individu_id", "uch_id", "enquete_id" - la convention Laravel/Hypervel
+# `<table>_id`, presente EN PARALLELE des vrais identifiants sur la quasi
+# totalite des tables reelles) n'en est pas la preuve : le menage est
+# identifie par `socialgpid`, jamais par `menage_id`. Seule cette liste, et
+# la documentation dont elle vient, fait foi.
+IDENTIFIANTS_REELS_DOCUMENTES = [
+    "individid", "socialgpid", "locationid", "episodeid", "episodeid_res",
+    "episodeid_head", "eventid", "observeid", "sobserveid", "eobserveid",
+    "fatherid", "motherid", "headid", "individid2", "childid", "ownerid",
+    "owner_id", "pregoutid", "respondid", "srespondid", "erespondid",
+]
+
 
 def load_table(path: str) -> pd.DataFrame:
     """Charge une table depuis un fichier Excel/Stata/CSV.
@@ -510,6 +528,38 @@ def _alias_mentionne(alias: str, q: str) -> bool:
     return re.search(r"\b" + re.escape(alias) + r"\b", q) is not None
 
 
+# Alias tres generiques qui coincident avec le vocabulaire courant de
+# l'observatoire, au-dela du nom d'une table precise : toute la base de
+# donnees parle "d'individus", "de menages", "de personnes"... Bug reel
+# corrige ici - la question "les individus dont on a fait l'education ne
+# sont pas dans la fiche presence" mentionne "individus" au sens general
+# (les gens), pas la table opo_hypervel_individus en particulier, mais une
+# correspondance nue sur ce mot la faisait quand meme compter comme "table
+# mentionnee". Resultat : `resoudre_paire_tables` recevait 3 tables
+# (individus, education, presences) et retenait les deux premieres au sens
+# de l'ordre de chargement (education + individus), ecartant la table
+# reellement visee par la question (presences). Pour ces alias-la
+# seulement, une mention nue ne suffit plus : il faut un ancrage explicite
+# ("dans les individus", "table individus", "base individus"...) a
+# proximite immediate, comme pour n'importe quel autre nom de table cite
+# explicitement.
+ALIAS_AMBIGUS_GENERIQUES = {"individus", "individu", "menages", "menage", "personnes", "personne"}
+
+_MOTS_ANCRAGE_TABLE = ("dans", "table", "base", "fiche", "feuille", "onglet")
+
+
+def _alias_ancre(alias: str, q: str) -> bool:
+    """Verifie qu'un alias AMBIGU (voir `ALIAS_AMBIGUS_GENERIQUES`) est bien
+    introduit par un mot comme "dans"/"table"/"base"/"fiche" juste avant, et
+    pas seulement employe comme mot du langage courant."""
+    motif = (
+        r"\b(?:" + "|".join(_MOTS_ANCRAGE_TABLE) + r")\s+"
+        r"(?:la\s+|le\s+|les\s+|l['’]\s*|de\s+la\s+|des\s+)?"
+        + re.escape(alias) + r"\b"
+    )
+    return re.search(motif, q) is not None
+
+
 def resoudre_table_ciblee(
     question: str, tables: dict, nom_par_defaut: str | None = None, historique: list[dict] | None = None
 ):
@@ -643,11 +693,26 @@ def detecter_tables_mentionnees(question: str, tables: dict) -> list[str]:
     `alias_table`) qui omet le prefixe technique et/ou le singulier/pluriel
     - ex: "education" et "presence" reconnus pour "FNewEducation" et
     "FNewPresences", sans que l'equipe ait besoin de citer le nom technique
-    complet."""
+    complet.
+
+    Pour les alias tres generiques qui se confondent avec le vocabulaire
+    courant de l'observatoire (voir `ALIAS_AMBIGUS_GENERIQUES` - ex:
+    "individus", "menages"), une mention nue ne suffit pas : il faut un
+    ancrage explicite ("dans les individus", "table individus"...), sinon
+    une question qui parle simplement "des individus" au sens general
+    ferait croire, a tort, que la table opo_hypervel_individus est visee."""
     q = _sans_accents(question.lower())
     trouvees = []
     for nom in tables:
-        if _sans_accents(nom.lower()) in q or any(_alias_mentionne(alias, q) for alias in alias_table(nom)):
+        if _sans_accents(nom.lower()) in q:
+            trouvees.append(nom)
+            continue
+        aliases = alias_table(nom)
+        aliases_specifiques = [a for a in aliases if a not in ALIAS_AMBIGUS_GENERIQUES]
+        aliases_ambigus = [a for a in aliases if a in ALIAS_AMBIGUS_GENERIQUES]
+        if any(_alias_mentionne(a, q) for a in aliases_specifiques):
+            trouvees.append(nom)
+        elif aliases_ambigus and any(_alias_ancre(a, q) for a in aliases_ambigus):
             trouvees.append(nom)
     return trouvees
 
@@ -657,6 +722,36 @@ def _colonnes_communes(df1: pd.DataFrame, df2: pd.DataFrame) -> list[str]:
     casse), dans l'ordre des colonnes de df1."""
     colonnes_b = {str(c).lower() for c in df2.columns}
     return [c for c in df1.columns if str(c).lower() in colonnes_b]
+
+
+def _meilleure_cle_jointure(communes: list[str]) -> str | None:
+    """Choisit, parmi des colonnes communes a deux tables, la plus fiable a
+    utiliser comme cle de jointure - PAS simplement la premiere trouvee.
+
+    Bug reel corrige ici : `communes[0]` choisissait bien souvent "id" (quasi
+    toujours la premiere colonne des vraies tables opo_hypervel_*), une cle
+    primaire LOCALE a chaque table qui n'est jamais une reference vers une
+    autre table dans ce schema - une jointure sur "id" ne relie que deux
+    compteurs auto-incrementes sans lien reel, produisant un resultat qui a
+    l'air precis (ex: "15630 lignes sans correspondance") mais qui ne
+    repond a rien de reel.
+
+    Ordre de priorite :
+    1. Un identifiant CONFIRME par le dictionnaire de donnees de
+       l'observatoire (`IDENTIFIANTS_REELS_DOCUMENTES`), dans l'ordre ou il
+       apparait parmi les colonnes communes.
+    2. A defaut, la premiere colonne commune qui n'est PAS la cle primaire
+       locale "id" (mieux qu'un abandon pur, mais a utiliser avec prudence -
+       cf. les nombreuses colonnes `<table>_id` de type Laravel/Hypervel qui
+       ressemblent a des identifiants sans etre documentees comme tels).
+    3. None si la seule colonne commune est "id" (aucune cle fiable)."""
+    for c in communes:
+        if str(c).strip().lower() in IDENTIFIANTS_REELS_DOCUMENTES:
+            return c
+    for c in communes:
+        if str(c).strip().lower() != "id":
+            return c
+    return None
 
 
 def detecter_cles_communes(tables: dict) -> dict[tuple[str, str], list[str]]:
@@ -692,11 +787,22 @@ def relation_entre_tables(nom1: str, nom2: str, tables: dict) -> str:
         f"**{nom1}** et **{nom2}** partagent {len(communes)} colonne(s) : "
         + ", ".join(f"`{c}`" for c in communes) + "."
     ]
-    lignes.append(
-        f"`{communes[0]}` est la candidate la plus probable comme clé de jointure "
-        f"(présente dans les deux tables). Demande « fusionne {nom1} et {nom2} » pour obtenir "
-        "une table combinée."
-    )
+    meilleure = _meilleure_cle_jointure(communes)
+    if meilleure is not None:
+        confirmee = meilleure.strip().lower() in IDENTIFIANTS_REELS_DOCUMENTES
+        precision = " (identifiant confirmé par le dictionnaire de données)" if confirmee else (
+            " (⚠️ à vérifier : pas un identifiant confirmé par le dictionnaire)"
+        )
+        lignes.append(
+            f"`{meilleure}` est la candidate la plus probable comme clé de jointure{precision}. "
+            f"Demande « fusionne {nom1} et {nom2} » pour obtenir une table combinée."
+        )
+    else:
+        lignes.append(
+            "Aucune de ces colonnes communes n'est fiable comme clé de jointure : seule 'id' est "
+            "partagée, or c'est une clé primaire locale à chaque table, jamais une référence vers "
+            "une autre table dans ce schéma."
+        )
     return "\n".join(lignes)
 
 
@@ -734,7 +840,13 @@ def fusionner_tables(nom1: str, nom2: str, tables: dict, cle: str | None = None)
         communes = _colonnes_communes(df1, df2)
         if not communes:
             raise ValueError(f"Aucune colonne commune trouvée entre '{nom1}' et '{nom2}' pour fusionner.")
-        cle = communes[0]
+        cle = _meilleure_cle_jointure(communes)
+        if cle is None:
+            raise ValueError(
+                f"Aucune colonne commune fiable trouvée entre '{nom1}' et '{nom2}' pour fusionner "
+                "(seule colonne commune : 'id', une clé primaire locale à chaque table, jamais une "
+                "référence entre tables dans ce schéma)."
+            )
     elif cle not in df1.columns or cle not in df2.columns:
         raise ValueError(f"La colonne '{cle}' n'existe pas dans les deux tables.")
 
@@ -749,7 +861,7 @@ def detecter_cle_jointure(nom1: str, nom2: str, tables: dict) -> str | None:
     if nom1 not in tables or nom2 not in tables:
         return None
     communes = _colonnes_communes(tables[nom1], tables[nom2])
-    return communes[0] if communes else None
+    return _meilleure_cle_jointure(communes)
 
 
 def difference_tables(nom1: str, nom2: str, tables: dict, cle: str | None = None) -> pd.DataFrame:

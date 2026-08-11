@@ -770,25 +770,14 @@ def tenter_requete_donnees_multi_table(
 
 
 # Identifiants REELS documentes dans le schema relationnel de l'observatoire
-# (voir data/docs/00_schema_relations.txt, construit a partir du dictionnaire
-# de donnees et du document de correspondance des tables - jamais invente ni
-# devine par convention de nommage). Sert a distinguer, parmi les colonnes
-# partagees par deux tables, celles qui sont des CLES DE JOINTURE CONFIRMEES
-# par la documentation de celles qui ressemblent seulement a un identifiant
-# par leur nom (ex: "menage_id") sans etre une vraie cle du schema reel - le
-# menage est identifie par `socialgpid`, jamais par `menage_id` ; un nom de
-# colonne qui "a l'air" d'un identifiant n'en est pas la preuve.
-IDENTIFIANTS_REELS_DOCUMENTES = [
-    "individid", "socialgpid", "locationid", "episodeid", "episodeid_res",
-    "episodeid_head", "eventid", "observeid", "sobserveid", "eobserveid",
-    "fatherid", "motherid", "headid", "individid2", "childid", "ownerid",
-    "owner_id", "pregoutid",
-    # Confirmes en inspectant les 28 vrais fichiers exportes par
-    # l'observatoire (respondid present sur la quasi-totalite des tables,
-    # srespondid/erespondid sur les tables d'episodes - meme convention
-    # documentee que sobserveid/eobserveid pour le debut/fin d'un episode).
-    "respondid", "srespondid", "erespondid",
-]
+# - source canonique unique : `dt.IDENTIFIANTS_REELS_DOCUMENTES` (deplace
+# dans data_tools.py pour que les fonctions de jointure deterministe
+# `detecter_cle_jointure`/`fusionner_tables`/`relation_entre_tables`, qui n'y
+# avaient plus acces depuis app.py, partagent la MEME liste que celle
+# utilisee ici pour la generation de requetes SQL - evite toute divergence
+# entre les deux). Garde un alias local pour ne rien casser des usages
+# existants dans ce fichier.
+IDENTIFIANTS_REELS_DOCUMENTES = dt.IDENTIFIANTS_REELS_DOCUMENTES
 
 
 def _description_schema(tables: dict) -> str:

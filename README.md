@@ -646,7 +646,7 @@ Cinq garde-fous supplémentaires pour que ce résultat reste fiable :
   l'observatoire — un nom de colonne qui *ressemble* à un identifiant (ex:
   `menage_id`) n'en est pas la preuve ; seul le dictionnaire de données fait
   foi (le ménage est identifié par `socialgpid`, jamais par `menage_id`).
-  `app.py:IDENTIFIANTS_REELS_DOCUMENTES` liste les identifiants confirmés par
+  `data_tools.IDENTIFIANTS_REELS_DOCUMENTES` liste les identifiants confirmés par
   `data/docs/00_schema_relations.txt` (`individid`, `socialgpid`,
   `locationid`, `episodeid`, `episodeid_res`, `episodeid_head`, `eventid`,
   `observeid`/`sobserveid`/`eobserveid`, `fatherid`, `motherid`, `headid`,
@@ -815,13 +815,54 @@ l'inspection des 28 vraies tables a confirmé la présence de `respondid`
 (répondant) sur la quasi-totalité des tables, ainsi que `srespondid`/
 `erespondid` (même convention début/fin qu'`sobserveid`/`eobserveid`) sur les
 tables d'épisodes (`individu_lien_c_m_s`, `menage_c_m_s`) — ajoutés à
-`app.py:IDENTIFIANTS_REELS_DOCUMENTES`. Confirmé aussi : la présence
+`data_tools.IDENTIFIANTS_REELS_DOCUMENTES`. Confirmé aussi : la présence
 massive, sur presque toutes les tables, de colonnes Laravel `<table>_id`
 (`individu_id`, `menage_id`, `uch_id`, `enquete_id`, `respond_id`,
 `individu_respondant_id`...) en PARALLÈLE des vrais identifiants du schéma
 HDSS d'origine (`individid`, `respondid`, `observeid`...) — exactement le
 piège que ces deux listes distinctes (confirmées vs. à vérifier) sont censées
 éviter.
+
+## Jointure "id" et mauvaise table choisies pour une différence entre tables réelles
+
+Bug réel signalé par l'observatoire sur des données de production : *"les
+individus dont on a fait leur education mais qui ne se trouvent pas dans la
+fiche presence"* renvoyait *"15630 ligne(s) de opo_hypervel_education n'ont
+pas de correspondance dans opo_hypervel_individus (sur la clé `id`)"* — deux
+erreurs à la fois, toutes deux systémiques (pas propres à cette seule
+question) :
+
+- **Mauvaise clé de jointure (`id` au lieu d'un identifiant réel)** :
+  `data_tools._colonnes_communes` renvoyait les colonnes communes dans
+  l'ordre brut des colonnes de la première table, et les fonctions qui
+  utilisaient ce résultat pour choisir UNE clé (`detecter_cle_jointure`,
+  `fusionner_tables` sans clé précisée, `relation_entre_tables`) prenaient
+  systématiquement la première — or `id` (clé primaire **locale** à chaque
+  table, jamais une référence vers une autre table dans ce schéma) est
+  quasiment toujours la toute première colonne des vraies tables
+  `opo_hypervel_*`. Le résultat *a l'air* précis ("15630 lignes") mais ne
+  répond à rien de réel, puisque les `id` des deux tables sont deux
+  compteurs auto-incrémentés sans lien entre eux. C'est le même piège déjà
+  corrigé côté génération SQL (section ci-dessus) mais qui ne l'était pas
+  encore côté fonctions déterministes déclenchées par mot-clé
+  (`difference_tables`, `fusionner_tables`, `relation_entre_tables`).
+  Corrigé par `data_tools._meilleure_cle_jointure`, qui exclut `id` et
+  priorise les identifiants confirmés (`IDENTIFIANTS_REELS_DOCUMENTES`,
+  désormais centralisée dans `data_tools.py`, seule source utilisée à la
+  fois par le repli SQL et par ces fonctions déterministes).
+- **Mauvaise table choisie (`opo_hypervel_individus` au lieu de
+  `opo_hypervel_presences`)** : "individus" est employé dans la question au
+  sens courant du mot ("les gens"), pas pour désigner la table
+  `opo_hypervel_individus` — mais `detecter_tables_mentionnees` comptait
+  quand même une simple mention nue du mot comme une table visée, ce qui
+  polluait la résolution automatique de la paire de tables
+  (`resoudre_paire_tables` prend les deux premières tables "mentionnées" :
+  elle retenait education + individus au lieu de education + presences).
+  Corrigé par une liste d'alias ambigus (`ALIAS_AMBIGUS_GENERIQUES` :
+  "individus", "menages", "personnes"...) qui, pour compter comme une
+  mention de table, exigent désormais un ancrage explicite juste avant
+  ("dans les individus", "table individus", "base individus"...) — une
+  mention nue du mot seul ne suffit plus.
 
 ## Limites connues
 
