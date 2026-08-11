@@ -60,10 +60,34 @@ AGENT_LIKE = re.compile(
 # identifie par `socialgpid`, jamais par `menage_id`. Seule cette liste, et
 # la documentation dont elle vient, fait foi.
 IDENTIFIANTS_REELS_DOCUMENTES = [
+    # --- Cles des 3 entites centrales + episodes/evenements (voir
+    # data/docs/00_schema_relations.txt, synthese officielle des relations
+    # entre les 23 tables du schema HDSS/ODSS d'origine). ---
     "individid", "socialgpid", "locationid", "episodeid", "episodeid_res",
     "episodeid_head", "eventid", "observeid", "sobserveid", "eobserveid",
     "fatherid", "motherid", "headid", "individid2", "childid", "ownerid",
-    "owner_id", "pregoutid", "respondid", "srespondid", "erespondid",
+    "owner_id", "pregoutid",
+    # --- Confirmes en inspectant directement les 28 vraies tables
+    # opo_hypervel_* exportees par l'observatoire (colonnes reellement
+    # presentes, pas seulement documentees) : respondid sur la quasi-totalite
+    # des tables, srespondid/erespondid sur les tables d'episodes (meme
+    # convention documentee que sobserveid/eobserveid), peventid present tel
+    # quel dans opo_hypervel_issue_grossesses.csv. ---
+    "respondid", "srespondid", "erespondid", "peventid",
+    # --- Consigne explicite de l'observatoire (2026-08-11) : reprendre TOUS
+    # les identifiants marques "Identifiant" dans le dictionnaire de
+    # donnees source, pas seulement le sous-ensemble deja verifie present
+    # dans les tables actuellement chargees - une table/un lot d'export
+    # different peut porter des colonnes non vues jusqu'ici. Liste ci-dessous
+    # extraite de "source_manuel technique et d'utilisation des donnees du
+    # ODSS (juil04).txt" (colonne "Identifiant" du dictionnaire technique
+    # d'origine), en plus de celles deja listees ci-dessus. Aucune n'a ete
+    # devinee par convention de nommage : chacune est explicitement typee
+    # "Identifiant" dans le document source. ---
+    "accomid", "chiefid", "socialgpidtmp", "lobserveid", "slobserveid",
+    "elobserveid", "region", "cluster",
+    "shusb_region", "shusb_locationid", "ehusb_region", "ehusb_locationid",
+    "swife_region", "swife_locationid", "ewife_region", "ewife_locationid",
 ]
 
 

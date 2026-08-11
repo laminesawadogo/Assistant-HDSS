@@ -864,6 +864,33 @@ question) :
   ("dans les individus", "table individus", "base individus"...) — une
   mention nue du mot seul ne suffit plus.
 
+## `IDENTIFIANTS_REELS_DOCUMENTES` étendue à tout le dictionnaire, pas un sous-ensemble choisi à la main
+
+Consigne explicite de l'observatoire : la liste des identifiants confirmés
+ne doit pas se limiter aux quelques colonnes déjà repérées au fil des bugs
+précédents (`individid`, `socialgpid`...) — elle doit reprendre **tous**
+les identifiants du dictionnaire de données, pour ne jamais rater un cas
+réel simplement parce qu'il n'était pas encore apparu dans une question.
+
+`data_tools.IDENTIFIANTS_REELS_DOCUMENTES` reprend maintenant, en plus des
+identifiants déjà listés (issus de `00_schema_relations.txt`), **tous** les
+champs explicitement typés `Identifiant` dans le dictionnaire technique
+d'origine (`source_manuel technique et d'utilisation des données du ODSS
+(juil04).txt`) : `accomid`, `chiefid`, `socialgpidtmp`, `lobserveid`,
+`slobserveid`, `elobserveid`, `region`, `cluster`, `shusb_region`,
+`shusb_locationid`, `ehusb_region`, `ehusb_locationid`, `swife_region`,
+`swife_locationid`, `ewife_region`, `ewife_locationid` — même si certains
+n'apparaissent pas dans le lot de 28 tables déjà inspecté (une table ou un
+lot d'export différent peut les porter). `peventid` (« PREGNANCY OUTCOME ID
+EVENT ID ») a aussi été ajouté et **confirmé présent tel quel** dans
+`opo_hypervel_issue_grossesses.csv`, exemple concret d'un identifiant
+documenté qui manquait encore à la liste avant cette extension.
+
+Aucun de ces ajouts n'a été deviné par convention de nommage : chacun est
+explicitement typé `Identifiant` dans le document source — c'est la même
+règle que celle déjà appliquée aux identifiants précédemment confirmés,
+appliquée maintenant de façon exhaustive plutôt que cas par cas.
+
 ## Limites connues
 
 - La recherche documentaire utilise du TF-IDF (mots-clés pondérés), pas des

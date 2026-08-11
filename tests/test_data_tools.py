@@ -227,6 +227,39 @@ def test_detecter_cle_jointure_none_si_aucune_commune():
     assert dt.detecter_cle_jointure("A", "B", tables) is None
 
 
+# --- IDENTIFIANTS_REELS_DOCUMENTES doit reprendre TOUS les identifiants du
+# dictionnaire, pas seulement un sous-ensemble choisi a la main - consigne
+# explicite de l'observatoire (2026-08-11). Verifie ici que les identifiants
+# du dictionnaire technique ODSS (au-dela des seuls individid/socialgpid/...
+# deja bien connus) sont bien reconnus, y compris ceux confirmes seulement
+# par inspection directe des vraies tables (ex: peventid, present tel quel
+# dans opo_hypervel_issue_grossesses.csv).
+
+def test_identifiants_reels_documentes_couvre_le_dictionnaire_technique_odss():
+    attendus = {
+        "individid", "socialgpid", "locationid", "episodeid", "eventid",
+        "observeid", "sobserveid", "eobserveid", "fatherid", "motherid",
+        "headid", "individid2", "childid", "ownerid", "owner_id",
+        "pregoutid", "respondid", "srespondid", "erespondid", "peventid",
+        "accomid", "chiefid", "socialgpidtmp", "lobserveid", "slobserveid",
+        "elobserveid", "region", "cluster",
+    }
+    manquants = attendus - set(dt.IDENTIFIANTS_REELS_DOCUMENTES)
+    assert not manquants, f"identifiants du dictionnaire absents de la liste : {manquants}"
+
+
+def test_detecter_cle_jointure_reconnait_peventid():
+    # peventid ("PREGNANCY OUTCOME ID EVENT ID") est confirme present tel
+    # quel dans les vraies donnees (opo_hypervel_issue_grossesses.csv).
+    tables = {
+        "opo_hypervel_naissances": pd.DataFrame({"id": [1, 2], "peventid": [100, 200]}),
+        "opo_hypervel_issue_grossesses": pd.DataFrame({"id": [9, 8], "peventid": [100, 200]}),
+    }
+    assert dt.detecter_cle_jointure(
+        "opo_hypervel_naissances", "opo_hypervel_issue_grossesses", tables
+    ) == "peventid"
+
+
 # --- Cle de jointure fiable : ignorer "id" au profit d'un identifiant reel --
 # Bug reel corrige ici : sur les vraies tables opo_hypervel_*, "id" (cle
 # primaire LOCALE a chaque table, jamais une reference vers une autre table
