@@ -945,6 +945,34 @@ def test_fusion_agent_controleur_sans_table_equipe():
     assert "controleur" not in fusionne.columns
 
 
+def test_fusion_agent_controleur_reconnait_la_colonne_contro_tronquee_stata():
+    # Bug reel rencontre sur un vrai export Stata (.dta) d'equipe fourni par
+    # l'observatoire : la colonne "Controleur" y est nommee "Contro" (nom de
+    # variable Stata tronque), donc CONTROLEUR_LIKE (qui exigeait le mot
+    # complet "controleur"/"superviseur"...) ne la reconnaissait pas - la
+    # jointure agent<->controleur echouait silencieusement (colonne absente,
+    # jamais d'erreur visible) meme avec une vraie table d'equipe chargee.
+    equipe = pd.DataFrame({
+        "field_wrkr": ["BADINI RACHIDE", "PASGO RENE", "MIHIN JUDITH STACY"],
+        "gender": [1, 1, 2],
+        "Contro": ["OUEDRAOGO MOUSSA AHMED", "OUEDRAOGO MOUSSA AHMED", "ZONGO SOMPOGOBNOMA HYACINTHE"],
+    })
+    rapport = pd.DataFrame({"agent": ["BADINI RACHIDE", "MIHIN JUDITH STACY"], "n_fiches": [12, 9]})
+    fusionne, nom_equipe = dt.fusion_agent_controleur(rapport, {"equipe": equipe})
+    assert nom_equipe == "equipe"
+    assert fusionne.set_index("agent")["controleur"]["BADINI RACHIDE"] == "OUEDRAOGO MOUSSA AHMED"
+    assert fusionne.set_index("agent")["controleur"]["MIHIN JUDITH STACY"] == "ZONGO SOMPOGOBNOMA HYACINTHE"
+
+
+def test_controleur_like_ne_matche_pas_un_controle_qualite():
+    # Garde-fou : l'ajout du cas tronque "Contro" (ancre ^...$) ne doit
+    # jamais faire matcher par erreur une colonne de controle QUALITE (ex:
+    # "controle_qualite", "date_controle"), qui n'a rien a voir avec
+    # l'identite d'un superviseur d'equipe.
+    assert dt.CONTROLEUR_LIKE.search("controle_qualite") is None
+    assert dt.CONTROLEUR_LIKE.search("date_controle") is None
+
+
 def test_prevision_objectif_calcule_la_date_de_fin(tables_performance_terrain):
     par_jour = dt.rapport_performance_par_jour(tables_performance_terrain)
     prevision = dt.prevision_objectif(par_jour, objectif=20)

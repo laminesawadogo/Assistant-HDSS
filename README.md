@@ -732,6 +732,34 @@ navigateur dans un état incohérent. Corrigé via `rag._texte_reponse_anthropic
 qui ne garde que les blocs de type `"text"` (peu importe leur position),
 utilisé par `call_llm` et `analyser_image`.
 
+## Identité agent / contrôleur (table "équipe")
+
+Une table "équipe" (n'importe quel nom de fichier — seules les colonnes
+comptent) contenant une colonne d'agent (ex: `field_wrkr`) ET une colonne de
+contrôleur/superviseur permet d'attacher le nom du contrôleur à chaque agent
+dans les rapports de performance (`data_tools.fusion_agent_controleur`). À
+déposer dans le **dossier Google Drive synchronisé** (pas seulement le
+dossier de travail local) pour être réellement pris en compte par
+l'application déployée.
+
+**Bug réel corrigé** : un export Stata (`.dta`) réel fourni par
+l'observatoire a sa colonne de contrôleur nommée `Contro` (nom de variable
+Stata tronqué), que `CONTROLEUR_LIKE` ne reconnaissait pas (il fallait le mot
+complet `controleur`/`superviseur`...) — la jointure agent↔contrôleur
+échouait silencieusement (aucune erreur visible, juste une colonne absente).
+`CONTROLEUR_LIKE` reconnaît maintenant aussi une colonne nommée exactement
+`contro` (ancré `^contro$`, pour ne jamais matcher par erreur une colonne de
+contrôle qualité comme `controle_qualite`).
+
+**Point à vérifier avec de vraies données** : cette jointure ne fonctionne
+que si la valeur déjà utilisée comme identifiant d'agent dans les tables
+d'observation (`agent` dans le rapport de performance) correspond exactement
+à la valeur de la colonne agent de la table équipe (ex: le même nom complet
+`field_wrkr`). Si les tables réelles identifient l'agent par un code/ID
+numérique plutôt qu'un nom, la jointure ne trouvera aucune correspondance
+(`controleur` affichera "Non renseigné" partout) — dans ce cas il faudrait
+une table de correspondance supplémentaire (ID ↔ nom).
+
 ## Limites connues
 
 - La recherche documentaire utilise du TF-IDF (mots-clés pondérés), pas des

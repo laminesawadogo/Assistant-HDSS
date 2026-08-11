@@ -1360,8 +1360,14 @@ observatoire/campagne a l'autre et ne sont pas connus a l'avance.
 """
 
 CONTROLEUR_LIKE = re.compile(
-    r"(controleur|contr[oô]lleur|superviseur|supervisor|chef_?equipe|team_?lead)", re.IGNORECASE
+    r"(controleur|contr[oô]lleur|superviseur|supervisor|chef_?equipe|team_?lead|^contro$)", re.IGNORECASE
 )
+# `^contro$` (colonne nommee EXACTEMENT "contro", rien avant/apres) : cas reel
+# rencontre dans un export Stata (.dta) d'equipe agent<->controleur, ou le nom
+# de colonne "Controleur" a ete tronque a "Contro" - ancre avec ^...$ plutot
+# qu'un simple "contro" en sous-chaine pour ne jamais matcher par erreur une
+# colonne de controle QUALITE (ex: "controle_qualite", "date_controle"), qui
+# n'a rien a voir avec l'identite d'un superviseur.
 
 # Chaque entree : (libelle affiche, mots-cles de reconnaissance du role de la
 # table par son nom - meme principe que `_table_correspond`/`TRANCHES_AGE_PAR_TYPE_FICHE`,
