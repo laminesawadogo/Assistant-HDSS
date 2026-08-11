@@ -334,6 +334,25 @@ def test_rapport_agents_leve_erreur_sans_colonne_agent():
         dt.rapport_agents(df)
 
 
+def test_rapport_agents_utilise_directement_agent_name(tmp_path):
+    # Verification bout-en-bout du vrai schema opo_hypervel_* : `agent_name`
+    # est detectee comme colonne d'agent ET contient deja le vrai nom
+    # complet - le rapport de performance doit donc afficher des noms
+    # directement, sans avoir besoin d'une jointure vers une autre table.
+    df = pd.DataFrame({
+        "individid": [1, 2, 3, 3],
+        "agent_name": ["BADINI RACHIDE", "BADINI RACHIDE", "PASGO RENE", "PASGO RENE"],
+    })
+    path = tmp_path / "table.csv"
+    df.to_csv(path, index=False)
+    charge = dt.load_table(str(path))
+    rapport = dt.rapport_agents(charge)
+    assert set(rapport["agent"]) == {"BADINI RACHIDE", "PASGO RENE"}
+    ligne = rapport[rapport["agent"] == "PASGO RENE"].iloc[0]
+    assert ligne["n_fiches"] == 2
+    assert ligne["doublons_id"] == 2
+
+
 def test_syntaxe_rapport_agents_contient_r_et_stata():
     texte = dt.syntaxe_rapport_agents("FNewIndividual", "field_wrkr")
     assert "dplyr::count(FNewIndividual, field_wrkr" in texte
@@ -377,6 +396,44 @@ def test_strip_names_retire_les_colonnes_nominatives(table_exemple):
     df = dt.load_table(table_exemple)
     assert "nom" not in df.columns
     assert "individid" in df.columns
+
+
+def test_strip_names_garde_le_nom_de_lagent(tmp_path):
+    # Bug reel corrige : `agent_name` contient "name" et etait donc retiree
+    # par erreur comme n'importe quel nom de personne enquetee - alors que
+    # la quasi-totalite des vraies tables de l'observatoire (opo_hypervel_*)
+    # portent cette colonne avec le vrai nom de l'agent enqueteur, et que
+    # c'est precisement ce que l'observatoire demande de pouvoir afficher.
+    # Un vrai nom de repondant/individu (colonne "nom") doit lui rester
+    # retire (vie privee des personnes enquetees).
+    df = pd.DataFrame({
+        "individid": [1, 2],
+        "nom": ["Diallo", "Ouedraogo"],
+        "agent_name": ["BADINI RACHIDE", "PASGO RENE"],
+    })
+    path = tmp_path / "table.csv"
+    df.to_csv(path, index=False)
+    charge = dt.load_table(str(path))
+    assert "agent_name" in charge.columns
+    assert list(charge["agent_name"]) == ["BADINI RACHIDE", "PASGO RENE"]
+    assert "nom" not in charge.columns
+
+
+def test_load_table_detecte_le_separateur_point_virgule(tmp_path):
+    # Bug reel corrige, decouvert sur les vrais exports de l'observatoire :
+    # environ la moitie des fichiers CSV reels (opo_hypervel_*) utilisent un
+    # point-virgule comme separateur (export en locale francaise), pas une
+    # virgule. Sans detection automatique, le fichier se chargeait comme une
+    # SEULE colonne (tout le contenu concatene), rendant la table entiere
+    # inutilisable - sans aucune erreur visible pour signaler le probleme.
+    path = tmp_path / "table_point_virgule.csv"
+    path.write_text(
+        "individid;respondid;agent_name\n1;10;BADINI RACHIDE\n2;20;PASGO RENE\n", encoding="utf-8"
+    )
+    df = dt.load_table(str(path))
+    assert list(df.columns) == ["individid", "respondid", "agent_name"]
+    assert len(df) == 2
+    assert list(df["agent_name"]) == ["BADINI RACHIDE", "PASGO RENE"]
 
 
 def test_detect_id_columns(table_exemple):

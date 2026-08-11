@@ -634,7 +634,7 @@ aucun mot-clé de modification (`INSERT`/`UPDATE`/`DROP`/`ATTACH`...) — jamais
 d'exécution de code généré par le LLM sans validation. Résultat limité à
 200 lignes. Voir `app.py:tenter_requete_sql` / `rag.generer_requete_sql`.
 
-Quatre garde-fous supplémentaires pour que ce résultat reste fiable :
+Cinq garde-fous supplémentaires pour que ce résultat reste fiable :
 
 - **Indices de jointure** : le schéma transmis au LLM inclut les colonnes
   réellement communes à chaque paire de tables (`dt.detecter_cles_communes`),
@@ -642,6 +642,19 @@ Quatre garde-fous supplémentaires pour que ce résultat reste fiable :
   (chaque table a sa propre clé primaire locale `id`, jamais une référence
   vers une autre table dans ce schéma) — réduit le risque d'une jointure
   inventée ou faite sur la mauvaise colonne.
+- **Clés confirmées vs. clés à vérifier** : consigne explicite de
+  l'observatoire — un nom de colonne qui *ressemble* à un identifiant (ex:
+  `menage_id`) n'en est pas la preuve ; seul le dictionnaire de données fait
+  foi (le ménage est identifié par `socialgpid`, jamais par `menage_id`).
+  `app.py:IDENTIFIANTS_REELS_DOCUMENTES` liste les identifiants confirmés par
+  `data/docs/00_schema_relations.txt` (`individid`, `socialgpid`,
+  `locationid`, `episodeid`, `episodeid_res`, `episodeid_head`, `eventid`,
+  `observeid`/`sobserveid`/`eobserveid`, `fatherid`, `motherid`, `headid`,
+  `individid2`, `childid`, `ownerid`/`owner_id`, `pregoutid`) ;
+  `_description_schema` sépare désormais les colonnes communes en deux
+  sections dans le prompt (CONFIRMÉES vs. NON confirmées), et
+  `generer_requete_sql` demande explicitement au LLM de n'utiliser les
+  secondes qu'en dernier recours.
 - **Contexte du dictionnaire de données** : en plus du schéma structurel,
   `app.py:_contexte_dictionnaire_pour_sql` va chercher dans le dictionnaire/
   manuels/fiches déjà indexés (`rag.retrieve`) les extraits pertinents pour
@@ -732,15 +745,53 @@ navigateur dans un état incohérent. Corrigé via `rag._texte_reponse_anthropic
 qui ne garde que les blocs de type `"text"` (peu importe leur position),
 utilisé par `call_llm` et `analyser_image`.
 
+## Bugs critiques corrigés grâce à l'inspection des 28 vraies tables exportées
+
+L'observatoire a fourni un export réel complet (28 fichiers `opo_hypervel_*`,
+août 2026). Leur inspection directe a révélé deux bugs majeurs, invisibles
+sans données réelles, corrigés dans `data_tools.load_table`/`strip_names` :
+
+- **Séparateur CSV non détecté** : `pd.read_csv(path)` supposait une virgule,
+  mais environ la moitié des exports réels (`arrivees`, `c_p_n_s`,
+  `d_e_c_e_s`, `departs`, `emplois`, `enquete_or_visites`, `grossesses`,
+  `histoire_*`, `individu_caracteristiques`, `individu_lien_c_m_s`,
+  `individus`...) utilisent un **point-virgule** (export en locale
+  française). Sans détection, ces tables se chargeaient comme une seule
+  colonne — `opo_hypervel_d_e_c_e_s.csv` se chargeait carrément à **0
+  colonne**, silencieusement invisible pour l'assistant, sans aucune erreur
+  affichée. `load_table` utilise maintenant `pd.read_csv(path, sep=None,
+  engine="python")` (détection automatique), vérifié sur les 28 tables
+  réelles.
+- **`agent_name` supprimée par erreur** : `strip_names` retire toute colonne
+  dont le nom contient "name" (protection de la vie privée des personnes
+  enquêtées — colonnes `name`, `conj_name`, `owner_name`...). Or la
+  quasi-totalité des tables d'événements réelles portent une colonne
+  `agent_name` qui contient déjà le **vrai nom complet de l'agent enquêteur**
+  (vérifié sur `opo_hypervel_education.csv`, 1091 lignes réelles : mêmes noms
+  que dans le fichier `equipe.dta` de l'observatoire, ex. "BADINI RACHIDE").
+  Cette colonne se faisait supprimer au chargement comme n'importe quel nom
+  de répondant — c'est la cause racine du besoin exprimé par l'observatoire
+  (« je veux que les noms des agents apparaissent »). `AGENT_LIKE` reconnaît
+  maintenant `agent_name`, et `strip_names` exclut désormais toute colonne
+  reconnue comme identité d'agent de la suppression — les noms de personnes
+  enquêtées (répondants, individus) restent bien retirés, seul le nom de
+  l'agent (donnée opérationnelle sur le personnel, pas une donnée privée
+  d'une personne enquêtée) est conservé.
+
+Avec ces deux correctifs, les rapports de performance par agent affichent
+directement les vrais noms **sans aucune jointure** vers `equipe.dta` — cette
+dernière reste utile uniquement pour attacher le nom du **contrôleur**
+(voir ci-dessous).
+
 ## Identité agent / contrôleur (table "équipe")
 
 Une table "équipe" (n'importe quel nom de fichier — seules les colonnes
-comptent) contenant une colonne d'agent (ex: `field_wrkr`) ET une colonne de
-contrôleur/superviseur permet d'attacher le nom du contrôleur à chaque agent
-dans les rapports de performance (`data_tools.fusion_agent_controleur`). À
-déposer dans le **dossier Google Drive synchronisé** (pas seulement le
-dossier de travail local) pour être réellement pris en compte par
-l'application déployée.
+comptent) contenant une colonne d'agent (ex: `field_wrkr` ou `agent_name`) ET
+une colonne de contrôleur/superviseur permet d'attacher le nom du contrôleur
+à chaque agent dans les rapports de performance
+(`data_tools.fusion_agent_controleur`). À déposer dans le **dossier Google
+Drive synchronisé** (pas seulement le dossier de travail local) pour être
+réellement pris en compte par l'application déployée.
 
 **Bug réel corrigé** : un export Stata (`.dta`) réel fourni par
 l'observatoire a sa colonne de contrôleur nommée `Contro` (nom de variable
@@ -751,14 +802,26 @@ complet `controleur`/`superviseur`...) — la jointure agent↔contrôleur
 `contro` (ancré `^contro$`, pour ne jamais matcher par erreur une colonne de
 contrôle qualité comme `controle_qualite`).
 
-**Point à vérifier avec de vraies données** : cette jointure ne fonctionne
-que si la valeur déjà utilisée comme identifiant d'agent dans les tables
-d'observation (`agent` dans le rapport de performance) correspond exactement
-à la valeur de la colonne agent de la table équipe (ex: le même nom complet
-`field_wrkr`). Si les tables réelles identifient l'agent par un code/ID
-numérique plutôt qu'un nom, la jointure ne trouvera aucune correspondance
-(`controleur` affichera "Non renseigné" partout) — dans ce cas il faudrait
-une table de correspondance supplémentaire (ID ↔ nom).
+**Point vérifié avec de vraies données** (résolu) : `opo_hypervel_education.csv`
+confirme que `agent_name` contient EXACTEMENT les mêmes chaînes de noms que
+`field_wrkr` dans `equipe.dta` (ex. "BADINI RACHIDE") — la jointure
+agent↔contrôleur fonctionne donc directement par égalité de nom, sans besoin
+d'identifiant numérique intermédiaire.
+
+## Identifiants réels confirmés par inspection directe (au-delà du dictionnaire)
+
+En plus des identifiants déjà documentés dans `00_schema_relations.txt`,
+l'inspection des 28 vraies tables a confirmé la présence de `respondid`
+(répondant) sur la quasi-totalité des tables, ainsi que `srespondid`/
+`erespondid` (même convention début/fin qu'`sobserveid`/`eobserveid`) sur les
+tables d'épisodes (`individu_lien_c_m_s`, `menage_c_m_s`) — ajoutés à
+`app.py:IDENTIFIANTS_REELS_DOCUMENTES`. Confirmé aussi : la présence
+massive, sur presque toutes les tables, de colonnes Laravel `<table>_id`
+(`individu_id`, `menage_id`, `uch_id`, `enquete_id`, `respond_id`,
+`individu_respondant_id`...) en PARALLÈLE des vrais identifiants du schéma
+HDSS d'origine (`individid`, `respondid`, `observeid`...) — exactement le
+piège que ces deux listes distinctes (confirmées vs. à vérifier) sont censées
+éviter.
 
 ## Limites connues
 

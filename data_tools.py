@@ -36,17 +36,41 @@ ID_LIKE = re.compile(r"(id|identif)", re.IGNORECASE)
 # comme `enquete_id` ou `date_enquete`, presentes sur la quasi-totalite des
 # tables du schema reel de l'observatoire mais qui ne designent PAS l'agent -
 # seulement l'evenement d'enquete/visite auquel la fiche se rattache.
-AGENT_LIKE = re.compile(r"(field_?wrkr|fieldworker|agent_?id|^agent$|agent_?enquet|interviewer_?id)", re.IGNORECASE)
+AGENT_LIKE = re.compile(
+    r"(field_?wrkr|fieldworker|agent_?id|agent_?name|^agent$|agent_?enquet|interviewer_?id)", re.IGNORECASE
+)
+# `agent_?name` ajoute suite a l'inspection des vrais fichiers exportes par
+# l'observatoire : la quasi-totalite des tables d'evenements reelles
+# (opo_hypervel_arrivees/deces/naissances/education/...) portent une colonne
+# `agent_name` qui contient DEJA le nom complet reel de l'agent enqueteur
+# (verifie sur `opo_hypervel_education.csv` : memes noms que dans le fichier
+# equipe.dta fourni par l'observatoire, ex "BADINI RACHIDE") - la reponse la
+# plus directe possible au besoin "je veux que les noms des agents
+# apparaissent", sans meme avoir besoin d'une jointure vers une autre table.
 
 
 def load_table(path: str) -> pd.DataFrame:
+    """Charge une table depuis un fichier Excel/Stata/CSV.
+
+    Bug reel corrige ici, decouvert en inspectant les vrais fichiers exportes
+    par l'observatoire : `pd.read_csv(path)` suppose une virgule comme
+    separateur, mais environ la moitie des exports reels du schema
+    opo_hypervel_* utilisent un POINT-VIRGULE (export Excel en locale
+    francaise, ou la virgule est deja le separateur decimal). Sans detection
+    du separateur, ces fichiers se chargeaient en UNE SEULE colonne (tout le
+    contenu de chaque ligne concatene comme texte), ce qui pouvait meme
+    aboutir a une table vide (0 colonne) selon le contenu - une table
+    entiere silencieusement invisible pour l'assistant, sans aucune erreur
+    affichee. `sep=None, engine="python"` laisse pandas detecter le vrai
+    separateur (virgule ou point-virgule) a partir du contenu reel du
+    fichier, verifie sur l'ensemble des 28 tables reelles de l'observatoire."""
     chemin = str(path).lower()
     if chemin.endswith((".xlsx", ".xls")):
         df = pd.read_excel(path)
     elif chemin.endswith(".dta"):
         df = pd.read_stata(path)
     else:
-        df = pd.read_csv(path)
+        df = pd.read_csv(path, sep=None, engine="python")
     return strip_names(df)
 
 
@@ -74,8 +98,18 @@ def charger_classeur(path: str) -> dict[str, pd.DataFrame]:
 
 
 def strip_names(df: pd.DataFrame) -> pd.DataFrame:
-    """Retire toute colonne qui ressemble a un nom/prenom avant analyse."""
-    to_drop = [c for c in df.columns if NAME_LIKE.search(str(c))]
+    """Retire toute colonne qui ressemble a un nom/prenom d'une PERSONNE
+    ENQUETEE avant analyse (vie privee des repondants/individus) - a
+    l'exception du nom de l'AGENT enqueteur (ex: `agent_name`, reconnu par
+    `AGENT_LIKE`), qui n'est pas une donnee de vie privee des personnes
+    enquetees mais une donnee operationnelle sur le personnel de terrain,
+    necessaire au suivi de performance par agent explicitement demande par
+    l'observatoire (voir `rapport_agents`/`fusion_agent_controleur`). Bug
+    reel corrige ici : `agent_name` contient "name" et etait donc
+    silencieusement supprimee comme n'importe quel nom de repondant, rendant
+    impossible l'affichage du nom de l'agent alors que la donnee existe deja
+    dans les vraies tables de l'observatoire."""
+    to_drop = [c for c in df.columns if NAME_LIKE.search(str(c)) and not AGENT_LIKE.search(str(c))]
     if to_drop:
         df = df.drop(columns=to_drop)
     return df

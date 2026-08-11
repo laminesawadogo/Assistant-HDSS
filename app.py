@@ -769,6 +769,28 @@ def tenter_requete_donnees_multi_table(
     return resultat_final
 
 
+# Identifiants REELS documentes dans le schema relationnel de l'observatoire
+# (voir data/docs/00_schema_relations.txt, construit a partir du dictionnaire
+# de donnees et du document de correspondance des tables - jamais invente ni
+# devine par convention de nommage). Sert a distinguer, parmi les colonnes
+# partagees par deux tables, celles qui sont des CLES DE JOINTURE CONFIRMEES
+# par la documentation de celles qui ressemblent seulement a un identifiant
+# par leur nom (ex: "menage_id") sans etre une vraie cle du schema reel - le
+# menage est identifie par `socialgpid`, jamais par `menage_id` ; un nom de
+# colonne qui "a l'air" d'un identifiant n'en est pas la preuve.
+IDENTIFIANTS_REELS_DOCUMENTES = [
+    "individid", "socialgpid", "locationid", "episodeid", "episodeid_res",
+    "episodeid_head", "eventid", "observeid", "sobserveid", "eobserveid",
+    "fatherid", "motherid", "headid", "individid2", "childid", "ownerid",
+    "owner_id", "pregoutid",
+    # Confirmes en inspectant les 28 vrais fichiers exportes par
+    # l'observatoire (respondid present sur la quasi-totalite des tables,
+    # srespondid/erespondid sur les tables d'episodes - meme convention
+    # documentee que sobserveid/eobserveid pour le debut/fin d'un episode).
+    "respondid", "srespondid", "erespondid",
+]
+
+
 def _description_schema(tables: dict) -> str:
     """Decrit le schema (nom de table + colonnes, PUIS indices de jointure)
     de TOUTES les tables chargees, pour le fournir au LLM dans
@@ -781,17 +803,40 @@ def _description_schema(tables: dict) -> str:
     "id" partagee par hasard entre deux tables SANS lien reel entre elles
     (chaque table du schema reel a sa propre cle primaire locale "id" - ce
     n'est jamais, dans ce schema, une reference vers une autre table),
-    volontairement exclue de ces indices."""
+    volontairement exclue de ces indices.
+
+    Distingue en plus, parmi les colonnes communes restantes, celles qui
+    correspondent a un identifiant CONFIRME par le dictionnaire de donnees
+    (`IDENTIFIANTS_REELS_DOCUMENTES`) de celles qui n'ont qu'un nom evocateur
+    (ex: "menage_id") sans etre documentees comme une vraie cle - consigne
+    explicite de l'observatoire : ne jamais se fier a un nom de colonne qui
+    "ressemble" a un identifiant, seule la documentation fait foi."""
     lignes = [f"- {nom}({', '.join(str(c) for c in df.columns)})" for nom, df in tables.items()]
 
-    indices = []
+    indices_confirmes, indices_a_verifier = [], []
     for (a, b), communes in dt.detecter_cles_communes(tables).items():
         candidates = [c for c in communes if str(c).strip().lower() != "id"]
-        if candidates:
-            indices.append(f"- {a} <-> {b} sur : {', '.join(candidates)}")
-    if indices:
-        lignes.append("\nColonnes candidates pour les jointures entre tables (détectées automatiquement) :")
-        lignes.extend(indices)
+        confirmes = [c for c in candidates if str(c).strip().lower() in IDENTIFIANTS_REELS_DOCUMENTES]
+        a_verifier = [c for c in candidates if c not in confirmes]
+        if confirmes:
+            indices_confirmes.append(f"- {a} <-> {b} sur : {', '.join(confirmes)}")
+        if a_verifier:
+            indices_a_verifier.append(f"- {a} <-> {b} sur : {', '.join(a_verifier)}")
+
+    if indices_confirmes:
+        lignes.append(
+            "\nColonnes de jointure CONFIRMÉES par le dictionnaire de données de l'observatoire "
+            "(à utiliser en priorité) :"
+        )
+        lignes.extend(indices_confirmes)
+    if indices_a_verifier:
+        lignes.append(
+            "\nAutres colonnes communes détectées automatiquement, mais NON confirmées comme de "
+            "vraies clés par le dictionnaire (un nom qui ressemble à un identifiant, ex: \"menage_id\", "
+            "n'en est pas la preuve) - à utiliser seulement si aucune colonne confirmée ci-dessus ne "
+            "permet de répondre, et avec prudence :"
+        )
+        lignes.extend(indices_a_verifier)
 
     return "\n".join(lignes)
 
