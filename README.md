@@ -109,15 +109,21 @@ automatique), mêmes analyses disponibles ensuite dans le chat. Un classeur
 Excel à plusieurs feuilles est reconnu comme un ensemble de tables
 distinctes (une par feuille), aussi bien déposé manuellement que via Drive.
 
-**Piège Drive à connaître** : si le paramètre Drive « Convertir les fichiers
-importés au format Google Docs » est activé, un `.xlsx` déposé est
-automatiquement transformé en Google Sheets **natif** (même s'il garde son
-nom affiché avec l'extension `.xlsx`) — un tel fichier n'a plus de contenu
-binaire téléchargeable par l'API. `drive_sync.synchroniser` détecte ce cas
-via le `mimeType` réel du fichier (`application/vnd.google-apps.*`) et
-affiche un message clair invitant à désactiver ce paramètre (Drive →
-Paramètres → Général) et à redéposer le fichier `.xlsx` d'origine, plutôt
-que l'erreur HTTP brute de l'API Google.
+**Piège Drive rencontré en pratique et pris en charge automatiquement** :
+même un vrai `.xlsx` uploadé (confirmé par l'équipe) peut se retrouver
+transformé par Drive en Google Sheets **natif** (URL en
+`docs.google.com/spreadsheets/...`, mimeType
+`application/vnd.google-apps.spreadsheet`), même s'il garde son nom affiché
+avec l'extension `.xlsx` — un tel fichier n'a plus de contenu binaire
+téléchargeable directement par l'API (`get_media` échoue). `drive_sync`
+détecte ce cas via le `mimeType` réel du fichier et le récupère
+automatiquement via `export_media` (conversion à la volée en `.xlsx` par
+Google, sans rien changer côté lecture) — **aucune action requise côté
+équipe**, y compris quand le fichier n'a aucune extension dans son nom
+affiché (ex. un Sheets créé directement dans Drive, jamais un fichier
+`.xlsx`). Seuls les *autres* documents Google natifs non tabulaires
+(Docs, Slides, Forms...) restent simplement signalés par un avertissement,
+sans tentative de conversion.
 
 **Le dossier étant restreint à des comptes précis** (pas un lien public),
 l'accès se fait via un **compte de service Google** (un compte technique,

@@ -117,6 +117,22 @@ def _est_dossier(item: dict) -> bool:
     return item.get("mimeType") == DOSSIER_MIME
 
 
+MIME_GOOGLE_SHEETS_NATIF = "application/vnd.google-apps.spreadsheet"
+
+
+def _est_fichier_table(item: dict) -> bool:
+    """Un fichier peut etre reconnu comme un export de table soit par son
+    extension (CSV/Excel/Stata), soit - bug reel rencontre - parce que c'est
+    un Google Sheets NATIF (`MIME_GOOGLE_SHEETS_NATIF`), qui peut ne porter
+    AUCUNE extension reconnue dans son nom affiche (ex: un Sheets cree
+    directement dans Drive, sans jamais avoir ete un fichier .xlsx, s'appelle
+    souvent juste "Export OPO" sans ".xlsx"). Sans ce deuxieme critere, un tel
+    fichier serait ignore des la resolution des candidats, avant meme
+    d'atteindre le code qui sait pourtant le convertir via `exporter_contenu`."""
+    nom = str(item.get("name", "")).lower()
+    return nom.endswith(EXTENSIONS_RECONNUES) or item.get("mimeType") == MIME_GOOGLE_SHEETS_NATIF
+
+
 def _plus_recent(items: list[dict]):
     """Choisit l'element le plus recent d'une liste (fichiers ou dossiers) :
     d'abord par date detectee dans son nom, sinon par date de derniere
@@ -149,7 +165,7 @@ def derniers_fichiers_par_table(fichiers: list[dict]) -> dict[str, dict]:
     retenus: dict[str, dict] = {}
     for f in fichiers:
         nom = f.get("name", "")
-        if not nom.lower().endswith(EXTENSIONS_RECONNUES):
+        if not _est_fichier_table(f):
             continue
         table = nom_base_table(nom)
         date_nom = extraire_date_export(nom)
@@ -274,6 +290,28 @@ def telecharger_contenu(service, file_id: str) -> bytes:
     return tampon.getvalue()
 
 
+# Mime-type Office standard vers lequel exporter un Google Sheets natif -
+# c'est le meme format que `data_tools.load_table`/`charger_classeur` savent
+# deja lire (pd.read_excel), aucun changement necessaire cote lecture.
+MIME_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+def exporter_contenu(service, file_id: str, mime_cible: str = MIME_XLSX) -> bytes:
+    """Comme `telecharger_contenu`, mais pour un fichier Google natif (Sheets,
+    Docs...) qui n'a pas de contenu binaire propre a telecharger (`get_media`
+    echoue dessus) - utilise `export_media`, qui demande a Google de generer
+    a la volee une conversion dans le format cible (xlsx par defaut)."""
+    from googleapiclient.http import MediaIoBaseDownload
+
+    requete = service.files().export_media(fileId=file_id, mimeType=mime_cible)
+    tampon = io.BytesIO()
+    telechargeur = MediaIoBaseDownload(tampon, requete)
+    termine = False
+    while not termine:
+        _, termine = telechargeur.next_chunk()
+    return tampon.getvalue()
+
+
 def _extraire_tables_dune_archive(octets_zip: bytes) -> dict[str, bytes]:
     """Extrait, en memoire (sans jamais rien ecrire sur disque), les fichiers
     de table (CSV/Excel/Stata) contenus dans une archive .zip d'export.
@@ -328,7 +366,7 @@ def resoudre_elements_du_dernier_export(service, folder_id: str) -> tuple[list[d
     else:
         candidats = fichiers_racine
 
-    tables_visibles = [c for c in candidats if c.get("name", "").lower().endswith(EXTENSIONS_RECONNUES)]
+    tables_visibles = [c for c in candidats if _est_fichier_table(c)]
     if tables_visibles:
         return tables_visibles, date_du_lot
 
@@ -407,27 +445,38 @@ def synchroniser(folder_id: str | None = None, service=None):
         c.setdefault("date_lot", date_du_lot)
     retenus = derniers_fichiers_par_table(candidats)
     for table, info in sorted(retenus.items()):
-        # Bug reel rencontre : si le parametre Drive "Convertir les fichiers
-        # importes au format Docs" est active, un .xlsx depose par l'equipe
-        # est automatiquement transforme en Google Sheets NATIF (meme s'il
-        # garde son nom affiche avec l'extension .xlsx) - un tel fichier n'a
-        # plus de contenu binaire telechargeable via `get_media` (utilise par
-        # `telecharger_contenu`), qui echoue avec une erreur HTTP Google
-        # brute et peu comprehensible ("Only files with binary content can
-        # be downloaded"). Detecte ce cas via le mimeType (deja recupere par
-        # `lister_fichiers_dossier`) AVANT de tenter le telechargement, pour
-        # afficher un message clair plutot que l'erreur technique brute.
-        if str(info.get("mimeType", "")).startswith("application/vnd.google-apps."):
-            avertissements.append(
-                f"{info['name']} ({table}) a été converti par Google Drive en document natif "
-                "(Google Sheets/Docs) et ne peut pas être lu tel quel — dans Drive, désactive "
-                "« Convertir les fichiers importés au format Google Docs » (Paramètres → Général), "
-                "puis redépose le fichier .xlsx d'origine."
-            )
-            continue
+        # Bug reel rencontre : un fichier depose dans Drive (upload d'un vrai
+        # .xlsx existant, confirme par l'equipe) peut malgre tout finir en
+        # Google Sheets NATIF cote Drive (mimeType application/vnd.google-
+        # apps.spreadsheet, URL en docs.google.com/spreadsheets/... plutot que
+        # drive.google.com/file/...) - meme si son nom affiche garde
+        # l'extension .xlsx. Un tel fichier n'a pas de contenu binaire
+        # telechargeable via `get_media` (utilise par `telecharger_contenu`),
+        # qui echoue avec une erreur HTTP Google brute ("Only files with
+        # binary content can be downloaded"). Pour un Sheets natif
+        # specifiquement, on peut recuperer un .xlsx equivalent via
+        # `export_media` (voir `exporter_contenu`) - aucune manipulation
+        # supplementaire demandee a l'equipe, la conversion est transparente.
+        # Les AUTRES formats Google natifs (Docs, Slides, Forms...) ne sont
+        # jamais des donnees tabulaires exploitables : ceux-la restent
+        # simplement signales par un avertissement, sans tentative de
+        # conversion.
+        mime = str(info.get("mimeType", ""))
+        nom_fichier = info["name"]
         try:
-            contenus[info["name"]] = telecharger_contenu(service, info["id"])
-            meta[info["name"]] = info
+            if mime == MIME_GOOGLE_SHEETS_NATIF:
+                if not nom_fichier.lower().endswith((".xlsx", ".xls")):
+                    nom_fichier = f"{nom_fichier}.xlsx"
+                contenus[nom_fichier] = exporter_contenu(service, info["id"])
+                meta[nom_fichier] = info
+            elif mime.startswith("application/vnd.google-apps."):
+                avertissements.append(
+                    f"{info['name']} ({table}) est un document Google natif non tabulaire "
+                    "(Docs/Slides/Forms...) et ne peut pas être lu comme une table de données."
+                )
+            else:
+                contenus[nom_fichier] = telecharger_contenu(service, info["id"])
+                meta[nom_fichier] = info
         except Exception as e:
             avertissements.append(f"Impossible de telecharger {info['name']} ({table}) : {e}")
     return contenus, meta, avertissements

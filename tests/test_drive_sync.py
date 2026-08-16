@@ -188,15 +188,20 @@ class _FauxServiceDrive:
 
 @pytest.fixture(autouse=True)
 def _telechargement_simule(monkeypatch):
-    """Remplace drive_sync.telecharger_contenu (qui utilise en interne
-    MediaIoBaseDownload) par une version qui lit directement dans le
-    dictionnaire de contenus simules attache au faux service, pour eviter
-    toute dependance a googleapiclient.http dans les tests."""
+    """Remplace drive_sync.telecharger_contenu/exporter_contenu (qui
+    utilisent en interne MediaIoBaseDownload) par des versions qui lisent
+    directement dans le dictionnaire de contenus simules attache au faux
+    service, pour eviter toute dependance a googleapiclient.http dans les
+    tests."""
 
     def _faux_telecharger(service, file_id):
         return service._contenus_par_id[file_id]
 
+    def _faux_exporter(service, file_id, mime_cible=ds.MIME_XLSX):
+        return service._contenus_par_id[file_id]
+
     monkeypatch.setattr(ds, "telecharger_contenu", _faux_telecharger)
+    monkeypatch.setattr(ds, "exporter_contenu", _faux_exporter)
 
 
 def test_synchroniser_renvoie_le_dernier_export_par_table():
@@ -259,15 +264,16 @@ def test_synchroniser_signale_un_echec_de_telechargement_sans_bloquer_les_autres
     assert "FNewIndividual" in avertissements[0]
 
 
-def test_synchroniser_signale_clairement_un_fichier_converti_en_google_sheets_natif(monkeypatch):
-    # Bug reel rencontre : si le parametre Drive "Convertir les fichiers
-    # importes au format Docs" est active, un .xlsx depose garde son nom
-    # affiche mais devient un Google Sheets NATIF (mimeType
-    # application/vnd.google-apps.spreadsheet) - un tel fichier n'a plus de
-    # contenu binaire telechargeable et faisait remonter une erreur HTTP
-    # Google brute et peu comprehensible. Doit maintenant produire un
-    # avertissement clair, SANS meme tenter le telechargement (qui
-    # echouerait de toute facon).
+def test_synchroniser_exporte_un_fichier_converti_en_google_sheets_natif(monkeypatch):
+    # Bug reel rencontre : un vrai .xlsx uploade par l'equipe peut finir en
+    # Google Sheets NATIF cote Drive (mimeType application/vnd.google-apps.
+    # spreadsheet - confirme par l'equipe via une URL docs.google.com/
+    # spreadsheets/... plutot qu'un simple fichier binaire), meme si son nom
+    # affiche garde l'extension .xlsx. Un tel fichier n'a pas de contenu
+    # binaire telechargeable via get_media (erreur HTTP Google brute).
+    # Doit maintenant etre recupere via `export_media` (equivalent xlsx),
+    # de facon totalement transparente pour l'equipe - aucun avertissement,
+    # aucune manipulation supplementaire demandee.
     fichiers = [
         {
             "id": "1", "name": "opo_export.xlsx",
@@ -276,21 +282,79 @@ def test_synchroniser_signale_clairement_un_fichier_converti_en_google_sheets_na
         },
         {"id": "2", "name": "FNewEducation_2026-08-04.csv", "modifiedTime": "2026-08-04T10:00:00Z"},
     ]
+    service = _FauxServiceDrive(fichiers, {"1": b"contenu_xlsx_exporte", "2": b"contenu_education"})
+
+    contenus, meta, avertissements = ds.synchroniser(folder_id="dossier_test", service=service)
+
+    assert avertissements == []
+    assert contenus["opo_export.xlsx"] == b"contenu_xlsx_exporte"
+    assert contenus["FNewEducation_2026-08-04.csv"] == b"contenu_education"
+
+
+def test_synchroniser_exporte_un_google_sheets_natif_sans_extension_dans_le_nom(monkeypatch):
+    # Un Google Sheets cree directement dans Drive (jamais un upload) n'a
+    # souvent AUCUNE extension dans son nom affiche (ex: "Export OPO", pas
+    # "Export OPO.xlsx") - l'extension .xlsx doit etre ajoutee pour que le
+    # contenu exporte soit ensuite reconnu comme un classeur Excel.
+    fichiers = [
+        {
+            "id": "1", "name": "Export OPO",
+            "mimeType": "application/vnd.google-apps.spreadsheet",
+            "modifiedTime": "2026-08-04T10:00:00Z",
+        },
+    ]
+    service = _FauxServiceDrive(fichiers, {"1": b"contenu_xlsx_exporte"})
+
+    contenus, meta, avertissements = ds.synchroniser(folder_id="dossier_test", service=service)
+
+    assert avertissements == []
+    assert contenus["Export OPO.xlsx"] == b"contenu_xlsx_exporte"
+
+
+def test_synchroniser_ignore_silencieusement_un_document_google_sans_extension_reconnue():
+    # Un Google Docs/Slides/Forms depose par erreur dans le dossier d'export
+    # (nom sans extension .csv/.xlsx/.xls/.dta) n'est jamais une table de
+    # donnees - ignore silencieusement des la resolution des candidats,
+    # exactement comme n'importe quel autre fichier non reconnu (ex: un PDF).
+    fichiers = [
+        {
+            "id": "1", "name": "notes_de_reunion",
+            "mimeType": "application/vnd.google-apps.document",
+            "modifiedTime": "2026-08-04T10:00:00Z",
+        },
+        {"id": "2", "name": "FNewEducation_2026-08-04.csv", "modifiedTime": "2026-08-04T10:00:00Z"},
+    ]
     service = _FauxServiceDrive(fichiers, {"2": b"contenu_education"})
-
-    def _telecharger_qui_ne_devrait_jamais_etre_appele_pour_le_natif(service, file_id):
-        assert file_id != "1", "un fichier Google natif ne doit jamais declencher un telechargement"
-        return service._contenus_par_id[file_id]
-
-    monkeypatch.setattr(ds, "telecharger_contenu", _telecharger_qui_ne_devrait_jamais_etre_appele_pour_le_natif)
 
     contenus, meta, avertissements = ds.synchroniser(folder_id="dossier_test", service=service)
 
     assert "FNewEducation_2026-08-04.csv" in contenus
-    assert "opo_export.xlsx" not in contenus
+    assert "notes_de_reunion" not in contenus
+    assert avertissements == []
+
+
+def test_synchroniser_signale_un_document_google_natif_nomme_comme_un_tableur():
+    # Cas limite : un Google Docs (pas un Sheets) dont le nom se termine par
+    # une extension reconnue (ex: quelqu'un a nomme son document ".xlsx" par
+    # erreur) passe le filtre par extension - doit alors etre signale
+    # explicitement plutot que de tenter (et echouer silencieusement) une
+    # conversion prevue seulement pour un vrai Google Sheets natif.
+    fichiers = [
+        {
+            "id": "1", "name": "rapport.xlsx",
+            "mimeType": "application/vnd.google-apps.document",
+            "modifiedTime": "2026-08-04T10:00:00Z",
+        },
+        {"id": "2", "name": "FNewEducation_2026-08-04.csv", "modifiedTime": "2026-08-04T10:00:00Z"},
+    ]
+    service = _FauxServiceDrive(fichiers, {"2": b"contenu_education"})
+
+    contenus, meta, avertissements = ds.synchroniser(folder_id="dossier_test", service=service)
+
+    assert "FNewEducation_2026-08-04.csv" in contenus
+    assert "rapport.xlsx" not in contenus
     assert len(avertissements) == 1
-    assert "opo_export.xlsx" in avertissements[0]
-    assert "Google Drive" in avertissements[0] or "Docs" in avertissements[0]
+    assert "rapport.xlsx" in avertissements[0]
 
 
 # --- organisation en sous-dossiers par export (ex. "export_2026-07-30_12-50-37") ---
