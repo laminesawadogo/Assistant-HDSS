@@ -157,7 +157,15 @@ class _FauxFichiers:
         self._enfants_par_dossier = enfants_par_dossier
         self._contenus_par_id = contenus_par_id
 
-    def list(self, q=None, fields=None, pageToken=None, pageSize=None):
+    def list(self, q=None, fields=None, pageToken=None, pageSize=None,
+              supportsAllDrives=None, includeItemsFromAllDrives=None):
+        # Verifie que l'appel reel demande bien la prise en compte des
+        # Drive partages (Shared Drives) - voir le commentaire de
+        # `lister_fichiers_dossier` : sans ces deux parametres, l'API Google
+        # renvoie silencieusement une liste vide pour un dossier qui s'y
+        # trouve, sans la moindre erreur.
+        assert supportsAllDrives is True
+        assert includeItemsFromAllDrives is True
         m = re.search(r"'([^']+)' in parents", q or "")
         dossier_id = m.group(1) if m else None
         enfants = self._enfants_par_dossier.get(dossier_id, [])

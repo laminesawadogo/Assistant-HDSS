@@ -256,7 +256,17 @@ def construire_service():
 def lister_fichiers_dossier(service, folder_id: str) -> list[dict]:
     """Liste tous les elements (fichiers ET sous-dossiers) directement
     presents dans un dossier Drive donne (avec pagination, au cas ou le
-    dossier depasse 200 elements a terme)."""
+    dossier depasse 200 elements a terme).
+
+    Bug reel rencontre : sans `supportsAllDrives`/`includeItemsFromAllDrives`,
+    l'API Google Drive renvoie silencieusement une liste VIDE (aucune erreur)
+    pour un dossier qui se trouve dans un Drive partage ("Lecteur partage" /
+    Shared Drive), par opposition a un dossier ordinaire dans "Mon Drive" -
+    piege classique et tres peu visible : le compte de service a bien acces
+    au dossier, la requete reussit, mais ne renvoie simplement rien. Ces deux
+    parametres sont sans effet sur un dossier "Mon Drive" classique (comme
+    `opo_db_exports`), donc les ajouter est strictement compatible avec
+    l'existant tout en corrigeant le cas des Drive partages."""
     elements: list[dict] = []
     page_token = None
     requete = f"'{folder_id}' in parents and trashed = false"
@@ -268,6 +278,8 @@ def lister_fichiers_dossier(service, folder_id: str) -> list[dict]:
                 fields="nextPageToken, files(id, name, modifiedTime, createdTime, mimeType)",
                 pageToken=page_token,
                 pageSize=200,
+                supportsAllDrives=True,
+                includeItemsFromAllDrives=True,
             )
             .execute()
         )

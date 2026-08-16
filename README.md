@@ -125,6 +125,17 @@ affiché (ex. un Sheets créé directement dans Drive, jamais un fichier
 (Docs, Slides, Forms...) restent simplement signalés par un avertissement,
 sans tentative de conversion.
 
+**Autre piège Drive rencontré** : si le dossier utilisé est un **Drive
+partagé** (« Lecteur partagé » / Shared Drive, distinct d'un dossier
+ordinaire dans « Mon Drive »), l'API Google Drive renvoyait silencieusement
+une liste **vide** — le compte de service a bien accès au dossier, la
+requête réussit, mais ne renvoie rien, sans la moindre erreur affichée
+(exactement le symptôme « je clique sur Recharger et rien ne se passe »).
+`drive_sync.lister_fichiers_dossier` demande maintenant explicitement la
+prise en compte des Drive partagés (`supportsAllDrives`,
+`includeItemsFromAllDrives`) — sans effet sur un dossier « Mon Drive »
+classique comme `opo_db_exports`, donc totalement rétrocompatible.
+
 **Le dossier étant restreint à des comptes précis** (pas un lien public),
 l'accès se fait via un **compte de service Google** (un compte technique,
 sans interface de connexion humaine), à créer une seule fois :
