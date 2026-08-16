@@ -537,3 +537,63 @@ def test_obtenir_folder_id_variable_environnement(monkeypatch):
     monkeypatch.setattr(ds, "_obtenir_secrets_gdrive", lambda: None)
     monkeypatch.setenv("GDRIVE_FOLDER_ID", "un_autre_dossier")
     assert ds.obtenir_folder_id() == "un_autre_dossier"
+
+
+# --- diagnostiquer : panneau de depannage affiche directement dans l'app ---
+# Bug reel rencontre : une equipe a un dossier bien partage, un fichier bien
+# present, mais l'app "ne charge rien, sans la moindre erreur" - impossible a
+# distinguer sans voir le contenu BRUT (non filtre) que le compte de service
+# voit reellement dans le dossier interroge. `diagnostiquer` expose cet etat
+# brut pour un affichage direct dans la barre laterale, sans dependre de
+# l'acces aux logs du serveur d'hebergement.
+
+def test_diagnostiquer_liste_les_elements_bruts_sans_filtrage(monkeypatch):
+    fichiers = [
+        {"id": "1", "name": "opo_export.xlsx", "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
+        {"id": "2", "name": "manuel.pdf", "mimeType": "application/pdf"},
+    ]
+    service = _FauxServiceDrive(fichiers, {})
+    monkeypatch.setattr(ds, "construire_service", lambda: service)
+
+    diagnostic = ds.diagnostiquer(folder_id="dossier_test")
+
+    assert diagnostic["folder_id"] == "dossier_test"
+    assert diagnostic["credentials_ok"] is True
+    assert diagnostic["erreur"] is None
+    noms = {e["name"] for e in diagnostic["elements_bruts"]}
+    assert noms == {"opo_export.xlsx", "manuel.pdf"}  # meme le PDF non reconnu apparait ici
+
+
+def test_diagnostiquer_dossier_vide_sans_erreur():
+    service = _FauxServiceDrive([], {})
+    diagnostic = ds.diagnostiquer(folder_id="dossier_test", service=service)
+    assert diagnostic["credentials_ok"] is True
+    assert diagnostic["erreur"] is None
+    assert diagnostic["elements_bruts"] == []
+
+
+def test_diagnostiquer_signale_un_echec_didentifiants(monkeypatch):
+    def _echoue():
+        raise RuntimeError("Aucun identifiant de compte de service Google configure")
+
+    monkeypatch.setattr(ds, "construire_service", _echoue)
+
+    diagnostic = ds.diagnostiquer(folder_id="dossier_test")
+
+    assert diagnostic["credentials_ok"] is False
+    assert "identifiant" in diagnostic["erreur"]
+    assert diagnostic["elements_bruts"] == []
+
+
+def test_diagnostiquer_utilise_le_folder_id_par_defaut_si_non_precise(monkeypatch):
+    monkeypatch.setattr(ds, "_obtenir_secrets_gdrive", lambda: None)
+    monkeypatch.delenv("GDRIVE_FOLDER_ID", raising=False)
+    service = _FauxServiceDrive([], {}, folder_id=ds.FOLDER_ID_PAR_DEFAUT)
+
+    diagnostic = ds.diagnostiquer(service=service)
+
+    # Verifie qu'aucune valeur perimee ne se glisse silencieusement : le
+    # diagnostic doit afficher EXACTEMENT le folder_id qui sera reellement
+    # utilise par `synchroniser`, pour que l'equipe puisse le comparer a ce
+    # qu'elle a configure dans les Secrets.
+    assert diagnostic["folder_id"] == ds.FOLDER_ID_PAR_DEFAUT

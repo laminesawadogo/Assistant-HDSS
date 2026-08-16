@@ -492,3 +492,50 @@ def synchroniser(folder_id: str | None = None, service=None):
         except Exception as e:
             avertissements.append(f"Impossible de telecharger {info['name']} ({table}) : {e}")
     return contenus, meta, avertissements
+
+
+def diagnostiquer(folder_id: str | None = None, service=None) -> dict:
+    """Etat brut de la connexion Drive, pour un panneau de depannage affiche
+    DIRECTEMENT dans l'application (voir app.py, barre laterale) - plus
+    accessible pour l'equipe que d'aller chercher les logs du serveur
+    d'hebergement, souvent difficiles a localiser pour une equipe non
+    technique.
+
+    Contrairement a `synchroniser`, ne filtre RIEN par extension/mimeType :
+    montre absolument tout ce que le compte de service voit dans le dossier
+    interroge, pour distinguer clairement "le dossier est bien vu mais son
+    contenu ne correspond a aucune table reconnue" de "le dossier lui-meme
+    n'est pas accessible" - les deux se manifestent sinon de la meme facon
+    cote equipe ("rien ne se charge, aucune erreur affichee").
+
+    Renvoie un dict avec, dans tous les cas :
+      - "folder_id" : l'ID de dossier reellement utilise (utile pour
+        confirmer qu'aucune valeur par defaut perimee n'est retombee en
+        vigueur a cause d'un secret mal renseigne) ;
+      - "credentials_ok" (bool) et "erreur" (str | None) : si la connexion
+        elle-meme a echoue (identifiants absents/invalides, dossier non
+        partage avec le compte de service...) ;
+      - "elements_bruts" : liste de tous les elements (fichiers ET
+        sous-dossiers) trouves A LA RACINE du dossier interroge, avec leur
+        nom et mimeType exacts - permet de reperer immediatement un fichier
+        qui porte un nom different de ce qu'on attend, un raccourci
+        (mimeType application/vnd.google-apps.shortcut) plutot que le vrai
+        fichier, ou un dossier bel et bien vide."""
+    resultat: dict = {"folder_id": folder_id or obtenir_folder_id(), "credentials_ok": True, "erreur": None,
+                       "elements_bruts": []}
+    try:
+        service = service or construire_service()
+    except Exception as e:
+        resultat["credentials_ok"] = False
+        resultat["erreur"] = str(e)
+        return resultat
+
+    try:
+        elements = lister_fichiers_dossier(service, resultat["folder_id"])
+        resultat["elements_bruts"] = [
+            {"name": e.get("name"), "mimeType": e.get("mimeType"), "modifiedTime": e.get("modifiedTime")}
+            for e in elements
+        ]
+    except Exception as e:
+        resultat["erreur"] = str(e)
+    return resultat

@@ -136,6 +136,23 @@ prise en compte des Drive partagés (`supportsAllDrives`,
 `includeItemsFromAllDrives`) — sans effet sur un dossier « Mon Drive »
 classique comme `opo_db_exports`, donc totalement rétrocompatible.
 
+**Panneau de diagnostic intégré à l'app** : quand le rechargement ne trouve
+aucun fichier sans afficher la moindre erreur, la cause exacte (mauvais
+`folder_id`, partage qui n'a pas pris, identifiants invalides...) est
+difficile à identifier sans accéder aux journaux du serveur d'hébergement —
+souvent peu accessibles depuis Streamlit Cloud. Un expander **🔧 Diagnostic
+Drive (dépannage)** est disponible dans la barre latérale : le bouton
+**Lancer le diagnostic** appelle `drive_sync.diagnostiquer()`, qui interroge
+Drive avec le `folder_id` réellement utilisé par l'app et affiche, sans
+aucun filtrage, tout ce que le compte de service voit dans ce dossier (nom
+et type de chaque élément), ou l'erreur de connexion le cas échéant. Cela
+permet de vérifier en un coup d'œil, directement dans l'interface : le
+`folder_id` effectivement interrogé (à comparer à celui configuré dans les
+Secrets), si les identifiants du compte de service sont valides, et si le
+dossier est vraiment vide du point de vue du compte de service (partage non
+appliqué) ou contient des fichiers qui n'apparaissent pas au chargement
+normal (nom/format non reconnu).
+
 **Le dossier étant restreint à des comptes précis** (pas un lien public),
 l'accès se fait via un **compte de service Google** (un compte technique,
 sans interface de connexion humaine), à créer une seule fois :

@@ -240,6 +240,33 @@ with st.sidebar:
     for avert in avertissements_drive:
         st.warning(avert)
 
+    # Panneau de depannage affiche DIRECTEMENT dans l'application - plus
+    # accessible pour l'equipe que d'aller chercher les logs du serveur
+    # d'hebergement (souvent difficiles a localiser sans habitude technique).
+    # Montre, sans aucun filtrage, tout ce que le compte de service voit
+    # reellement dans le dossier configure : permet de distinguer d'un coup
+    # d'oeil "le dossier est bien vu mais vide/sans fichier reconnu" de "le
+    # dossier lui-meme n'est pas accessible" - les deux se manifestent sinon
+    # de la meme facon cote equipe ("rien ne se charge, aucune erreur").
+    with st.expander("🔧 Diagnostic Drive (dépannage)"):
+        if st.button("Lancer le diagnostic", key="diagnostic_drive"):
+            diagnostic = drive_sync.diagnostiquer()
+            st.write(f"**Dossier interrogé (folder_id)** : `{diagnostic['folder_id']}`")
+            if not diagnostic["credentials_ok"]:
+                st.error(f"Connexion impossible : {diagnostic['erreur']}")
+            elif diagnostic["erreur"]:
+                st.error(f"Dossier interrogé mais erreur lors de la lecture : {diagnostic['erreur']}")
+            elif not diagnostic["elements_bruts"]:
+                st.warning(
+                    "Connexion réussie, mais **aucun élément trouvé** dans ce dossier — vérifie que "
+                    "le fichier est bien déplacé (pas seulement en raccourci) directement dans CE "
+                    "dossier précis, et que le compte de service y a bien accès."
+                )
+            else:
+                st.success(f"{len(diagnostic['elements_bruts'])} élément(s) trouvé(s) dans ce dossier :")
+                for e in diagnostic["elements_bruts"]:
+                    st.write(f"- **{e['name']}** — type : `{e['mimeType']}`")
+
     # Meme controle anti-relecture que pour un depot manuel : Streamlit
     # relance tout le script a chaque interaction (chaque question posee
     # dans le chat), et un export dont le nom (donc la date) n'a pas change
