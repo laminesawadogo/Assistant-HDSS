@@ -105,7 +105,19 @@ Drive — trois organisations sont reconnues automatiquement, sans réglage :
 
 Ces fichiers sont ensuite chargés exactement comme un dépôt manuel l'aurait
 fait : mêmes contrôles (colonnes nom/prénom retirées, aucune correction
-automatique), mêmes analyses disponibles ensuite dans le chat.
+automatique), mêmes analyses disponibles ensuite dans le chat. Un classeur
+Excel à plusieurs feuilles est reconnu comme un ensemble de tables
+distinctes (une par feuille), aussi bien déposé manuellement que via Drive.
+
+**Piège Drive à connaître** : si le paramètre Drive « Convertir les fichiers
+importés au format Google Docs » est activé, un `.xlsx` déposé est
+automatiquement transformé en Google Sheets **natif** (même s'il garde son
+nom affiché avec l'extension `.xlsx`) — un tel fichier n'a plus de contenu
+binaire téléchargeable par l'API. `drive_sync.synchroniser` détecte ce cas
+via le `mimeType` réel du fichier (`application/vnd.google-apps.*`) et
+affiche un message clair invitant à désactiver ce paramètre (Drive →
+Paramètres → Général) et à redéposer le fichier `.xlsx` d'origine, plutôt
+que l'erreur HTTP brute de l'API Google.
 
 **Le dossier étant restreint à des comptes précis** (pas un lien public),
 l'accès se fait via un **compte de service Google** (un compte technique,

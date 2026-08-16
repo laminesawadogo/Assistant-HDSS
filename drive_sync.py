@@ -407,6 +407,24 @@ def synchroniser(folder_id: str | None = None, service=None):
         c.setdefault("date_lot", date_du_lot)
     retenus = derniers_fichiers_par_table(candidats)
     for table, info in sorted(retenus.items()):
+        # Bug reel rencontre : si le parametre Drive "Convertir les fichiers
+        # importes au format Docs" est active, un .xlsx depose par l'equipe
+        # est automatiquement transforme en Google Sheets NATIF (meme s'il
+        # garde son nom affiche avec l'extension .xlsx) - un tel fichier n'a
+        # plus de contenu binaire telechargeable via `get_media` (utilise par
+        # `telecharger_contenu`), qui echoue avec une erreur HTTP Google
+        # brute et peu comprehensible ("Only files with binary content can
+        # be downloaded"). Detecte ce cas via le mimeType (deja recupere par
+        # `lister_fichiers_dossier`) AVANT de tenter le telechargement, pour
+        # afficher un message clair plutot que l'erreur technique brute.
+        if str(info.get("mimeType", "")).startswith("application/vnd.google-apps."):
+            avertissements.append(
+                f"{info['name']} ({table}) a été converti par Google Drive en document natif "
+                "(Google Sheets/Docs) et ne peut pas être lu tel quel — dans Drive, désactive "
+                "« Convertir les fichiers importés au format Google Docs » (Paramètres → Général), "
+                "puis redépose le fichier .xlsx d'origine."
+            )
+            continue
         try:
             contenus[info["name"]] = telecharger_contenu(service, info["id"])
             meta[info["name"]] = info

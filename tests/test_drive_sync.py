@@ -259,6 +259,40 @@ def test_synchroniser_signale_un_echec_de_telechargement_sans_bloquer_les_autres
     assert "FNewIndividual" in avertissements[0]
 
 
+def test_synchroniser_signale_clairement_un_fichier_converti_en_google_sheets_natif(monkeypatch):
+    # Bug reel rencontre : si le parametre Drive "Convertir les fichiers
+    # importes au format Docs" est active, un .xlsx depose garde son nom
+    # affiche mais devient un Google Sheets NATIF (mimeType
+    # application/vnd.google-apps.spreadsheet) - un tel fichier n'a plus de
+    # contenu binaire telechargeable et faisait remonter une erreur HTTP
+    # Google brute et peu comprehensible. Doit maintenant produire un
+    # avertissement clair, SANS meme tenter le telechargement (qui
+    # echouerait de toute facon).
+    fichiers = [
+        {
+            "id": "1", "name": "opo_export.xlsx",
+            "mimeType": "application/vnd.google-apps.spreadsheet",
+            "modifiedTime": "2026-08-04T10:00:00Z",
+        },
+        {"id": "2", "name": "FNewEducation_2026-08-04.csv", "modifiedTime": "2026-08-04T10:00:00Z"},
+    ]
+    service = _FauxServiceDrive(fichiers, {"2": b"contenu_education"})
+
+    def _telecharger_qui_ne_devrait_jamais_etre_appele_pour_le_natif(service, file_id):
+        assert file_id != "1", "un fichier Google natif ne doit jamais declencher un telechargement"
+        return service._contenus_par_id[file_id]
+
+    monkeypatch.setattr(ds, "telecharger_contenu", _telecharger_qui_ne_devrait_jamais_etre_appele_pour_le_natif)
+
+    contenus, meta, avertissements = ds.synchroniser(folder_id="dossier_test", service=service)
+
+    assert "FNewEducation_2026-08-04.csv" in contenus
+    assert "opo_export.xlsx" not in contenus
+    assert len(avertissements) == 1
+    assert "opo_export.xlsx" in avertissements[0]
+    assert "Google Drive" in avertissements[0] or "Docs" in avertissements[0]
+
+
 # --- organisation en sous-dossiers par export (ex. "export_2026-07-30_12-50-37") ---
 
 def test_resoudre_elements_choisit_le_sous_dossier_dexport_le_plus_recent():
