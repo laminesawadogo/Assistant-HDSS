@@ -748,6 +748,18 @@ def _colonnes_communes(df1: pd.DataFrame, df2: pd.DataFrame) -> list[str]:
     return [c for c in df1.columns if str(c).lower() in colonnes_b]
 
 
+def _cle_str(serie: pd.Series) -> pd.Series:
+    """Convertit une colonne de cle de jointure en texte, pour un merge entre
+    deux tables ou le meme identifiant peut etre stocke avec un type
+    different (ex: colonne entiere dans un export, texte dans un autre - cas
+    reel rencontre : `individid` charge en int64 depuis une table, en texte
+    depuis une autre, ce qui fait echouer `pd.merge` avec une ValueError
+    explicite plutot qu'un simple resultat vide). Garde les valeurs
+    manquantes manquantes (jamais la chaine litterale "nan", qui ferait sinon
+    matcher a tort entre elles toutes les lignes sans identifiant renseigne)."""
+    return serie.where(serie.isna(), serie.astype(str))
+
+
 def _meilleure_cle_jointure(communes: list[str]) -> str | None:
     """Choisit, parmi des colonnes communes a deux tables, la seule fiable a
     utiliser comme cle de jointure - PAS simplement la premiere trouvee, et
@@ -1101,6 +1113,51 @@ PHONE_LIKE = re.compile(r"(telephone|numtel|phone)", re.IGNORECASE)
 SLEEP_LIKE = re.compile(r"(sleep|dormi)", re.IGNORECASE)
 LOCATION_LIKE = re.compile(r"(locationid|menageid)", re.IGNORECASE)
 SOCIALGP_LIKE = re.compile(r"(socialgpid)", re.IGNORECASE)
+UNION_AGE_LIKE = re.compile(r"union_?age", re.IGNORECASE)
+DIEDINHS_LIKE = re.compile(r"diedinhs", re.IGNORECASE)
+GONETOHS_LIKE = re.compile(r"gonetohs", re.IGNORECASE)
+RLTN_HEAD_LIKE = re.compile(r"rltn_?head", re.IGNORECASE)
+# "1 Socialgp head" (chef de menage) : code documente tel quel dans le
+# dictionnaire de donnees de l'observatoire ("source_Dictionnaire des
+# variables.txt", colonne `rltn_head`) - jamais devine.
+CODE_CHEF_MENAGE = "1"
+PREGOUTID_LIKE = re.compile(r"pregoutid", re.IGNORECASE)
+EVENTID_LIKE = re.compile(r"^eventid$", re.IGNORECASE)
+PEVENTID_LIKE = re.compile(r"^peventid$", re.IGNORECASE)
+CPN_DATE_LIKE = re.compile(r"^cpn_?date(\d+)$", re.IGNORECASE)
+NB_CPN_LIKE = re.compile(r"nb_?cpn", re.IGNORECASE)
+RESPONDID_LIKE = re.compile(r"^respondid$", re.IGNORECASE)
+S4_2_LIKE = re.compile(r"^S4_2$", re.IGNORECASE)
+S4_2MM_LIKE = re.compile(r"^S4_2mm$", re.IGNORECASE)
+S5_1_LIKE = re.compile(r"^S5_1$", re.IGNORECASE)
+S5_2_LIEU_LIKE = re.compile(r"^S5_2[ABC]$", re.IGNORECASE)
+RES_STATUS_LIKE = re.compile(r"res_?status", re.IGNORECASE)
+BEGIN_TIME_LIKE = re.compile(r"begin_?time", re.IGNORECASE)
+END_TIME_LIKE = re.compile(r"end_?time", re.IGNORECASE)
+# "1. Resident" : code documente tel quel dans le dictionnaire de donnees de
+# l'observatoire ("source_Dictionnaire des variables.txt", colonne
+# `res_status`) - jamais devine.
+CODE_RESIDENT = "1"
+# "1. Oui" / "2. Non" : codes documentes tels quels dans le questionnaire
+# source "20_FICHE SANTE_R14" (question S4_2) - jamais devines.
+CODE_NON = "2"
+GENDER_LIKE = re.compile(r"^gender$", re.IGNORECASE)
+# "1. Male" / "2. Female" : codes documentes tels quels dans le dictionnaire
+# de donnees de l'observatoire ("source_Dictionnaire des variables.txt",
+# colonne `gender`) - jamais devines.
+CODE_HOMME = "1"
+LIVING_CHILDREN_LIKE = re.compile(r"living_?children_?number", re.IGNORECASE)
+ISALIVE_LIKE = re.compile(r"^isAlive$", re.IGNORECASE)
+BIRTHDATE_ENFANT_LIKE = re.compile(r"^birthDate$", re.IGNORECASE)
+# Les 4 variantes de date d'union documentees sur FNewRelationship (schema
+# reel de l'observatoire) : debut, civile, religieuse, traditionnelle -
+# chacune doit rester posterieure a la naissance de l'individu.
+DATES_UNION_LIKE = {
+    "début d'union": re.compile(r"uni_?start_?date", re.IGNORECASE),
+    "union civile": re.compile(r"uni_?civil_?date", re.IGNORECASE),
+    "union religieuse": re.compile(r"uni_?relig_?date", re.IGNORECASE),
+    "union traditionnelle": re.compile(r"uni_?trad_?date", re.IGNORECASE),
+}
 
 # Bornes approximatives du territoire burkinabe, pour reperer des coordonnees
 # GPS clairement hors zone (au-dela d'une simple valeur manquante).
@@ -1272,6 +1329,52 @@ def controle_dates_arrivee_depart(df: pd.DataFrame) -> dict | None:
     return {"colonnes_verifiees": [col_arrivee, col_depart], "n_anomalies": int(masque.sum())}
 
 
+def controle_coherence_presence(df: pd.DataFrame) -> list[tuple[str, dict]] | None:
+    """Fiche presence (FNewPresences) : 3 controles de coherence entre le
+    statut "a dormi sur place" et les dates d'arrivee/depart renseignees -
+    - a dormi (sleep=oui) MAIS une date de depart est quand meme renseignee
+      (incoherent : si la personne a dormi sur place, elle n'est pas censee
+      etre partie) ;
+    - n'a PAS dormi (sleep=non) SANS aucune date de depart renseignee
+      (incoherent : une absence devrait normalement etre expliquee par un
+      depart date) ;
+    - ni date de depart ni date d'arrivee renseignees du tout (fiche
+      incomplete sur le statut de presence, distinct du cas "dates identiques"
+      deja couvert par `controle_dates_arrivee_depart`).
+
+    Renvoie une liste de (libelle, resultat), ou None si les colonnes
+    necessaires (sleep + au moins une des deux dates) ne sont pas
+    detectees."""
+    col_sleep = _premiere_colonne(df, SLEEP_LIKE)
+    col_arrivee = _premiere_colonne(df, ARRIVE_DATE_LIKE)
+    col_depart = _premiere_colonne(df, DEPART_DATE_LIKE)
+    if col_sleep is None or (col_arrivee is None and col_depart is None):
+        return None
+
+    sleep_norm = df[col_sleep].astype(str).str.strip().str.lower()
+    sleep_oui = sleep_norm.isin(["1", "1.0", "oui", "yes", "true"])
+    sleep_non = df[col_sleep].notna() & ~sleep_oui
+
+    resultats: list[tuple[str, dict]] = []
+    if col_depart is not None:
+        a_depart = df[col_depart].notna()
+        resultats.append((
+            "A dormi sur place mais une date de départ est renseignée",
+            {"colonnes_verifiees": [col_sleep, col_depart], "n_anomalies": int((sleep_oui & a_depart).sum())},
+        ))
+        resultats.append((
+            "N'a pas dormi sur place sans date de départ renseignée",
+            {"colonnes_verifiees": [col_sleep, col_depart], "n_anomalies": int((sleep_non & ~a_depart).sum())},
+        ))
+    if col_arrivee is not None and col_depart is not None:
+        masque_incomplete = df[col_arrivee].isna() & df[col_depart].isna()
+        resultats.append((
+            "Ni date de départ ni date d'arrivée renseignées",
+            {"colonnes_verifiees": [col_arrivee, col_depart], "n_anomalies": int(masque_incomplete.sum())},
+        ))
+    return resultats or None
+
+
 def controle_residence_multiple(df: pd.DataFrame) -> dict | None:
     """Signale un individu present dans plusieurs menages/localisations
     differents (colonne `locationid` ou `socialgpid` associee a plusieurs
@@ -1290,7 +1393,9 @@ def controle_tranche_age(df: pd.DataFrame, borne_min: float, borne_max: float) -
     """Controle generique : signale les lignes dont l'age (calcule depuis la
     colonne de naissance detectee) sort d'une tranche attendue pour ce type
     de fiche (ex: 12-49 ans pour une fiche genesique, 5-34 ans pour une fiche
-    education...)."""
+    education...). Ne fonctionne que si LA TABLE ELLE-MEME porte une colonne
+    de naissance - voir `controle_tranche_age_croisee` pour le cas (largement
+    majoritaire sur le vrai schema de l'observatoire) ou ce n'est pas le cas."""
     col = _premiere_colonne(df, BIRTH_DATE_LIKE)
     if col is None:
         return None
@@ -1300,6 +1405,77 @@ def controle_tranche_age(df: pd.DataFrame, borne_min: float, borne_max: float) -
         "colonnes_verifiees": [col],
         "n_anomalies": int(hors_plage.sum()),
         "detail": [f"âge hors {borne_min:g}-{borne_max:g} ans"],
+    }
+
+
+def _table_individus(tables: dict, exclure: str | None = None) -> str | None:
+    """Trouve, parmi les tables chargees, celle qui porte l'identite de
+    reference de chaque individu - `individid` + une colonne de naissance
+    (FNewIndividual/RegAllIndividual dans le schema reel de l'observatoire).
+
+    Necessaire car, contrairement a ce qu'on pourrait supposer, PRESQUE
+    AUCUNE fiche d'evenement du vrai schema (education, emploi, grossesse,
+    genesique, histoire matrimoniale, telephone...) ne porte elle-meme de
+    colonne birth_date : elle vit UNIQUEMENT sur la table individus, reliee
+    par `individid` - verifie en inspectant les 27 vraies tables exportees le
+    2026-08-17. Sans ce croisement, `controle_tranche_age` (qui ne cherche
+    birth_date QUE dans la table en cours) ne peut jamais s'appliquer a
+    aucune de ces fiches, et le controle d'age correspondant est ignore en
+    silence sur les vraies donnees (jamais signale comme un vrai bug avant
+    inspection directe du schema)."""
+    return next(
+        (
+            n for n, df in tables.items()
+            if n != exclure
+            and _table_correspond(n, ["individual", "individu"])
+            and any("individ" in c.lower() and not c.lower().endswith("2") for c in detect_id_columns(df))
+            and _premiere_colonne(df, BIRTH_DATE_LIKE) is not None
+        ),
+        None,
+    )
+
+
+def controle_tranche_age_croisee(
+    df: pd.DataFrame, tables: dict, nom_table: str, borne_min: float, borne_max: float
+) -> dict | None:
+    """Version croisee de `controle_tranche_age`, a utiliser en priorite pour
+    les controles d'age par type de fiche (`TRANCHES_AGE_PAR_TYPE_FICHE`) :
+    tente d'abord la colonne de naissance LOCALE (cas rare), puis, si absente,
+    va chercher l'age via une jointure `individid` -> la table individus
+    (voir `_table_individus`) plutot que d'abandonner. Repond a l'age ACTUEL
+    de la personne (date du jour - naissance), pertinent pour les controles
+    d'eligibilite/tranche d'age courants du catalogue (education, emploi,
+    genesique, grossesse...) - PAS a un age a une date d'evenement passee
+    (ex: age a la premiere union), qui necessite un calcul dedie (voir
+    `controle_age_union`)."""
+    resultat_local = controle_tranche_age(df, borne_min, borne_max)
+    if resultat_local is not None:
+        return resultat_local
+
+    col_id = next((c for c in detect_id_columns(df) if "individ" in c.lower() and not c.lower().endswith("2")), None)
+    if col_id is None or col_id not in df.columns:
+        return None
+    nom_individus = _table_individus(tables, exclure=nom_table)
+    if nom_individus is None:
+        return None
+    individus = tables[nom_individus]
+    col_id_individus = next(
+        (c for c in detect_id_columns(individus) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_naissance = _premiere_colonne(individus, BIRTH_DATE_LIKE)
+    if col_id_individus is None or col_naissance is None:
+        return None
+
+    reference = individus[[col_id_individus, col_naissance]].rename(columns={col_id_individus: col_id})
+    reference = reference.assign(**{col_id: _cle_str(reference[col_id])})
+    gauche = df[[col_id]].assign(**{col_id: _cle_str(df[col_id])})
+    fusion = gauche.merge(reference, on=col_id, how="left")
+    age = _age_en_annees(fusion, col_naissance)
+    hors_plage = ((age < borne_min) | (age > borne_max)).fillna(False)
+    return {
+        "colonnes_verifiees": [col_id, f"{nom_individus}.{col_naissance}"],
+        "n_anomalies": int(hors_plage.sum()),
+        "detail": [f"âge (via {col_id} → {nom_individus}) hors {borne_min:g}-{borne_max:g} ans"],
     }
 
 
@@ -1315,7 +1491,18 @@ CONTROLES_GENERIQUES_PAR_TABLE = [
     ("Dates arrivée/départ incohérentes", controle_dates_arrivee_depart),
     ("Résidence multiple pour un même individu", controle_residence_multiple),
     ("Naissance postérieure au décès", lambda df: controle_dates_ordre(df, BIRTH_DATE_LIKE, DEATH_DATE_LIKE)),
-    ("Enregistrement antérieur à la naissance", lambda df: controle_dates_ordre(df, ENTRY_DATE_LIKE, BIRTH_DATE_LIKE, strict=False)),
+    # Bug reel corrige ici (jamais teste jusqu'ici) : le libelle annonce
+    # detecter un ENREGISTREMENT anterieur a la naissance (entry_date <
+    # birth_date, logiquement impossible - on ne peut pas enregistrer une
+    # naissance avant qu'elle n'ait eu lieu), mais l'appel precedent avait
+    # motif_avant/motif_apres INVERSES (ENTRY_DATE_LIKE, BIRTH_DATE_LIKE) :
+    # `controle_dates_ordre` flagge quand `motif_avant` (cense etre le plus
+    # ancien) se retrouve APRES `motif_apres`, donc l'ancien appel flaggait
+    # en realite "entry_date >= birth_date" (le cas NORMAL, la quasi-totalite
+    # des lignes), et laissait passer silencieusement le vrai cas anormal
+    # (entry_date < birth_date). BIRTH_DATE_LIKE doit etre `motif_avant`
+    # (la naissance doit toujours précéder l'enregistrement).
+    ("Enregistrement antérieur à la naissance", lambda df: controle_dates_ordre(df, BIRTH_DATE_LIKE, ENTRY_DATE_LIKE)),
 ]
 
 # Tranches d'age attendues par type de fiche (mots-cles reconnus dans le nom
@@ -1329,9 +1516,12 @@ TRANCHES_AGE_PAR_TYPE_FICHE = [
     # jamais regresser sur les donnees de test existantes.
     (["genesiqcompl", "gnesiqcompl", "genesiquecomplementaire"], None),  # cas particulier traite a part (age de la mere)
     (["genesiq", "gnesiq"], (12.0, 49.0)),
-    # "histmat"/"matrimon"/"union" : anciens mots-cles synthetiques ;
-    # "marietal" : vrai nom reel (table "opo_hypervel_histoire_marietales").
-    (["histmat", "matrimon", "union", "marietal"], (12.0, 40.0)),
+    # "histmat"/"matrimon"/"union"/"marietal" : PAS d'entree ici - l'age
+    # attendu (12-40 ans) concerne l'age A LA PREMIERE UNION, pas l'age
+    # ACTUEL de la personne (que calculerait ce controle generique) : deux
+    # valeurs tres differentes pour quelqu'un marie il y a des annees. Voir
+    # `controle_age_union`, qui utilise directement la colonne `union_age`
+    # declaree (FNewBase_HistMat) plutot que de deviner un age via naissance.
     (["education"], (5.0, 34.0)),
     (["emploi", "employ"], (15.0, 120.0)),
     (["pregnancy", "grossesse"], (12.0, 49.0)),
@@ -1397,8 +1587,84 @@ def rapport_coherence_avancee(tables: dict, nom_table: str | None = None) -> dic
 
         for mots_cles, bornes in TRANCHES_AGE_PAR_TYPE_FICHE:
             if bornes is not None and _table_correspond(nom, mots_cles):
-                resultat = controle_tranche_age(df, *bornes)
+                # `tables` (l'ensemble COMPLET, pas `tables_a_verifier` qui
+                # peut etre restreint a une seule table si `nom_table` est
+                # precise) - le croisement vers la table individus a besoin
+                # de voir toutes les tables chargees, meme quand on ne
+                # verifie qu'une seule table cible.
+                resultat = controle_tranche_age_croisee(df, tables, nom, *bornes)
                 libelle = f"Âge hors tranche attendue ({bornes[0]:g}-{bornes[1]:g} ans)"
+                if resultat is None:
+                    controles_ignores.append(libelle)
+                else:
+                    controles_ok.append((libelle, resultat))
+
+        if _table_correspond(nom, ["histmat", "matrimon", "union", "marietal"]):
+            libelle = "Âge à la première union hors tranche attendue (12-40 ans)"
+            resultat = controle_age_union(df)
+            if resultat is None:
+                controles_ignores.append(libelle)
+            else:
+                controles_ok.append((libelle, resultat))
+
+        if _table_correspond(nom, ["presences", "presence"]):
+            resultats_presence = controle_coherence_presence(df)
+            if resultats_presence is None:
+                controles_ignores.append("Cohérence dormi/dates d'arrivée-départ")
+            else:
+                controles_ok.extend(resultats_presence)
+
+        if _table_correspond(nom, ["death", "deces"]):
+            for libelle, resultat in (
+                ("Individu déclaré décédé plus d'une fois", controle_doublon_individu(df)),
+                ("Décédé en formation sanitaire sans y être jamais allé", controle_deces_formation_sanitaire(df)),
+            ):
+                if resultat is None:
+                    controles_ignores.append(libelle)
+                else:
+                    controles_ok.append((libelle, resultat))
+
+        if _table_correspond(nom, ["birth", "naissance"]):
+            libelle = "Moins de 12 ans déclaré chef de ménage"
+            resultat = controle_chef_menage_mineur(df)
+            if resultat is None:
+                controles_ignores.append(libelle)
+            else:
+                controles_ok.append((libelle, resultat))
+
+        if _table_correspond(nom, ["cpn"]):
+            for libelle, resultat in (
+                ("Dates CPN désordonnées", controle_cpn_dates_desordonnees(df)),
+                ("Dates CPN manquantes (nb_cpn déclaré > dates renseignées)", controle_cpn_dates_manquantes(df)),
+            ):
+                if resultat is None:
+                    controles_ignores.append(libelle)
+                else:
+                    controles_ok.append((libelle, resultat))
+
+        if _table_correspond(nom, ["gnesiqcompl", "genesiqcompl", "genesiquecomplementaire"]):
+            libelle = "Année de naissance de l'enfant hors 2022-2026"
+            resultat = controle_annee_naissance_enfant(df)
+            if resultat is None:
+                controles_ignores.append(libelle)
+            else:
+                controles_ok.append((libelle, resultat))
+
+        if _table_correspond(nom, ["observation"]):
+            libelle = "Durée d'entretien anormalement courte ou incohérente"
+            resultat = controle_duree_entretien(df)
+            if resultat is None:
+                controles_ignores.append(libelle)
+            else:
+                controles_ok.append((libelle, resultat))
+
+        if _table_correspond(nom, ["sante"]):
+            for libelle, resultat in (
+                ("Même répondant pour des ménages différents", controle_sante_doublon_menage(df)),
+                ("Mois de dernière règle inconnu", controle_sante_mois_regle_inconnu(df)),
+                ("Jamais utilisé internet mais utilisé (maison/travail/espace public)",
+                 controle_sante_internet_contradictoire(df)),
+            ):
                 if resultat is None:
                     controles_ignores.append(libelle)
                 else:
@@ -1413,13 +1679,21 @@ def rapport_coherence_avancee(tables: dict, nom_table: str | None = None) -> dic
     controles_croises = []
     nom_presence = next((n for n in tables if _table_correspond(n, ["presences", "presence"])), None)
     if nom_presence is not None:
+        # Controles d'eligibilite PAR INDIVIDU (cle individid, commune a la
+        # fiche presence et a la table cible).
         cibles = {
             "éducation": ["education"],
             "emploi": ["emploi", "employ"],
             "histoire génésique complémentaire": ["gnesiqcompl", "genesiqcompl", "genesiquecomplementaire"],
-            "pauvreté": ["pauvrete"],
-            "santé": ["sante"],
+            "téléphone": ["telephone"],
         }
+        # NOTE : "santé" utilise `respondid`, pas `individid` directement -
+        # `controle_eligibilite_croisee` (base sur `detecter_cle_jointure`,
+        # colonnes communes) ne le trouverait pas automatiquement comme cle
+        # partagee avec la fiche presence. Le controle par menage
+        # (cibles_par_menage, ci-dessous) couvre deja l'eligibilite pour
+        # cette table ; `controle_sante_repondant_non_dormi` (branche plus
+        # bas) couvre en plus le cas individuel via `respondid`.
         for libelle, mots in cibles.items():
             nom_cible = next((n for n in tables if _table_correspond(n, mots)), None)
             if nom_cible is None:
@@ -1428,11 +1702,46 @@ def rapport_coherence_avancee(tables: dict, nom_table: str | None = None) -> dic
             if resultat is not None:
                 controles_croises.append((f"Éligibilité présence ↔ {libelle}", nom_presence, nom_cible, resultat))
 
+        # Controles d'eligibilite PAR MENAGE (cle socialgpid, absente de la
+        # fiche presence : derivee via la table individus - voir
+        # `controle_eligibilite_croisee_par_menage`).
+        cibles_par_menage = {"pauvreté": ["pauvrete"], "santé": ["sante"]}
+        for libelle, mots in cibles_par_menage.items():
+            nom_cible = next((n for n in tables if _table_correspond(n, mots)), None)
+            if nom_cible is None:
+                continue
+            resultat = controle_eligibilite_croisee_par_menage(tables, nom_presence, nom_cible)
+            if resultat is not None:
+                controles_croises.append((
+                    f"Éligibilité présence ↔ {libelle} (par ménage)", nom_presence, nom_cible, resultat
+                ))
+
     nom_deces = next((n for n in tables if _table_correspond(n, ["death", "deces"])), None)
     if nom_presence is not None and nom_deces is not None:
         resultat = controle_deces_present(tables, nom_deces, nom_presence)
         if resultat is not None:
             controles_croises.append(("Décédé mais présent dans la fiche présence", nom_deces, nom_presence, resultat))
+    if nom_deces is not None:
+        nom_individus_deces = _table_individus(tables, exclure=nom_deces)
+        resultat = controle_deces_avant_naissance(tables, nom_deces)
+        if resultat is not None:
+            controles_croises.append((
+                "Date de décès antérieure à la naissance", nom_deces, nom_individus_deces or nom_deces, resultat
+            ))
+
+    nom_relationship = next((n for n in tables if _table_correspond(n, ["relationship", "relation"])), None)
+    nom_histmat = next((n for n in tables if _table_correspond(n, ["histmat", "matrimon", "marietal"])), None)
+    if nom_relationship is not None:
+        resultats_union = controle_naissance_apres_union(tables, nom_relationship)
+        if resultats_union is not None:
+            for libelle_union, resultat_union in resultats_union:
+                controles_croises.append((libelle_union, nom_relationship, nom_relationship, resultat_union))
+    if nom_histmat is not None and nom_relationship is not None:
+        resultat = controle_ecart_age_union_declare_calcule(tables, nom_histmat, nom_relationship)
+        if resultat is not None:
+            controles_croises.append((
+                "Âge à l'union déclaré très différent de l'âge calculé", nom_histmat, nom_relationship, resultat
+            ))
 
     # "migration_out"/"migrationout" : anciens mots-cles synthetiques ;
     # "depart" : vrai nom reel le plus proche (table "opo_hypervel_departs"
@@ -1447,6 +1756,15 @@ def rapport_coherence_avancee(tables: dict, nom_table: str | None = None) -> dic
             controles_croises.append(
                 ("A dormi dans le ménage mais apparaît aussi en départ", nom_migration_out, nom_presence, resultat)
             )
+
+    nom_migration_in = next((n for n in tables if _table_correspond(n, ["migration_in", "migrationin"])), None)
+    if nom_migration_in is not None and nom_migration_out is not None:
+        resultat = controle_migration_depart_avant_arrivee(tables, nom_migration_in, nom_migration_out)
+        if resultat is not None:
+            controles_croises.append((
+                "Date de départ antérieure à la date d'arrivée (migration)",
+                nom_migration_out, nom_migration_in, resultat,
+            ))
 
     # "pregnancy"/"pregoutcome" : anciens mots-cles synthetiques ; "grossesse"
     # / "issue" : vrais noms reels (tables "opo_hypervel_grossesses" et
@@ -1471,6 +1789,114 @@ def rapport_coherence_avancee(tables: dict, nom_table: str | None = None) -> dic
             controles_croises.append((
                 "Grossesse sans issue de grossesse enregistrée", nom_grossesse, nom_issue,
                 {"colonnes_verifiees": [cle], "n_anomalies": len(manquantes)},
+            ))
+
+    nom_naissance = next((n for n in tables if _table_correspond(n, ["birth", "naissance"])), None)
+    if nom_naissance is not None and nom_issue is not None:
+        resultat = controle_naissance_sans_issue(tables, nom_naissance, nom_issue)
+        if resultat is not None:
+            controles_croises.append((
+                "Naissance sans issue de grossesse correspondante", nom_naissance, nom_issue, resultat
+            ))
+
+    if nom_issue is not None and nom_grossesse is not None:
+        resultat = controle_issue_sans_grossesse(tables, nom_issue, nom_grossesse)
+        if resultat is not None:
+            controles_croises.append((
+                "Issue de grossesse sans grossesse correspondante", nom_issue, nom_grossesse, resultat
+            ))
+
+    if nom_grossesse is not None and nom_presence is not None:
+        resultat = controle_grossesse_sans_avoir_dormi(tables, nom_grossesse, nom_presence)
+        if resultat is not None:
+            controles_croises.append((
+                "Enceinte sans avoir dormi sur place", nom_grossesse, nom_presence, resultat
+            ))
+
+    # "genesiq"/"gnesiq" EXCLUANT le complement - meme principe que
+    # grossesse/issue plus haut (la table complementaire contient aussi
+    # "genesiq" comme sous-chaine et se ciblerait sinon elle-meme).
+    nom_genesique_base = next(
+        (
+            n for n in tables
+            if _table_correspond(n, ["genesiq", "gnesiq"])
+            and not _table_correspond(n, ["gnesiqcompl", "genesiqcompl", "genesiquecomplementaire"])
+        ),
+        None,
+    )
+    nom_complement = next(
+        (n for n in tables if _table_correspond(n, ["gnesiqcompl", "genesiqcompl", "genesiquecomplementaire"])), None
+    )
+    for nom_cible_genesique in (nom_genesique_base, nom_complement):
+        if nom_cible_genesique is None:
+            continue
+        resultat = controle_homme_dans_fiche_genesique(tables, nom_cible_genesique)
+        if resultat is not None:
+            controles_croises.append((
+                "Homme présent dans la fiche génésique", nom_cible_genesique, nom_cible_genesique, resultat
+            ))
+    if nom_genesique_base is not None and nom_complement is not None:
+        resultat = controle_pas_enfant_mais_naissance_vivante(tables, nom_genesique_base, nom_complement)
+        if resultat is not None:
+            controles_croises.append((
+                "Aucun enfant déclaré alors qu'une naissance vivante est enregistrée",
+                nom_genesique_base, nom_complement, resultat,
+            ))
+    if nom_complement is not None:
+        resultat = controle_age_mere_a_naissance(tables, nom_complement)
+        if resultat is not None:
+            nom_individus_mere = _table_individus(tables, exclure=nom_complement)
+            controles_croises.append((
+                "Âge de la mère incohérent à la naissance (< 15 ans)",
+                nom_complement, nom_individus_mere or nom_complement, resultat,
+            ))
+
+    nom_sante = next((n for n in tables if _table_correspond(n, ["sante"])), None)
+    if nom_sante is not None and nom_presence is not None:
+        resultat = controle_sante_repondant_non_dormi(tables, nom_sante, nom_presence)
+        if resultat is not None:
+            controles_croises.append(("Répondant santé n'ayant pas dormi sur place", nom_sante, nom_presence, resultat))
+    if nom_sante is not None:
+        nom_individus_sante = _table_individus(tables, exclure=nom_sante)
+        resultat = controle_sante_repondant_mineur(tables, nom_sante)
+        if resultat is not None:
+            controles_croises.append((
+                "Répondant santé mineur (< 15 ans)", nom_sante, nom_individus_sante or nom_sante, resultat
+            ))
+        resultat = controle_sante_regles_femme_jeune(tables, nom_sante)
+        if resultat is not None:
+            controles_croises.append((
+                "Question sur les règles renseignée pour une femme de moins de 35 ans",
+                nom_sante, nom_individus_sante or nom_sante, resultat,
+            ))
+
+    # "snakebite" seul (pas "snakebiteanimaux"/"snakebiteindividus", qui
+    # portent des questions differentes, sans lien direct avec la residence
+    # du menage).
+    nom_snakebite = next(
+        (
+            n for n in tables
+            if _table_correspond(n, ["snakebite"])
+            and not _table_correspond(n, ["snakebiteanimaux", "snakebiteindividus"])
+        ),
+        None,
+    )
+    nom_residency = next((n for n in tables if _table_correspond(n, ["residency", "residence"])), None)
+    if nom_snakebite is not None and nom_residency is not None:
+        resultat = controle_snakebite_residents(tables, nom_snakebite, nom_residency)
+        if resultat is not None:
+            controles_croises.append((
+                "Fiche snakebite ↔ résidents du ménage", nom_snakebite, nom_residency, resultat
+            ))
+
+    nom_telephone = next((n for n in tables if _table_correspond(n, ["telephone"])), None)
+    if nom_telephone is not None:
+        resultat = controle_telephone_par_age(tables, nom_telephone)
+        if resultat is not None:
+            nom_individus_tel = _table_individus(tables, exclure=nom_telephone)
+            controles_croises.append((
+                "Téléphone incohérent avec l'âge (< 15 ans avec numéro / ≥ 15 ans sans numéro)",
+                nom_telephone, nom_individus_tel or nom_telephone, resultat,
             ))
 
     if nom_table is not None:
@@ -1534,6 +1960,775 @@ def controle_deces_present(tables: dict, nom_source: str, nom_presence: str, cle
     except Exception:
         return None
     return {"colonnes_verifiees": [cle], "n_anomalies": len(chevauchement)}
+
+
+def controle_age_union(df: pd.DataFrame, borne_min: float = 12.0, borne_max: float = 40.0) -> dict | None:
+    """Fiche histoire matrimoniale (FNewBase_HistMat) : signale les lignes ou
+    l'age a la premiere union DECLARE (colonne `union_age`) sort de la
+    tranche attendue. Controle DIRECT sur la valeur declaree - ne PAS
+    confondre avec un age calcule depuis birth_date (qui donnerait l'age
+    ACTUEL de la personne, pas son age au moment de l'union, tres different
+    pour quelqu'un marie il y a des annees)."""
+    col = _premiere_colonne(df, UNION_AGE_LIKE)
+    if col is None:
+        return None
+    age = pd.to_numeric(df[col], errors="coerce")
+    hors_plage = ((age < borne_min) | (age > borne_max)).fillna(False)
+    return {
+        "colonnes_verifiees": [col],
+        "n_anomalies": int(hors_plage.sum()),
+        "detail": [f"{col} hors {borne_min:g}-{borne_max:g} ans"],
+    }
+
+
+def controle_doublon_individu(df: pd.DataFrame) -> dict | None:
+    """Signale un identifiant d'individu qui apparait PLUSIEURS FOIS dans une
+    table ou il ne devrait logiquement apparaitre qu'une seule fois (ex: un
+    meme individu declare decede a plus d'une reprise dans FNewDeath).
+
+    A n'utiliser QUE pour les tables ou une repetition n'est PAS legitime -
+    contrairement a une fiche d'evenement (grossesses, naissances...) ou un
+    individu peut tres bien apparaitre plusieurs fois au fil du temps."""
+    col_id = next((c for c in detect_id_columns(df) if "individ" in c.lower() and not c.lower().endswith("2")), None)
+    if col_id is None:
+        return None
+    valeurs = df[col_id][df[col_id].notna()]
+    doublons = valeurs[valeurs.duplicated(keep=False)]
+    return {"colonnes_verifiees": [col_id], "n_anomalies": int(doublons.nunique())}
+
+
+def controle_deces_formation_sanitaire(df: pd.DataFrame) -> dict | None:
+    """FNewDeath : signale les deces declares survenus EN formation sanitaire
+    (`diedinhs` = oui) alors que l'individu n'y est JAMAIS alle (`gonetohs` =
+    non) - incoherent, un deces en formation sanitaire suppose necessairement
+    un passage par cette formation avant le deces."""
+    col_died = _premiere_colonne(df, DIEDINHS_LIKE)
+    col_gone = _premiere_colonne(df, GONETOHS_LIKE)
+    if col_died is None or col_gone is None:
+        return None
+    oui = lambda s: s.astype(str).str.strip().str.lower().isin(["1", "1.0", "oui", "yes", "true"])
+    died_oui = oui(df[col_died])
+    gone_non = df[col_gone].notna() & ~oui(df[col_gone])
+    masque = died_oui & gone_non
+    return {"colonnes_verifiees": [col_died, col_gone], "n_anomalies": int(masque.sum())}
+
+
+def controle_deces_avant_naissance(tables: dict, nom_deces: str) -> dict | None:
+    """FNewDeath : signale les deces dont la date (`evtdate`) est ANTERIEURE
+    a la date de naissance de l'individu concerne, via `individid` -> table
+    individus (voir `_table_individus`) - logiquement impossible."""
+    if nom_deces not in tables:
+        return None
+    deces = tables[nom_deces]
+    col_id = next((c for c in detect_id_columns(deces) if "individ" in c.lower() and not c.lower().endswith("2")), None)
+    col_deces_date = _premiere_colonne(deces, DEATH_DATE_LIKE)
+    if col_id is None or col_deces_date is None:
+        return None
+    nom_individus = _table_individus(tables, exclure=nom_deces)
+    if nom_individus is None:
+        return None
+    individus = tables[nom_individus]
+    col_id_individus = next(
+        (c for c in detect_id_columns(individus) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_naissance = _premiere_colonne(individus, BIRTH_DATE_LIKE)
+    if col_id_individus is None or col_naissance is None:
+        return None
+
+    reference = individus[[col_id_individus, col_naissance]].rename(columns={col_id_individus: col_id})
+    reference = reference.assign(**{col_id: _cle_str(reference[col_id])})
+    gauche = deces[[col_id, col_deces_date]].assign(**{col_id: _cle_str(deces[col_id])})
+    fusion = gauche.merge(reference, on=col_id, how="left")
+    d_deces = pd.to_datetime(fusion[col_deces_date], errors="coerce", dayfirst=True)
+    d_naissance = pd.to_datetime(fusion[col_naissance], errors="coerce", dayfirst=True)
+    masque = (d_deces < d_naissance).fillna(False)
+    return {
+        "colonnes_verifiees": [col_id, col_deces_date, f"{nom_individus}.{col_naissance}"],
+        "n_anomalies": int(masque.sum()),
+    }
+
+
+def controle_chef_menage_mineur(df: pd.DataFrame, seuil_age: float = 12.0) -> dict | None:
+    """FNewBirth (ou toute fiche portant a la fois `birth_date` et
+    `rltn_head`) : signale les individus de moins de `seuil_age` ans
+    declares chef de menage (`rltn_head` = 1, "Socialgp head" - code
+    documente dans le dictionnaire de donnees de l'observatoire, jamais
+    devine) - logiquement improbable."""
+    col_naissance = _premiere_colonne(df, BIRTH_DATE_LIKE)
+    col_rltn = _premiere_colonne(df, RLTN_HEAD_LIKE)
+    if col_naissance is None or col_rltn is None:
+        return None
+    age = _age_en_annees(df, col_naissance)
+    est_chef = df[col_rltn].astype(str).str.strip() == CODE_CHEF_MENAGE
+    masque = (age < seuil_age) & est_chef
+    return {"colonnes_verifiees": [col_naissance, col_rltn], "n_anomalies": int(masque.sum())}
+
+
+def controle_naissance_sans_issue(tables: dict, nom_naissance: str, nom_issue: str) -> dict | None:
+    """FNewBirth <-> FNewPregoutcome : signale les naissances (`pregoutid`)
+    sans AUCUNE correspondance dans la table des issues de grossesse
+    (`eventid`) - cle PRECISE documentee par l'observatoire, differente d'une
+    simple jointure par individid (qui donnerait un lien "large", pas la
+    correspondance exacte demandee ici)."""
+    if nom_naissance not in tables or nom_issue not in tables:
+        return None
+    naissance, issue = tables[nom_naissance], tables[nom_issue]
+    col_pregoutid = _premiere_colonne(naissance, PREGOUTID_LIKE)
+    col_eventid = _premiere_colonne(issue, EVENTID_LIKE)
+    if col_pregoutid is None or col_eventid is None:
+        return None
+    ids_naissance = set(_cle_str(naissance[col_pregoutid]).dropna())
+    ids_issue = set(_cle_str(issue[col_eventid]).dropna())
+    manquants = ids_naissance - ids_issue
+    return {
+        "colonnes_verifiees": [f"{nom_naissance}.{col_pregoutid}", f"{nom_issue}.{col_eventid}"],
+        "n_anomalies": len(manquants),
+    }
+
+
+def controle_issue_sans_grossesse(tables: dict, nom_issue: str, nom_grossesse: str) -> dict | None:
+    """FNewPregoutcome <-> FNewPregnancy : signale les issues de grossesse
+    (`peventid`) sans AUCUNE correspondance dans la table des grossesses
+    (`eventid`) - cle PRECISE documentee par l'observatoire, dans le sens
+    INVERSE de `controle_naissance_sans_issue`/du controle "grossesse sans
+    issue" deja existant (qui, lui, utilise une cle plus large - individid)."""
+    if nom_issue not in tables or nom_grossesse not in tables:
+        return None
+    issue, grossesse = tables[nom_issue], tables[nom_grossesse]
+    col_peventid = _premiere_colonne(issue, PEVENTID_LIKE)
+    col_eventid = _premiere_colonne(grossesse, EVENTID_LIKE)
+    if col_peventid is None or col_eventid is None:
+        return None
+    ids_issue = set(_cle_str(issue[col_peventid]).dropna())
+    ids_grossesse = set(_cle_str(grossesse[col_eventid]).dropna())
+    manquants = ids_issue - ids_grossesse
+    return {
+        "colonnes_verifiees": [f"{nom_issue}.{col_peventid}", f"{nom_grossesse}.{col_eventid}"],
+        "n_anomalies": len(manquants),
+    }
+
+
+def controle_grossesse_sans_avoir_dormi(tables: dict, nom_grossesse: str, nom_presence: str) -> dict | None:
+    """FNewPregnancy <-> FNewPresences : signale les grossesses enregistrees
+    pour un individu qui, selon la fiche presence, N'A PAS dormi sur place
+    (`sleep_lastnight` different de oui) - incoherent."""
+    if nom_grossesse not in tables or nom_presence not in tables:
+        return None
+    grossesse, presence = tables[nom_grossesse], tables[nom_presence]
+    cle = detecter_cle_jointure(nom_grossesse, nom_presence, tables)
+    if cle is None:
+        return None
+    col_sleep = _premiere_colonne(presence, SLEEP_LIKE)
+    if col_sleep is None:
+        return None
+    dormi = presence[col_sleep].astype(str).str.strip().str.lower().isin(["1", "1.0", "oui", "yes", "true"])
+    ids_non_dormi = set(_cle_str(presence.loc[~dormi, cle]).dropna())
+    ids_grossesse = set(_cle_str(grossesse[cle]).dropna())
+    return {
+        "colonnes_verifiees": [cle, col_sleep],
+        "n_anomalies": len(ids_grossesse & ids_non_dormi),
+    }
+
+
+def _colonnes_cpn_ordonnees(df: pd.DataFrame) -> list[str]:
+    """Colonnes cpn_date1..cpn_dateN presentes dans la table, triees par
+    NUMERO d'ordre (et non alphabetiquement, ce qui casserait des la
+    dixieme visite : "cpn_date10" < "cpn_date2" en tri texte)."""
+    trouvees = []
+    for c in df.columns:
+        m = CPN_DATE_LIKE.match(str(c))
+        if m:
+            trouvees.append((int(m.group(1)), c))
+    return [c for _, c in sorted(trouvees)]
+
+
+def controle_cpn_dates_desordonnees(df: pd.DataFrame) -> dict | None:
+    """FNewPregnancy_CPN : signale les lignes ou les dates de visite CPN
+    (cpn_date1, cpn_date2...) ne sont PAS dans l'ordre chronologique
+    croissant (une visite numerotee plus tard datee avant une visite
+    numerotee plus tot)."""
+    colonnes = _colonnes_cpn_ordonnees(df)
+    if len(colonnes) < 2:
+        return None
+    dates = [pd.to_datetime(df[c], errors="coerce", dayfirst=True) for c in colonnes]
+    masque = pd.Series(False, index=df.index)
+    for i in range(len(dates) - 1):
+        for j in range(i + 1, len(dates)):
+            masque |= (dates[i] > dates[j]).fillna(False)
+    return {"colonnes_verifiees": colonnes, "n_anomalies": int(masque.sum())}
+
+
+def controle_cpn_dates_manquantes(df: pd.DataFrame) -> dict | None:
+    """FNewPregnancy_CPN : signale les lignes ou le nombre de CPN declare
+    (`nb_cpn`) est SUPERIEUR au nombre de dates cpn_dateN reellement
+    renseignees - des visites declarees sans date correspondante."""
+    col_nb = _premiere_colonne(df, NB_CPN_LIKE)
+    colonnes = _colonnes_cpn_ordonnees(df)
+    if col_nb is None or not colonnes:
+        return None
+    nb_declare = pd.to_numeric(df[col_nb], errors="coerce")
+    nb_renseignees = df[colonnes].notna().sum(axis=1)
+    masque = (nb_declare > nb_renseignees).fillna(False)
+    return {"colonnes_verifiees": [col_nb] + colonnes, "n_anomalies": int(masque.sum())}
+
+
+def controle_homme_dans_fiche_genesique(tables: dict, nom_genesique: str) -> dict | None:
+    """Fiche genesique (FNewHistoireGnesique/FNewHistGnesiqComplement) : ne
+    devrait concerner QUE des femmes - signale les individus de genre
+    masculin (`gender` = 1, "Male", code documente dans le dictionnaire de
+    donnees de l'observatoire) presents dans la fiche, via individid -> table
+    individus."""
+    if nom_genesique not in tables:
+        return None
+    genesique = tables[nom_genesique]
+    col_id = next(
+        (c for c in detect_id_columns(genesique) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    if col_id is None:
+        return None
+    nom_individus = _table_individus(tables, exclure=nom_genesique)
+    if nom_individus is None:
+        return None
+    individus = tables[nom_individus]
+    col_id_individus = next(
+        (c for c in detect_id_columns(individus) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_gender = _premiere_colonne(individus, GENDER_LIKE)
+    if col_id_individus is None or col_gender is None:
+        return None
+    reference = individus[[col_id_individus, col_gender]].rename(columns={col_id_individus: col_id})
+    reference = reference.assign(**{col_id: _cle_str(reference[col_id])})
+    gauche = genesique[[col_id]].assign(**{col_id: _cle_str(genesique[col_id])})
+    fusion = gauche.merge(reference, on=col_id, how="left")
+    masque = (fusion[col_gender].astype(str).str.strip() == CODE_HOMME).fillna(False)
+    return {"colonnes_verifiees": [col_id, f"{nom_individus}.{col_gender}"], "n_anomalies": int(masque.sum())}
+
+
+def controle_pas_enfant_mais_naissance_vivante(tables: dict, nom_genesique: str, nom_complement: str) -> dict | None:
+    """FNewHistoireGnesique <-> FNewHistGnesiqComplement : signale les
+    individus declarant AUCUN enfant vivant (`living_children_number` = 0)
+    alors qu'une naissance vivante (`isAlive` = oui) est bien enregistree
+    pour ce meme individu dans le complement genesique - incoherent."""
+    if nom_genesique not in tables or nom_complement not in tables:
+        return None
+    genesique, complement = tables[nom_genesique], tables[nom_complement]
+    col_id_g = next(
+        (c for c in detect_id_columns(genesique) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_living = _premiere_colonne(genesique, LIVING_CHILDREN_LIKE)
+    col_id_c = next(
+        (c for c in detect_id_columns(complement) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_alive = _premiere_colonne(complement, ISALIVE_LIKE)
+    if col_id_g is None or col_living is None or col_id_c is None or col_alive is None:
+        return None
+    nb_vivants = pd.to_numeric(genesique[col_living], errors="coerce")
+    sans_enfant = set(_cle_str(genesique.loc[nb_vivants == 0, col_id_g]).dropna())
+    oui = complement[col_alive].astype(str).str.strip().str.lower().isin(["1", "1.0", "oui", "yes", "true"])
+    naissance_vivante = set(_cle_str(complement.loc[oui, col_id_c]).dropna())
+    return {
+        "colonnes_verifiees": [col_living, col_alive],
+        "n_anomalies": len(sans_enfant & naissance_vivante),
+    }
+
+
+def controle_age_mere_a_naissance(tables: dict, nom_complement: str, seuil_age: float = 15.0) -> dict | None:
+    """FNewHistGnesiqComplement : signale les cas ou l'age de la mere AU
+    MOMENT de la naissance de l'enfant enregistre (`birthDate` de l'enfant -
+    date de naissance de la mere, via individid -> table individus) est
+    INFERIEUR a `seuil_age` ans - distinct d'un simple age ACTUEL hors
+    tranche (voir `controle_tranche_age_croisee`), puisqu'il s'agit ici de
+    l'age a un evenement passe."""
+    if nom_complement not in tables:
+        return None
+    complement = tables[nom_complement]
+    col_id = next(
+        (c for c in detect_id_columns(complement) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_naissance_enfant = _premiere_colonne(complement, BIRTHDATE_ENFANT_LIKE)
+    if col_id is None or col_naissance_enfant is None:
+        return None
+    nom_individus = _table_individus(tables, exclure=nom_complement)
+    if nom_individus is None:
+        return None
+    individus = tables[nom_individus]
+    col_id_individus = next(
+        (c for c in detect_id_columns(individus) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_naissance_mere = _premiere_colonne(individus, BIRTH_DATE_LIKE)
+    if col_id_individus is None or col_naissance_mere is None:
+        return None
+
+    reference = individus[[col_id_individus, col_naissance_mere]].rename(
+        columns={col_id_individus: col_id, col_naissance_mere: "_naissance_mere"}
+    )
+    reference = reference.assign(**{col_id: _cle_str(reference[col_id])})
+    gauche = complement[[col_id, col_naissance_enfant]].assign(**{col_id: _cle_str(complement[col_id])})
+    fusion = gauche.merge(reference, on=col_id, how="left")
+    d_enfant = pd.to_datetime(fusion[col_naissance_enfant], errors="coerce", dayfirst=True)
+    d_mere = pd.to_datetime(fusion["_naissance_mere"], errors="coerce", dayfirst=True)
+    age_mere = (d_enfant - d_mere).dt.days / 365.25
+    masque = (age_mere < seuil_age).fillna(False)
+    return {
+        "colonnes_verifiees": [col_id, col_naissance_enfant, f"{nom_individus}.{col_naissance_mere}"],
+        "n_anomalies": int(masque.sum()),
+    }
+
+
+def controle_annee_naissance_enfant(df: pd.DataFrame, annee_min: int = 2022, annee_max: int = 2026) -> dict | None:
+    """FNewHistGnesiqComplement : signale les enfants dont l'annee de
+    naissance (`birthDate`) sort de la plage attendue des rounds de
+    l'observatoire (2022-2026 par defaut)."""
+    col = _premiere_colonne(df, BIRTHDATE_ENFANT_LIKE)
+    if col is None:
+        return None
+    annee = pd.to_datetime(df[col], errors="coerce", dayfirst=True).dt.year
+    masque = ((annee < annee_min) | (annee > annee_max)).fillna(False)
+    return {
+        "colonnes_verifiees": [col],
+        "n_anomalies": int(masque.sum()),
+        "detail": [f"{col} hors {annee_min}-{annee_max}"],
+    }
+
+
+def controle_telephone_par_age(tables: dict, nom_telephone: str, seuil_age: float = 15.0) -> dict | None:
+    """FNewTelephone <-> table individus : signale (1) les individus de
+    MOINS de `seuil_age` ans ayant un numero de telephone enregistre, et (2)
+    les individus de `seuil_age` ans OU PLUS SANS aucun numero enregistre -
+    a partir de l'age REEL (individid -> table individus), pas d'une simple
+    presence brute dans FNewTelephone."""
+    if nom_telephone not in tables:
+        return None
+    telephone = tables[nom_telephone]
+    col_id_tel = next(
+        (c for c in detect_id_columns(telephone) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    if col_id_tel is None:
+        return None
+    col_numero = _premiere_colonne(telephone, PHONE_LIKE)
+    nom_individus = _table_individus(tables, exclure=nom_telephone)
+    if nom_individus is None:
+        return None
+    individus = tables[nom_individus]
+    col_id_individus = next(
+        (c for c in detect_id_columns(individus) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_naissance = _premiere_colonne(individus, BIRTH_DATE_LIKE)
+    if col_id_individus is None or col_naissance is None:
+        return None
+
+    ids_avec_numero: set = set()
+    if col_numero is not None:
+        ids_avec_numero = set(_cle_str(telephone.loc[telephone[col_numero].notna(), col_id_tel]).dropna())
+
+    reference = individus[[col_id_individus, col_naissance]].rename(columns={col_id_individus: "_id"})
+    age = _age_en_annees(reference, col_naissance)
+    reference = reference.assign(_age=age, _id=_cle_str(reference["_id"]))
+
+    jeunes_avec_numero = reference.loc[(reference["_age"] < seuil_age) & reference["_id"].isin(ids_avec_numero)]
+    ages_sans_numero = reference.loc[(reference["_age"] >= seuil_age) & ~reference["_id"].isin(ids_avec_numero)]
+
+    return {
+        "colonnes_verifiees": [col_id_tel, f"{nom_individus}.{col_naissance}"] + ([col_numero] if col_numero else []),
+        "n_moins_seuil_avec_numero": int(len(jeunes_avec_numero)),
+        "n_seuil_ou_plus_sans_numero": int(len(ages_sans_numero)),
+    }
+
+
+def controle_migration_depart_avant_arrivee(tables: dict, nom_migration_in: str, nom_migration_out: str) -> dict | None:
+    """FNewMigration_IN <-> FNewMigration_Out : signale, pour un meme
+    individu, un depart (`depart_date`, Migration_Out) ANTERIEUR a son
+    arrivee (`arrive_date`, Migration_IN) - logiquement impossible (on ne
+    peut pas partir d'un lieu avant d'y etre arrive)."""
+    if nom_migration_in not in tables or nom_migration_out not in tables:
+        return None
+    entree, sortie = tables[nom_migration_in], tables[nom_migration_out]
+    col_id_in = next(
+        (c for c in detect_id_columns(entree) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_id_out = next(
+        (c for c in detect_id_columns(sortie) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_arrivee = _premiere_colonne(entree, ARRIVE_DATE_LIKE)
+    col_depart = _premiere_colonne(sortie, DEPART_DATE_LIKE)
+    if col_id_in is None or col_id_out is None or col_arrivee is None or col_depart is None:
+        return None
+
+    gauche = sortie[[col_id_out, col_depart]].rename(columns={col_id_out: "_id"})
+    gauche = gauche.assign(_id=_cle_str(gauche["_id"]))
+    droite = entree[[col_id_in, col_arrivee]].rename(columns={col_id_in: "_id"})
+    droite = droite.assign(_id=_cle_str(droite["_id"]))
+    fusion = gauche.merge(droite, on="_id", how="inner")
+    d_depart = pd.to_datetime(fusion[col_depart], errors="coerce", dayfirst=True)
+    d_arrivee = pd.to_datetime(fusion[col_arrivee], errors="coerce", dayfirst=True)
+    masque = (d_depart < d_arrivee).fillna(False)
+    return {
+        "colonnes_verifiees": [f"{nom_migration_out}.{col_depart}", f"{nom_migration_in}.{col_arrivee}"],
+        "n_anomalies": int(masque.sum()),
+    }
+
+
+def controle_eligibilite_croisee_par_menage(tables: dict, nom_presence: str, nom_cible: str) -> dict | None:
+    """Variante de `controle_eligibilite_croisee` pour les controles
+    D'ELIGIBILITE PAR MENAGE (`socialgpid`) plutot que par individu - cas de
+    la fiche pauvrete (et sante) : contrairement a l'individid, la fiche
+    presence ne porte PAS directement `socialgpid`, donc une comparaison
+    directe presence <-> cible ne trouverait aucune colonne commune. Il faut
+    d'abord deriver le menage de chaque individu ELIGIBLE (a dormi, sans date
+    de depart) via la table individus (`individid` -> `socialgpid`), PUIS
+    comparer l'ensemble de menages obtenu a celui de la table cible."""
+    if nom_presence not in tables or nom_cible not in tables:
+        return None
+    presence, cible = tables[nom_presence], tables[nom_cible]
+    col_id_presence = next(
+        (c for c in detect_id_columns(presence) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_socialgp_cible = _premiere_colonne(cible, SOCIALGP_LIKE)
+    if col_id_presence is None or col_socialgp_cible is None:
+        return None
+    nom_individus = _table_individus(tables, exclure=nom_presence)
+    if nom_individus is None:
+        return None
+    individus = tables[nom_individus]
+    col_id_individus = next(
+        (c for c in detect_id_columns(individus) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_socialgp_individus = _premiere_colonne(individus, SOCIALGP_LIKE)
+    if col_id_individus is None or col_socialgp_individus is None:
+        return None
+
+    col_sleep = _premiere_colonne(presence, SLEEP_LIKE)
+    col_depart = _premiere_colonne(presence, DEPART_DATE_LIKE)
+    masque = pd.Series(True, index=presence.index)
+    colonnes_verifiees = [col_id_presence, col_socialgp_cible]
+    if col_sleep is not None:
+        masque &= presence[col_sleep].astype(str).str.strip().str.lower().isin(["1", "1.0", "oui", "yes", "true"])
+        colonnes_verifiees.append(col_sleep)
+    if col_depart is not None:
+        masque &= presence[col_depart].isna()
+        colonnes_verifiees.append(col_depart)
+
+    ids_eligibles = set(_cle_str(presence.loc[masque, col_id_presence]).dropna())
+    reference = individus[[col_id_individus, col_socialgp_individus]].rename(columns={col_id_individus: "_id"})
+    reference = reference.assign(_id=_cle_str(reference["_id"]))
+    menages_eligibles = set(reference.loc[reference["_id"].isin(ids_eligibles), col_socialgp_individus].dropna())
+
+    ids_cible = set(cible[col_socialgp_cible].dropna())
+    eligibles_sans_fiche = sorted(menages_eligibles - ids_cible, key=str)
+    fiche_sans_eligibilite = sorted(ids_cible - menages_eligibles, key=str)
+
+    return {
+        "colonnes_verifiees": colonnes_verifiees + [f"{nom_individus}.{col_socialgp_individus}"],
+        "n_eligibles_sans_fiche": len(eligibles_sans_fiche),
+        "n_fiche_sans_eligibilite": len(fiche_sans_eligibilite),
+        "eligibles_sans_fiche": eligibles_sans_fiche[:50],
+        "fiche_sans_eligibilite": fiche_sans_eligibilite[:50],
+    }
+
+
+def _sante_avec_age(tables: dict, nom_sante: str) -> tuple[pd.DataFrame, str, str] | None:
+    """Fusionne FNewSante avec la table individus via `respondid` ->
+    `individid` (convention du schema reel de l'observatoire : le
+    `respondid` d'une fiche sante EST l'`individid` de la personne
+    interrogee) et ajoute une colonne d'age calcule `_age`. Renvoie
+    (fusion, colonne_respondid, nom_table_individus), ou None si le
+    croisement necessaire n'est pas disponible."""
+    if nom_sante not in tables:
+        return None
+    sante = tables[nom_sante]
+    col_respondid = _premiere_colonne(sante, RESPONDID_LIKE)
+    if col_respondid is None:
+        return None
+    nom_individus = _table_individus(tables, exclure=nom_sante)
+    if nom_individus is None:
+        return None
+    individus = tables[nom_individus]
+    col_id_individus = next(
+        (c for c in detect_id_columns(individus) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_naissance = _premiere_colonne(individus, BIRTH_DATE_LIKE)
+    if col_id_individus is None or col_naissance is None:
+        return None
+    reference = individus[[col_id_individus, col_naissance]].rename(columns={col_id_individus: col_respondid})
+    reference = reference.assign(**{col_respondid: _cle_str(reference[col_respondid])})
+    gauche = sante.assign(**{col_respondid: _cle_str(sante[col_respondid])})
+    fusion = gauche.merge(reference, on=col_respondid, how="left")
+    fusion = fusion.assign(_age=_age_en_annees(fusion, col_naissance))
+    return fusion, col_respondid, nom_individus
+
+
+def controle_sante_repondant_non_dormi(tables: dict, nom_sante: str, nom_presence: str) -> dict | None:
+    """FNewSante <-> FNewPresences : signale les fiches sante remplies pour
+    un repondant qui, selon la fiche presence, N'A PAS dormi sur place
+    (convention : `respondid` (Sante) correspond a l'`individid` (Presence)
+    de la meme personne)."""
+    if nom_sante not in tables or nom_presence not in tables:
+        return None
+    sante, presence = tables[nom_sante], tables[nom_presence]
+    col_respondid = _premiere_colonne(sante, RESPONDID_LIKE)
+    col_id_presence = next(
+        (c for c in detect_id_columns(presence) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_sleep = _premiere_colonne(presence, SLEEP_LIKE)
+    if col_respondid is None or col_id_presence is None or col_sleep is None:
+        return None
+    dormi = presence[col_sleep].astype(str).str.strip().str.lower().isin(["1", "1.0", "oui", "yes", "true"])
+    ids_non_dormi = set(_cle_str(presence.loc[~dormi, col_id_presence]).dropna())
+    ids_sante = set(_cle_str(sante[col_respondid]).dropna())
+    return {"colonnes_verifiees": [col_respondid, col_sleep], "n_anomalies": len(ids_sante & ids_non_dormi)}
+
+
+def controle_sante_doublon_menage(df: pd.DataFrame) -> dict | None:
+    """FNewSante : signale un meme `respondid` associe a PLUSIEURS
+    `socialgpid` differents - incoherent, un repondant appartient a un seul
+    menage."""
+    col_respondid = _premiere_colonne(df, RESPONDID_LIKE)
+    col_socialgp = _premiere_colonne(df, SOCIALGP_LIKE)
+    if col_respondid is None or col_socialgp is None:
+        return None
+    nb_menages = df.groupby(col_respondid)[col_socialgp].nunique()
+    return {"colonnes_verifiees": [col_respondid, col_socialgp], "n_anomalies": int((nb_menages > 1).sum())}
+
+
+def controle_sante_mois_regle_inconnu(df: pd.DataFrame) -> dict | None:
+    """FNewSante : quand la repondante n'a PAS eu ses regles au cours des 12
+    derniers mois (`S4_2` = 2, "Non" - code documente dans le questionnaire
+    source), le mois de la derniere fois (`S4_2mm`) devrait etre renseigne -
+    signale les cas ou il manque."""
+    col_s4_2 = _premiere_colonne(df, S4_2_LIKE)
+    col_mm = _premiere_colonne(df, S4_2MM_LIKE)
+    if col_s4_2 is None or col_mm is None:
+        return None
+    non = df[col_s4_2].astype(str).str.strip() == CODE_NON
+    masque = non & df[col_mm].isna()
+    return {"colonnes_verifiees": [col_s4_2, col_mm], "n_anomalies": int(masque.sum())}
+
+
+def controle_sante_internet_contradictoire(df: pd.DataFrame) -> dict | None:
+    """FNewSante : signale les repondants declarant n'avoir JAMAIS utilise
+    internet en general (`S5_1` = 7, "Jamais" - questionnaire source) alors
+    qu'ils declarent une utilisation reelle (reponse 1 a 4, PAS "Jamais"/"Ne
+    sait pas") dans au moins un lieu precis (`S5_2A` maison, `S5_2B` travail/
+    ecole, `S5_2C` espace public) - incoherent."""
+    col_s5_1 = _premiere_colonne(df, S5_1_LIKE)
+    colonnes_lieux = [c for c in df.columns if S5_2_LIEU_LIKE.match(str(c))]
+    if col_s5_1 is None or not colonnes_lieux:
+        return None
+    jamais_general = df[col_s5_1].astype(str).str.strip() == "7"
+    utilise_quelque_part = pd.Series(False, index=df.index)
+    for c in colonnes_lieux:
+        utilise_quelque_part |= df[c].astype(str).str.strip().isin(["1", "2", "3", "4"])
+    masque = jamais_general & utilise_quelque_part
+    return {"colonnes_verifiees": [col_s5_1] + colonnes_lieux, "n_anomalies": int(masque.sum())}
+
+
+def controle_sante_repondant_mineur(tables: dict, nom_sante: str, seuil_age: float = 15.0) -> dict | None:
+    """FNewSante : le module sante ne concerne QUE les repondants de 15 ans
+    et plus (documente explicitement dans le questionnaire source, "Module
+    sante (répondant de 15 ans et plus)") - signale les fiches remplies pour
+    un repondant plus jeune."""
+    resultat = _sante_avec_age(tables, nom_sante)
+    if resultat is None:
+        return None
+    fusion, col_respondid, nom_individus = resultat
+    masque = (fusion["_age"] < seuil_age).fillna(False)
+    return {"colonnes_verifiees": [col_respondid, f"{nom_individus}.birth_date"], "n_anomalies": int(masque.sum())}
+
+
+def controle_sante_regles_femme_jeune(tables: dict, nom_sante: str, seuil_age: float = 35.0) -> dict | None:
+    """FNewSante : la question sur les regles des 12 derniers mois (`S4_2`)
+    n'est documentee, dans le questionnaire source, que "Pour les femmes
+    agees de 35 ans et plus" - signale les fiches ou `S4_2` est renseignee
+    pour un repondant de moins de `seuil_age` ans."""
+    resultat = _sante_avec_age(tables, nom_sante)
+    if resultat is None:
+        return None
+    fusion, col_respondid, nom_individus = resultat
+    col_s4_2 = _premiere_colonne(fusion, S4_2_LIKE)
+    if col_s4_2 is None:
+        return None
+    masque = (fusion["_age"] < seuil_age).fillna(False) & fusion[col_s4_2].notna()
+    return {
+        "colonnes_verifiees": [col_respondid, col_s4_2, f"{nom_individus}.birth_date"],
+        "n_anomalies": int(masque.sum()),
+    }
+
+
+def controle_snakebite_residents(tables: dict, nom_snakebite: str, nom_residency: str) -> dict | None:
+    """FNewSnakebite <-> FNewResidency (`res_status` = 1, "Resident" - code
+    documente) : signale, par MENAGE (`socialgpid`), les fiches snakebite
+    sans AUCUN resident identifie, et separement les menages avec des
+    residents mais SANS fiche snakebite."""
+    if nom_snakebite not in tables or nom_residency not in tables:
+        return None
+    snakebite, residency = tables[nom_snakebite], tables[nom_residency]
+    col_socialgp_snake = _premiere_colonne(snakebite, SOCIALGP_LIKE)
+    col_socialgp_res = _premiere_colonne(residency, SOCIALGP_LIKE)
+    col_res_status = _premiere_colonne(residency, RES_STATUS_LIKE)
+    if col_socialgp_snake is None or col_socialgp_res is None or col_res_status is None:
+        return None
+    residents = residency[residency[col_res_status].astype(str).str.strip() == CODE_RESIDENT]
+    menages_avec_residents = set(_cle_str(residents[col_socialgp_res]).dropna())
+    menages_snakebite = set(_cle_str(snakebite[col_socialgp_snake]).dropna())
+    fiche_sans_resident = sorted(menages_snakebite - menages_avec_residents, key=str)
+    residents_sans_fiche = sorted(menages_avec_residents - menages_snakebite, key=str)
+    return {
+        "colonnes_verifiees": [col_socialgp_snake, col_socialgp_res, col_res_status],
+        "n_fiche_sans_resident": len(fiche_sans_resident),
+        "n_residents_sans_fiche": len(residents_sans_fiche),
+        "fiche_sans_resident": fiche_sans_resident[:50],
+        "residents_sans_fiche": residents_sans_fiche[:50],
+    }
+
+
+def controle_duree_entretien(df: pd.DataFrame, seuil_minutes: float = 3.0) -> dict | None:
+    """FNewObservation : signale les entretiens de duree ANORMALEMENT COURTE
+    (< `seuil_minutes` minutes, `end_time` - `begin_time`), et separement les
+    entretiens a la duree INCOHERENTE (fin AVANT le debut)."""
+    col_begin = _premiere_colonne(df, BEGIN_TIME_LIKE)
+    col_end = _premiere_colonne(df, END_TIME_LIKE)
+    if col_begin is None or col_end is None:
+        return None
+    d_begin = pd.to_datetime(df[col_begin], errors="coerce")
+    d_end = pd.to_datetime(df[col_end], errors="coerce")
+    duree_min = (d_end - d_begin).dt.total_seconds() / 60
+    incoherente = (duree_min < 0).fillna(False)
+    trop_courte = ((duree_min >= 0) & (duree_min < seuil_minutes)).fillna(False)
+    return {
+        "colonnes_verifiees": [col_begin, col_end],
+        "n_duree_trop_courte": int(trop_courte.sum()),
+        "n_duree_incoherente": int(incoherente.sum()),
+    }
+
+
+def controle_naissance_apres_union(tables: dict, nom_relationship: str) -> list[tuple[str, dict]] | None:
+    """FNewRelationship : signale, pour chacune des 4 dates d'union
+    documentees (debut, civile, religieuse, traditionnelle), les lignes ou la
+    date de naissance de l'individu (via `individid` -> table individus) est
+    POSTERIEURE a la date d'union - logiquement impossible (on ne peut pas se
+    marier avant de naitre).
+
+    Renvoie une liste de (libelle, resultat) - un element par variante de
+    date effectivement presente dans la table - ou None si la table/le
+    croisement necessaire n'est pas disponible."""
+    if nom_relationship not in tables:
+        return None
+    relationship = tables[nom_relationship]
+    col_id = next(
+        (c for c in detect_id_columns(relationship) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    if col_id is None:
+        return None
+    nom_individus = _table_individus(tables, exclure=nom_relationship)
+    if nom_individus is None:
+        return None
+    individus = tables[nom_individus]
+    col_id_individus = next(
+        (c for c in detect_id_columns(individus) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_naissance = _premiere_colonne(individus, BIRTH_DATE_LIKE)
+    if col_id_individus is None or col_naissance is None:
+        return None
+
+    reference = individus[[col_id_individus, col_naissance]].rename(columns={col_id_individus: col_id})
+    naissance = pd.to_datetime(reference[col_naissance], errors="coerce", dayfirst=True)
+    reference = reference.assign(**{col_naissance: naissance, col_id: _cle_str(reference[col_id])})
+
+    resultats = []
+    for libelle, motif in DATES_UNION_LIKE.items():
+        col_union = _premiere_colonne(relationship, motif)
+        if col_union is None:
+            continue
+        gauche = relationship[[col_id, col_union]].assign(**{col_id: _cle_str(relationship[col_id])})
+        fusion = gauche.merge(reference, on=col_id, how="left")
+        d_union = pd.to_datetime(fusion[col_union], errors="coerce", dayfirst=True)
+        d_naissance = fusion[col_naissance]
+        masque = (d_naissance > d_union).fillna(False)
+        resultats.append((
+            f"Naissance postérieure à la date d'union ({libelle})",
+            {
+                "colonnes_verifiees": [col_id, col_union, f"{nom_individus}.{col_naissance}"],
+                "n_anomalies": int(masque.sum()),
+            },
+        ))
+    return resultats or None
+
+
+def controle_ecart_age_union_declare_calcule(
+    tables: dict, nom_histmat: str, nom_relationship: str, seuil_ecart: float = 3.0
+) -> dict | None:
+    """FNewBase_HistMat <-> FNewRelationship <-> table individus : compare
+    l'age a l'union DECLARE (`union_age`, FNewBase_HistMat) a l'age CALCULE
+    (date d'union de debut - date de naissance) - signale un ecart de plus de
+    `seuil_ecart` ans, indice d'une erreur de saisie sur l'une des deux
+    dates/valeurs. Utilise la date d'union de DEBUT (`uni_start_date`) comme
+    reference, faute d'un lien direct entre `union_age` et l'une des 4
+    variantes de date documentees."""
+    if nom_histmat not in tables or nom_relationship not in tables:
+        return None
+    histmat = tables[nom_histmat]
+    relationship = tables[nom_relationship]
+    col_id_histmat = next(
+        (c for c in detect_id_columns(histmat) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_age_declare = _premiere_colonne(histmat, UNION_AGE_LIKE)
+    if col_id_histmat is None or col_age_declare is None:
+        return None
+
+    col_id_relationship = next(
+        (c for c in detect_id_columns(relationship) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_union = _premiere_colonne(relationship, DATES_UNION_LIKE["début d'union"])
+    if col_id_relationship is None or col_union is None:
+        return None
+
+    nom_individus = _table_individus(tables, exclure=nom_histmat)
+    if nom_individus is None or nom_individus == nom_relationship:
+        nom_individus = _table_individus(tables) if nom_individus is None else nom_individus
+    if nom_individus is None:
+        return None
+    individus = tables[nom_individus]
+    col_id_individus = next(
+        (c for c in detect_id_columns(individus) if "individ" in c.lower() and not c.lower().endswith("2")), None
+    )
+    col_naissance = _premiere_colonne(individus, BIRTH_DATE_LIKE)
+    if col_id_individus is None or col_naissance is None:
+        return None
+
+    fusion = (
+        histmat[[col_id_histmat, col_age_declare]]
+        .rename(columns={col_id_histmat: "_id"})
+        .assign(_id=lambda d: _cle_str(d["_id"]))
+        .merge(
+            relationship[[col_id_relationship, col_union]]
+            .rename(columns={col_id_relationship: "_id"})
+            .assign(_id=lambda d: _cle_str(d["_id"])),
+            on="_id", how="inner",
+        )
+        .merge(
+            individus[[col_id_individus, col_naissance]]
+            .rename(columns={col_id_individus: "_id"})
+            .assign(_id=lambda d: _cle_str(d["_id"])),
+            on="_id", how="inner",
+        )
+    )
+    if fusion.empty:
+        return {
+            "colonnes_verifiees": [col_id_histmat, col_age_declare, col_union, f"{nom_individus}.{col_naissance}"],
+            "n_anomalies": 0,
+        }
+
+    age_declare = pd.to_numeric(fusion[col_age_declare], errors="coerce")
+    d_union = pd.to_datetime(fusion[col_union], errors="coerce", dayfirst=True)
+    d_naissance = pd.to_datetime(fusion[col_naissance], errors="coerce", dayfirst=True)
+    age_calcule = (d_union - d_naissance).dt.days / 365.25
+    ecart = (age_declare - age_calcule).abs()
+    masque = (ecart > seuil_ecart).fillna(False)
+    return {
+        "colonnes_verifiees": [col_id_histmat, col_age_declare, col_union, f"{nom_individus}.{col_naissance}"],
+        "n_anomalies": int(masque.sum()),
+        "detail": [f"écart > {seuil_ecart:g} ans entre âge déclaré et âge calculé"],
+    }
 
 
 """

@@ -525,7 +525,7 @@ absentes, et la liste des contrôles non applicables à une table (colonnes non
 reconnues) est affichée explicitement pour rester transparent sur ce qui a
 vraiment été vérifié.
 
-Contrôles par table :
+Contrôles génériques par table :
 
 - identifiants de longueur inhabituelle (par rapport à la longueur la plus
   fréquente de la colonne) ;
@@ -540,28 +540,77 @@ Contrôles par table :
 - dates d'arrivée/départ incohérentes (départ antérieur ou égal à l'arrivée) ;
 - résidence multiple pour un même individu (plusieurs ménages/localisations
   distincts) ;
-- naissance postérieure au décès, enregistrement antérieur à la naissance ;
-- âge hors de la tranche attendue selon le type de fiche détecté par le nom de
-  la table (12-49 ans pour une fiche génésique/grossesse, 12-40 ans pour une
-  fiche d'histoire matrimoniale, 5-34 ans pour l'éducation, 15-120 ans pour
-  l'emploi).
+- naissance postérieure au décès, enregistrement antérieur à la naissance
+  (colonne birth_date qui doit toujours précéder entry_date) ;
+- âge ACTUEL hors de la tranche attendue selon le type de fiche détecté par le
+  nom de la table (12-49 ans pour une fiche génésique/grossesse, 5-34 ans pour
+  l'éducation, 15-120 ans pour l'emploi) — calculé via une jointure
+  `individid` vers la table individus quand la fiche elle-même ne porte pas de
+  colonne `birth_date` (le cas sur la quasi-totalité du vrai schéma : aucune
+  fiche d'événement — éducation, emploi, grossesse, génésique, téléphone... —
+  ne porte `birth_date`, elle vit uniquement sur `FNewIndividual`/
+  `RegAllIndividual`).
 
-Contrôles croisés entre tables (population « éligible » de la fiche présence —
-a dormi dans le ménage, sans date de départ enregistrée) :
+Contrôles spécifiques par fiche (par table détectée par son nom) :
 
-- éligibilité présence ↔ éducation/emploi/histoire génésique
-  complémentaire/pauvreté/santé (qui est éligible sans avoir la fiche, et qui a
-  la fiche sans être éligible) ;
-- décédé mais toujours présent dans la fiche présence ;
-- a dormi dans le ménage mais apparaît aussi en migration OUT ;
-- grossesse sans issue de grossesse enregistrée.
+- **présence** : a dormi mais une date de départ est renseignée ; n'a pas
+  dormi sans date de départ renseignée ; ni date de départ ni d'arrivée
+  renseignées ;
+- **histoire matrimoniale** : âge à la première union (colonne `union_age`
+  déclarée, pas un âge actuel recalculé) hors 12-40 ans ; naissance
+  postérieure à chacune des 4 dates d'union (début/civile/religieuse/
+  traditionnelle, `FNewRelationship`) ; écart de plus de 3 ans entre l'âge à
+  l'union déclaré et l'âge calculé (date d'union − naissance) ;
+- **décès** : décédé en formation sanitaire sans y être jamais allé
+  (`diedinhs`/`gonetohs`) ; individu déclaré décédé plus d'une fois ; date de
+  décès antérieure à la naissance ;
+- **naissance** : moins de 12 ans déclaré chef de ménage (`rltn_head` = 1,
+  code documenté) ; naissance sans issue de grossesse correspondante
+  (`pregoutid` → `eventid`) ;
+- **grossesse** : dates CPN désordonnées ou manquantes (nb_cpn déclaré >
+  dates renseignées) ; issue de grossesse sans grossesse correspondante
+  (`peventid` → `eventid`, sens inverse de la clé « large » individid déjà
+  utilisée pour grossesse → issue) ; enceinte sans avoir dormi sur place ;
+- **génésique** : homme présent dans la fiche (`gender` = 1, code documenté) ;
+  aucun enfant déclaré alors qu'une naissance vivante est enregistrée dans le
+  complément ; âge de la mère incohérent à la naissance de l'enfant (< 15 ans,
+  calculé à la date de naissance de l'enfant, pas l'âge actuel) ; année de
+  naissance de l'enfant hors 2022-2026 ;
+- **téléphone** : moins de 15 ans avec numéro enregistré ; 15 ans ou plus sans
+  numéro enregistré (âge réel via la table individus) ;
+- **migration** : date de départ (Migration_Out) antérieure à la date
+  d'arrivée (Migration_IN) pour un même individu ;
+- **santé** : répondant n'ayant pas dormi sur place (`respondid` correspond à
+  l'`individid` de la même personne) ; même répondant associé à des ménages
+  différents ; mois de dernière règle inconnu quand `S4_2` = Non ; « jamais
+  utilisé internet » en général mais usage déclaré dans un lieu précis
+  (maison/travail/espace public) ; répondant mineur (< 15 ans, le module ne
+  concerne documentairement que les 15 ans et plus) ; question sur les règles
+  (`S4_2`) renseignée pour une femme de moins de 35 ans (documenté comme
+  réservé aux 35 ans et plus) ;
+- **snakebite/résidence** : fiche snakebite sans aucun résident identifié dans
+  le ménage, et ménage avec résidents mais sans fiche snakebite (`res_status`
+  = 1, « Resident », code documenté) ;
+- **observation** : durée d'entretien anormalement courte (< 3 min) ou
+  incohérente (fin avant le début).
 
-**Non couvert pour l'instant, explicitement signalé comme tel dans le
-rapport** : les contrôles les plus spécifiques au questionnaire (codes de
-réponse détaillés d'une question de santé précise, par exemple), qui
-nécessitent de connaître le nom exact d'une colonne de code de réponse propre
-à l'observatoire et n'ont pas pu être vérifiés depuis cette session — à
-compléter dès que ces colonnes précises sont confirmées.
+Contrôles d'éligibilité croisés avec la fiche présence (population « éligible »
+= a dormi dans le ménage, sans date de départ enregistrée) :
+
+- **par individu** (`individid` commun) : éducation, emploi, histoire
+  génésique complémentaire, téléphone ;
+- **par ménage** (`socialgpid` — absent de la fiche présence, dérivé de
+  l'individu éligible via la table individus) : pauvreté, santé.
+
+Chaque contrôle répond, dans les deux sens, à « qui est éligible sans avoir la
+fiche » et « qui a la fiche sans être éligible ».
+
+**Non couvert pour l'instant, explicitement signalé comme tel plutôt que
+deviné** : la comparaison « Diabète = Cancer » et le contrôle précis
+« règle vue mais année incohérente » de la fiche santé — le sens exact attendu
+de ces deux contrôles reste à confirmer avec l'équipe avant implémentation
+(les autres contrôles santé listés ci-dessus s'appuient, eux, sur le
+questionnaire source documenté : `20_FICHE SANTE_R14`).
 
 ## Performances de terrain (ménages/UCH, objectif, rapport Word)
 
@@ -680,7 +729,16 @@ aucun mot-clé de modification (`INSERT`/`UPDATE`/`DROP`/`ATTACH`...) — jamais
 d'exécution de code généré par le LLM sans validation. Résultat limité à
 200 lignes. Voir `app.py:tenter_requete_sql` / `rag.generer_requete_sql`.
 
-Cinq garde-fous supplémentaires pour que ce résultat reste fiable :
+Six garde-fous supplémentaires pour que ce résultat reste fiable :
+
+- **Mémoire de conversation** : `generer_requete_sql` reçoit désormais
+  l'historique récent des échanges (`historique`, même mécanisme que
+  `rag.answer`) et l'inclut dans le prompt — bug réel corrigé ici : cette
+  fonction ne recevait JAMAIS l'historique auparavant (contrairement à
+  `rag.answer`), donc toute question de suivi qui ne répète pas tout le
+  contexte (« et pour les femmes seulement ? », « et dans l'autre table ? »)
+  passant par le repli SQL général était traitée dans le vide, sans mémoire
+  de ce qui venait d'être demandé.
 
 - **Indices de jointure** : le schéma transmis au LLM inclut les colonnes
   réellement communes à chaque paire de tables (`dt.detecter_cles_communes`),

@@ -1068,6 +1068,339 @@ def test_controle_residence_multiple_detecte_individu_dans_plusieurs_menages():
     assert resultat["n_anomalies"] == 1
 
 
+def test_controle_enregistrement_anterieur_a_la_naissance_detecte_le_bon_sens():
+    # Bug reel corrige : l'appel precedent detectait l'inverse (entry_date >=
+    # birth_date, le cas NORMAL) au lieu du vrai cas anormal (entry_date <
+    # birth_date, un enregistrement date d'AVANT la naissance).
+    df = pd.DataFrame({
+        "birth_date": ["2020-01-01", "2020-06-01"],
+        "entry_date": ["2020-02-01", "2020-01-01"],  # ligne 2 : enregistrement avant la naissance -> anomalie
+    })
+    _, fonction = next(
+        (l, f) for l, f in dt.CONTROLES_GENERIQUES_PAR_TABLE if "Enregistrement antérieur" in l
+    )
+    resultat = fonction(df)
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_coherence_presence_detecte_les_3_incoherences():
+    df = pd.DataFrame({
+        "individid": [1, 2, 3, 4, 5, 6],
+        "sleep_lastnight": ["oui", "oui", "non", "non", "oui", "non"],
+        # individu 1 : a dormi ET a une date de depart -> anomalie (controle 1)
+        # individu 2 : a dormi, pas de depart -> normal
+        # individu 3 : n'a pas dormi, sans depart -> anomalie (controle 2)
+        # individu 4 : n'a pas dormi, MAIS a un depart -> normal (l'absence est expliquee)
+        # individu 5 : a dormi, ni arrivee ni depart -> anomalie (controle 3)
+        # individu 6 : n'a pas dormi, a un depart, sans arrivee -> normal (pas les 2 a la fois manquantes)
+        "arrive_date": ["2024-01-01", "2024-01-01", "2024-01-01", "2024-01-01", None, None],
+        "depart_date": ["2024-02-01", None, None, "2024-02-01", None, "2024-02-01"],
+    })
+    resultats = dict(dt.controle_coherence_presence(df))
+    assert resultats["A dormi sur place mais une date de départ est renseignée"]["n_anomalies"] == 1
+    assert resultats["N'a pas dormi sur place sans date de départ renseignée"]["n_anomalies"] == 1
+    assert resultats["Ni date de départ ni date d'arrivée renseignées"]["n_anomalies"] == 1
+
+
+def test_controle_coherence_presence_ignore_sans_colonne_sleep():
+    df = pd.DataFrame({"individid": [1, 2]})
+    assert dt.controle_coherence_presence(df) is None
+
+
+def test_controle_doublon_individu_detecte_les_repetitions():
+    df = pd.DataFrame({"individid": [1, 2, 2, 3, 3, 3]})
+    resultat = dt.controle_doublon_individu(df)
+    assert resultat["n_anomalies"] == 2  # individus 2 et 3, chacun compte une fois
+
+
+def test_controle_doublon_individu_ignore_sans_colonne():
+    assert dt.controle_doublon_individu(pd.DataFrame({"x": [1, 2]})) is None
+
+
+def test_controle_deces_formation_sanitaire_detecte_incoherence():
+    df = pd.DataFrame({
+        "individid": [1, 2, 3],
+        "diedinhs": ["oui", "oui", "non"],
+        "gonetohs": ["non", "oui", "non"],
+        # individu 1 : decede en FS mais jamais alle -> anomalie
+        # individu 2 : decede en FS et y est alle -> normal
+        # individu 3 : pas decede en FS -> non concerne
+    })
+    resultat = dt.controle_deces_formation_sanitaire(df)
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_deces_avant_naissance_detecte_incoherence():
+    deces = pd.DataFrame({"individid": [1, 2], "evtdate": ["2020-01-01", "1980-01-01"]})
+    individus = pd.DataFrame({"individid": [1, 2], "birth_date": ["1990-01-01", "1990-01-01"]})
+    tables = {"FNewDeath": deces, "FNewIndividual": individus}
+    resultat = dt.controle_deces_avant_naissance(tables, "FNewDeath")
+    assert resultat["n_anomalies"] == 1  # individu 2 : deces (1980) avant naissance (1990)
+
+
+def test_controle_chef_menage_mineur_detecte_incoherence():
+    df = pd.DataFrame({
+        "individid": [1, 2, 3],
+        "birth_date": ["2020-01-01", "2020-01-01", "1990-01-01"],
+        "rltn_head": ["1", "3", "1"],
+        # individu 1 : <12 ans ET chef de menage (code 1) -> anomalie
+        # individu 2 : <12 ans mais pas chef (code 3, fils/fille) -> normal
+        # individu 3 : chef de menage mais pas mineur -> normal
+    })
+    resultat = dt.controle_chef_menage_mineur(df)
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_naissance_sans_issue_detecte_incoherence():
+    naissance = pd.DataFrame({"individid": [1, 2], "pregoutid": [100, 200]})
+    issue = pd.DataFrame({"individid": [1], "eventid": [100]})  # 200 absent -> naissance sans issue
+    tables = {"FNewBirth": naissance, "FNewPregoutcome": issue}
+    resultat = dt.controle_naissance_sans_issue(tables, "FNewBirth", "FNewPregoutcome")
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_issue_sans_grossesse_utilise_la_cle_precise_peventid_eventid():
+    issue = pd.DataFrame({"individid": [1, 2], "peventid": [100, 200]})
+    grossesse = pd.DataFrame({"individid": [1], "eventid": [100]})  # 200 absent -> issue sans grossesse
+    tables = {"FNewPregoutcome": issue, "FNewPregnancy": grossesse}
+    resultat = dt.controle_issue_sans_grossesse(tables, "FNewPregoutcome", "FNewPregnancy")
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_grossesse_sans_avoir_dormi_detecte_incoherence():
+    grossesse = pd.DataFrame({"individid": [1, 2]})
+    presence = pd.DataFrame({"individid": [1, 2], "sleep_lastnight": ["oui", "non"]})
+    tables = {"FNewPregnancy": grossesse, "FNewPresences": presence}
+    resultat = dt.controle_grossesse_sans_avoir_dormi(tables, "FNewPregnancy", "FNewPresences")
+    assert resultat["n_anomalies"] == 1  # individu 2 : enceinte mais n'a pas dormi
+
+
+def test_controle_cpn_dates_desordonnees_detecte_incoherence():
+    df = pd.DataFrame({
+        "individid": [1, 2],
+        "cpn_date1": ["2024-01-01", "2024-01-01"],
+        "cpn_date2": ["2024-02-01", "2023-12-01"],  # individu 2 : date2 AVANT date1 -> anomalie
+    })
+    resultat = dt.controle_cpn_dates_desordonnees(df)
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_cpn_dates_desordonnees_trie_numeriquement_pas_alphabetiquement():
+    # "cpn_date10" doit venir APRES "cpn_date2" (tri numerique), jamais avant
+    # (ce que donnerait un tri alphabetique sur les noms de colonnes).
+    df = pd.DataFrame({"cpn_date2": ["2024-02-01"], "cpn_date10": ["2024-10-01"]})
+    colonnes = dt._colonnes_cpn_ordonnees(df)
+    assert colonnes == ["cpn_date2", "cpn_date10"]
+
+
+def test_controle_cpn_dates_manquantes_detecte_incoherence():
+    df = pd.DataFrame({
+        "individid": [1, 2],
+        "nb_cpn": [2, 3],
+        "cpn_date1": ["2024-01-01", "2024-01-01"],
+        "cpn_date2": ["2024-02-01", None],  # individu 2 : nb_cpn=3 mais seulement 1 date renseignee -> anomalie
+    })
+    resultat = dt.controle_cpn_dates_manquantes(df)
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_homme_dans_fiche_genesique_detecte_incoherence():
+    genesique = pd.DataFrame({"individid": [1, 2, 3]})
+    individus = pd.DataFrame({
+        "individid": [1, 2, 3],
+        "gender": ["2", "1", "2"],  # individu 2 : homme (code 1)
+        "birth_date": ["1990-01-01", "1990-01-01", "1990-01-01"],  # requis pour que _table_individus reconnaisse la table
+    })
+    tables = {"FNewHistoireGnesique": genesique, "FNewIndividual": individus}
+    resultat = dt.controle_homme_dans_fiche_genesique(tables, "FNewHistoireGnesique")
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_pas_enfant_mais_naissance_vivante_detecte_incoherence():
+    genesique = pd.DataFrame({"individid": [1, 2], "living_children_number": [0, 2]})
+    complement = pd.DataFrame({"individid": [1], "isAlive": ["oui"]})
+    tables = {"FNewHistoireGnesique": genesique, "FNewHistGnesiqComplement": complement}
+    resultat = dt.controle_pas_enfant_mais_naissance_vivante(tables, "FNewHistoireGnesique", "FNewHistGnesiqComplement")
+    assert resultat["n_anomalies"] == 1  # individu 1 : 0 enfant declare MAIS naissance vivante enregistree
+
+
+def test_controle_age_mere_a_naissance_detecte_incoherence():
+    complement = pd.DataFrame({"individid": [1, 2], "birthDate": ["2020-01-01", "2020-01-01"]})
+    individus = pd.DataFrame({"individid": [1, 2], "birth_date": ["2010-01-01", "1990-01-01"]})
+    # individu 1 : mere nee en 2010, enfant ne en 2020 -> mere avait 10 ans -> anomalie (<15)
+    # individu 2 : mere nee en 1990, enfant ne en 2020 -> mere avait 30 ans -> normal
+    tables = {"FNewHistGnesiqComplement": complement, "FNewIndividual": individus}
+    resultat = dt.controle_age_mere_a_naissance(tables, "FNewHistGnesiqComplement")
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_annee_naissance_enfant_detecte_hors_plage():
+    df = pd.DataFrame({"individid": [1, 2], "birthDate": ["2019-01-01", "2024-01-01"]})
+    resultat = dt.controle_annee_naissance_enfant(df)
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_telephone_par_age_detecte_les_2_incoherences():
+    telephone = pd.DataFrame({"individid": [1, 3], "NumTelephone": ["70123456", "71234567"]})
+    individus = pd.DataFrame({
+        "individid": [1, 2, 3],
+        "birth_date": ["2020-01-01", "2020-01-01", "1990-01-01"],
+        # individu 1 : <15 ans (2020) AVEC numero -> anomalie
+        # individu 2 : <15 ans (2020) SANS numero -> normal (pas concerne par le seuil >=15)
+        # individu 3 : >=15 ans (1990) AVEC numero -> normal
+    })
+    tables = {"FNewTelephone": telephone, "FNewIndividual": individus}
+    resultat = dt.controle_telephone_par_age(tables, "FNewTelephone")
+    assert resultat["n_moins_seuil_avec_numero"] == 1
+    assert resultat["n_seuil_ou_plus_sans_numero"] == 0
+
+
+def test_controle_telephone_par_age_detecte_majeur_sans_numero():
+    telephone = pd.DataFrame({"individid": [1], "NumTelephone": ["70123456"]})
+    individus = pd.DataFrame({"individid": [1, 2], "birth_date": ["1990-01-01", "1990-01-01"]})
+    tables = {"FNewTelephone": telephone, "FNewIndividual": individus}
+    resultat = dt.controle_telephone_par_age(tables, "FNewTelephone")
+    assert resultat["n_seuil_ou_plus_sans_numero"] == 1  # individu 2 : majeur, sans numero
+
+
+def test_controle_migration_depart_avant_arrivee_detecte_incoherence():
+    entree = pd.DataFrame({"individid": [1, 2], "arrive_date": ["2024-06-01", "2024-01-01"]})
+    sortie = pd.DataFrame({"individid": [1, 2], "depart_date": ["2024-01-01", "2024-06-01"]})
+    # individu 1 : depart (2024-01-01) AVANT arrivee (2024-06-01) -> anomalie
+    # individu 2 : depart (2024-06-01) APRES arrivee (2024-01-01) -> normal
+    tables = {"FNewMigration_IN": entree, "FNewMigration_Out": sortie}
+    resultat = dt.controle_migration_depart_avant_arrivee(tables, "FNewMigration_IN", "FNewMigration_Out")
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_eligibilite_croisee_par_menage_presence_pauvrete():
+    presence = pd.DataFrame({
+        "individid": [1, 2, 3, 4],
+        "sleep_lastnight": [1, 1, 0, 1],
+        "depart_date": [None, None, None, None],
+    })
+    # individus 1, 2, 4 sont eligibles (ont dormi) ; individu 3 non.
+    individus = pd.DataFrame({
+        "individid": [1, 2, 3, 4],
+        "socialgpid": [100, 100, 200, 300],
+        "birth_date": ["1990-01-01"] * 4,  # requis pour que _table_individus reconnaisse la table
+    })
+    # menages eligibles attendus (via 1,2,4) : {100, 300}
+    pauvrete = pd.DataFrame({"socialgpid": [100, 999]})  # 300 manque ; 999 en trop
+    tables = {"FNewPresences": presence, "FNewIndividual": individus, "FNewPauvreteSubjective": pauvrete}
+    resultat = dt.controle_eligibilite_croisee_par_menage(tables, "FNewPresences", "FNewPauvreteSubjective")
+    assert resultat["n_eligibles_sans_fiche"] == 1  # menage 300
+    assert resultat["n_fiche_sans_eligibilite"] == 1  # menage 999
+    assert resultat["eligibles_sans_fiche"] == [300]
+    assert resultat["fiche_sans_eligibilite"] == [999]
+
+
+def test_controle_sante_repondant_non_dormi_detecte_incoherence():
+    sante = pd.DataFrame({"respondid": [1, 2]})
+    presence = pd.DataFrame({"individid": [1, 2], "sleep_lastnight": ["oui", "non"]})
+    tables = {"FNewSante": sante, "FNewPresences": presence}
+    resultat = dt.controle_sante_repondant_non_dormi(tables, "FNewSante", "FNewPresences")
+    assert resultat["n_anomalies"] == 1  # respondant 2 : fiche sante mais n'a pas dormi
+
+
+def test_controle_sante_doublon_menage_detecte_incoherence():
+    df = pd.DataFrame({"respondid": [1, 1, 2], "socialgpid": [100, 200, 100]})
+    resultat = dt.controle_sante_doublon_menage(df)
+    assert resultat["n_anomalies"] == 1  # respondid 1 : associe a 2 menages differents
+
+
+def test_controle_sante_mois_regle_inconnu_detecte_incoherence():
+    df = pd.DataFrame({"respondid": [1, 2], "S4_2": ["2", "2"], "S4_2mm": [None, "03"]})
+    resultat = dt.controle_sante_mois_regle_inconnu(df)
+    assert resultat["n_anomalies"] == 1  # respondant 1 : n'a pas eu ses regles (2=Non) mais mois manquant
+
+
+def test_controle_sante_internet_contradictoire_detecte_incoherence():
+    df = pd.DataFrame({
+        "respondid": [1, 2],
+        "S5_1": ["7", "7"],  # les deux disent "jamais" en general
+        "S5_2A": ["5", "1"],  # respondant 1 : jamais (5) ; respondant 2 : "toujours" (1) au lieu A -> contradiction
+        "S5_2B": ["5", "5"],
+        "S5_2C": ["6", "5"],
+    })
+    resultat = dt.controle_sante_internet_contradictoire(df)
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_sante_repondant_mineur_detecte_incoherence():
+    sante = pd.DataFrame({"respondid": [1, 2]})
+    individus = pd.DataFrame({"individid": [1, 2], "birth_date": ["2015-01-01", "1990-01-01"]})
+    tables = {"FNewSante": sante, "FNewIndividual": individus}
+    resultat = dt.controle_sante_repondant_mineur(tables, "FNewSante")
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_sante_regles_femme_jeune_detecte_incoherence():
+    sante = pd.DataFrame({"respondid": [1, 2], "S4_2": ["1", "1"]})
+    individus = pd.DataFrame({"individid": [1, 2], "birth_date": ["2005-01-01", "1980-01-01"]})
+    # individu 1 : environ 21 ans (< 35) avec S4_2 renseignee -> anomalie
+    # individu 2 : environ 46 ans (>= 35) avec S4_2 renseignee -> normal
+    tables = {"FNewSante": sante, "FNewIndividual": individus}
+    resultat = dt.controle_sante_regles_femme_jeune(tables, "FNewSante")
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_snakebite_residents_detecte_les_2_incoherences():
+    snakebite = pd.DataFrame({"socialgpid": [100, 200]})
+    residency = pd.DataFrame({
+        "socialgpid": [100, 300],
+        "res_status": ["1", "1"],  # 100 : resident -> coherent avec la fiche 100
+        # 300 : resident, mais AUCUNE fiche snakebite pour ce menage -> anomalie
+    })
+    # menage 200 : une fiche snakebite existe, mais aucun resident (absent de residency) -> anomalie
+    tables = {"FNewSnakebite": snakebite, "FNewResidency": residency}
+    resultat = dt.controle_snakebite_residents(tables, "FNewSnakebite", "FNewResidency")
+    assert resultat["n_fiche_sans_resident"] == 1
+    assert resultat["n_residents_sans_fiche"] == 1
+    assert resultat["fiche_sans_resident"] == ["200"]
+    assert resultat["residents_sans_fiche"] == ["300"]
+
+
+def test_controle_duree_entretien_detecte_les_2_incoherences():
+    df = pd.DataFrame({
+        "observeid": [1, 2, 3],
+        "begin_time": ["2024-01-01 10:00:00", "2024-01-01 10:00:00", "2024-01-01 10:00:00"],
+        "end_time": ["2024-01-01 10:01:00", "2024-01-01 10:20:00", "2024-01-01 09:59:00"],
+        # observation 1 : 1 min -> trop courte (< 3 min)
+        # observation 2 : 20 min -> normal
+        # observation 3 : fin avant debut -> incoherente
+    })
+    resultat = dt.controle_duree_entretien(df)
+    assert resultat["n_duree_trop_courte"] == 1
+    assert resultat["n_duree_incoherente"] == 1
+
+
+def test_controles_generiques_fatherid_motherid_sur_vrai_schema_individual():
+    # Verifie sur le vrai schema (FNewIndividual) que les controles
+    # generiques existants (fatherid==motherid, <5ans sans parent)
+    # s'appliquent bien - pas de bug specifique attendu ici, simple
+    # non-regression du catalogue generique sur ce nom de table reel.
+    df = pd.DataFrame({
+        "individid": [1, 2, 3],
+        "fatherid": [100, 100, 100],
+        "motherid": [100, 200, None],
+        "birth_date": ["2023-01-01", "2023-01-01", "2023-01-01"],
+    })
+    resultat_parents = dt.controle_parents_identiques(df)
+    assert resultat_parents["n_anomalies"] == 1  # individu 1 : fatherid == motherid
+    resultat_jeune = dt.controle_parent_manquant_jeune_enfant(df)
+    assert resultat_jeune["n_anomalies"] == 1  # individu 3 : <5 ans sans motherid
+
+
+def test_controle_residence_multiple_sur_vrai_schema_residency():
+    # FNewResidency (vrai schema) : locationid, individid, res_status... -
+    # verifie que le controle generique existant fonctionne bien via
+    # locationid (pas besoin de socialgpid, absent de cette table reelle).
+    df = pd.DataFrame({"individid": [1, 1, 2], "locationid": [10, 20, 10], "res_status": ["1", "1", "1"]})
+    resultat = dt.controle_residence_multiple(df)
+    assert resultat["n_anomalies"] == 1  # individu 1 : present dans 2 locationid differents
+
+
 def test_controle_tranche_age_detecte_hors_plage():
     df = pd.DataFrame({"birth_date": ["2020-01-01", "2000-01-01", "1990-01-01"]})
     resultat = dt.controle_tranche_age(df, 5, 34)
@@ -1399,8 +1732,76 @@ def test_fusion_identite_agent_sans_table_users_renvoie_inchange():
 
 
 def test_tranches_age_reconnait_histoire_marietales_reelle():
-    mots_cles = next(m for m, b in dt.TRANCHES_AGE_PAR_TYPE_FICHE if "marietal" in m)
-    assert dt._table_correspond("opo_hypervel_histoire_marietales", mots_cles)
+    # "histmat" n'est PLUS dans TRANCHES_AGE_PAR_TYPE_FICHE (l'age a l'union
+    # doit venir de la colonne `union_age` declaree, pas d'un age ACTUEL
+    # calcule depuis birth_date - voir `controle_age_union`) : verifie que la
+    # reconnaissance par mots-cles reelle du nom de table fonctionne toujours
+    # avec les memes mots-cles, desormais utilises directement dans
+    # `rapport_coherence_avancee` pour brancher `controle_age_union`.
+    assert dt._table_correspond("opo_hypervel_histoire_marietales", ["histmat", "matrimon", "union", "marietal"])
+
+
+def test_controle_age_union_detecte_hors_plage():
+    df = pd.DataFrame({"individid": [1, 2, 3], "union_age": [15, 10, 45]})
+    resultat = dt.controle_age_union(df)
+    assert resultat["n_anomalies"] == 2
+
+
+def test_controle_age_union_ignore_sans_colonne():
+    df = pd.DataFrame({"individid": [1, 2, 3]})
+    assert dt.controle_age_union(df) is None
+
+
+def test_controle_naissance_apres_union_detecte_incoherence():
+    relationship = pd.DataFrame({
+        "individid": [1, 2, 3],
+        "uni_start_date": ["2015-01-01", "2010-01-01", "2020-01-01"],
+    })
+    individus = pd.DataFrame({
+        "individid": [1, 2, 3],
+        "birth_date": ["2000-01-01", "2012-01-01", "1990-01-01"],  # individu 2 : naissance APRES l'union
+    })
+    tables = {"FNewRelationship": relationship, "FNewIndividual": individus}
+    resultats = dt.controle_naissance_apres_union(tables, "FNewRelationship")
+    (_, resultat_debut), = [(l, r) for l, r in resultats if "début" in l]
+    assert resultat_debut["n_anomalies"] == 1
+
+
+def test_controle_ecart_age_union_declare_calcule_detecte_incoherence():
+    histmat = pd.DataFrame({"individid": [1, 2], "union_age": [20, 20]})
+    relationship = pd.DataFrame({
+        "individid": [1, 2],
+        "uni_start_date": ["2020-01-01", "2020-01-01"],
+    })
+    individus = pd.DataFrame({
+        "individid": [1, 2],
+        # individu 1 : naissance 2000 -> age reel a l'union = 20 ans (coherent)
+        # individu 2 : naissance 1990 -> age reel a l'union = 30 ans (ecart de 10 ans avec les 20 declares)
+        "birth_date": ["2000-01-01", "1990-01-01"],
+    })
+    tables = {"FNewBase_HistMat": histmat, "FNewRelationship": relationship, "FNewIndividual": individus}
+    resultat = dt.controle_ecart_age_union_declare_calcule(tables, "FNewBase_HistMat", "FNewRelationship")
+    assert resultat["n_anomalies"] == 1
+
+
+def test_controle_tranche_age_croisee_utilise_la_table_individus():
+    # FNewEducation (schema reel) ne porte PAS de colonne birth_date - sans
+    # le croisement, ce controle etait ignore en silence sur les vraies
+    # donnees (bug systemique corrige, voir controle_tranche_age_croisee).
+    education = pd.DataFrame({"individid": [1, 2, 3]})
+    individus = pd.DataFrame({"individid": [1, 2, 3], "birth_date": ["2020-01-01", "2000-01-01", "1990-01-01"]})
+    tables = {"FNewEducation": education, "FNewIndividual": individus}
+    resultat = dt.controle_tranche_age_croisee(education, tables, "FNewEducation", 5, 34)
+    assert resultat is not None
+    assert resultat["n_anomalies"] == 1  # individu 1 (2020) : trop jeune
+
+
+def test_controle_tranche_age_croisee_utilise_la_colonne_locale_si_presente():
+    # Si la table porte elle-meme birth_date, la version locale reste
+    # prioritaire (pas besoin de croisement).
+    df = pd.DataFrame({"birth_date": ["2020-01-01", "2000-01-01", "1990-01-01"]})
+    resultat = dt.controle_tranche_age_croisee(df, {}, "peu_importe", 5, 34)
+    assert resultat["n_anomalies"] == 1
 
 
 def test_rapport_coherence_avancee_grossesse_reelle_exclut_issue_grossesses():

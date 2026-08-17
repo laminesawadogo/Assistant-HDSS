@@ -422,6 +422,7 @@ def generer_requete_sql(
     tentative_precedente: str | None = None,
     erreur_precedente: str | None = None,
     contexte_dictionnaire: str | None = None,
+    historique: list[dict] | None = None,
 ) -> str | None:
     """Demande au LLM d'ecrire une requete SQL en LECTURE SEULE repondant a
     la question, a partir du SCHEMA REEL de TOUTES les tables chargees
@@ -448,6 +449,16 @@ def generer_requete_sql(
     choisir les bonnes colonnes de jointure, en plus des indices purement
     structurels (colonnes de meme nom) deja presents dans `schema`.
 
+    `historique` : tours precedents de cette meme conversation (meme format
+    que `build_prompt`), pour comprendre une question de suivi qui ne
+    reprend pas tout le contexte (ex: "et pour les femmes ?" apres une
+    premiere question sur un sous-groupe precis). Bug reel corrige ici :
+    cette fonction ne recevait JAMAIS l'historique (contrairement a
+    `answer()`), donc toute question de suivi passant par la generation SQL
+    etait traitee dans le vide, sans aucune memoire de ce qui venait d'etre
+    demande - cause probable du symptome rapporte "le modele n'arrive pas a
+    lier les conversations".
+
     Renvoie la requete SQL brute (str) si le LLM en propose une, ou None si
     aucune cle LLM n'est configuree, si le modele indique ne pas pouvoir
     repondre avec ce schema, ou si l'appel echoue. La requete renvoyee n'est
@@ -457,12 +468,25 @@ def generer_requete_sql(
     if not has_llm_configured(groq_key, anthropic_key):
         return None
 
+    bloc_historique = ""
+    if historique:
+        tours = "\n".join(f"{h['role'].capitalize()} : {h['contenu']}" for h in historique)
+        bloc_historique = (
+            "Echanges precedents de cette meme conversation (pour comprendre une question de suivi "
+            "qui ne repete pas tout le contexte, ex: \"et pour les femmes seulement ?\", \"et dans "
+            "l'autre table ?\", \"meme chose mais pour 2025\") - reformule la question actuelle a la "
+            "lumiere de ces echanges avant d'ecrire la requete, sans jamais perdre de vue qu'elle "
+            "doit rester STRICTEMENT limitee aux tables/colonnes reellement listees ci-dessous :\n"
+            f"{tours}\n\n"
+        )
+
     prompt = (
         "Tu ecris UNE SEULE requete SQL (dialecte DuckDB, proche de PostgreSQL standard) EN LECTURE "
         "SEULE (SELECT, ou WITH ... SELECT) pour repondre a la question - jamais INSERT/UPDATE/"
         "DELETE/DROP/CREATE/ALTER/PRAGMA/ATTACH. Utilise UNIQUEMENT les tables et colonnes listees "
         "ci-dessous, avec leur nom exact (jamais un nom invente) :\n\n"
         f"{schema}\n\n"
+        f"{bloc_historique}"
         f"Question : {question}\n\n"
         "Si la question necessite de croiser plusieurs tables, utilise UNIQUEMENT les colonnes "
         "listees comme jointures CONFIRMEES par le dictionnaire de donnees de l'observatoire pour "

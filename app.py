@@ -884,7 +884,10 @@ def _contexte_dictionnaire_pour_sql(question: str, k: int = 4) -> str | None:
     return "\n".join(f"- ({c.get('source', '?')}) {c['text']}" for c in chunks)
 
 
-def tenter_requete_sql(question: str, tables: dict, groq_key: str | None, anthropic_key: str | None) -> dict | None:
+def tenter_requete_sql(
+    question: str, tables: dict, groq_key: str | None, anthropic_key: str | None,
+    historique: list[dict] | None = None,
+) -> dict | None:
     """Repli GENERAL pour une question qui necessite de croiser PLUSIEURS
     tables a la fois (2, 3, 4 ou plus) - au-dela de ce que couvrent l'action
     REQUETE mono-table (`tenter_requete_donnees_multi_table`) ou le controle
@@ -926,7 +929,7 @@ def tenter_requete_sql(question: str, tables: dict, groq_key: str | None, anthro
         requete_sql = rag.generer_requete_sql(
             question, schema, groq_key=groq_key, anthropic_key=anthropic_key,
             tentative_precedente=requete_precedente, erreur_precedente=erreur,
-            contexte_dictionnaire=contexte_dictionnaire,
+            contexte_dictionnaire=contexte_dictionnaire, historique=historique,
         )
         if not requete_sql:
             return None
@@ -1599,7 +1602,9 @@ def route_question(question: str) -> dict:
         # jamais de reponse "aucun lien trouve" alors qu'une reponse precise
         # est possible avec les vraies donnees chargees.
         if "Aucune colonne commune détectée" in reponse_relation:
-            reponse_sql = tenter_requete_sql(question, tables, groq_key_input, anthropic_key_input)
+            reponse_sql = tenter_requete_sql(
+                question, tables, groq_key_input, anthropic_key_input, historique=historique_recent(),
+            )
             if reponse_sql:
                 return reponse_sql
         return {"content": reponse_relation}
@@ -1719,7 +1724,9 @@ def route_question(question: str) -> dict:
         # Toujours rien : tente le repli GENERAL (requete SQL sur le schema
         # complet, capable de croiser 2, 3, 4 tables ou plus) avant de
         # demander de preciser ou de retomber sur le dictionnaire.
-        reponse_sql = tenter_requete_sql(question, tables, groq_key_input, anthropic_key_input)
+        reponse_sql = tenter_requete_sql(
+                question, tables, groq_key_input, anthropic_key_input, historique=historique_recent(),
+            )
         if reponse_sql is not None:
             return reponse_sql
 
@@ -1835,7 +1842,9 @@ def route_question(question: str) -> dict:
         # repli GENERAL (requete SQL sur le schema de TOUTES les tables
         # chargees, capable de croiser 2, 3, 4 tables ou plus) avant
         # d'abandonner sur le dictionnaire documentaire.
-        reponse_sql = tenter_requete_sql(question, tables, groq_key_input, anthropic_key_input)
+        reponse_sql = tenter_requete_sql(
+                question, tables, groq_key_input, anthropic_key_input, historique=historique_recent(),
+            )
         if reponse_sql is not None:
             return reponse_sql
 

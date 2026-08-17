@@ -711,6 +711,63 @@ def test_requete_sql_generale_croise_trois_tables(monkeypatch):
     assert "Requête utilisée" in reponse
 
 
+def test_requete_sql_generale_recoit_lhistorique_pour_une_question_de_suivi(monkeypatch):
+    # Bug reel signale par l'observatoire : une question de suivi qui ne
+    # repete pas tout le contexte ("et seulement pour le secteur formel ?"
+    # apres une premiere question sur le secteur informel) doit pouvoir
+    # s'appuyer sur l'echange precedent - `rag.generer_requete_sql` ne
+    # recevait auparavant JAMAIS l'historique de conversation (contrairement
+    # a `rag.answer`), donc toute question de suivi passant par le repli SQL
+    # general etait traitee dans le vide. Ce test verifie concretement que le
+    # texte de la premiere question atteint bien le prompt du DEUXIEME appel
+    # SQL, pas seulement que la reponse finale est correcte.
+    tables = {
+        "opo_hypervel_presences": pd.DataFrame({"individu_id": [1, 2, 3, 4], "enquete_id": [10, 10, 20, 20]}),
+        "opo_hypervel_emplois": pd.DataFrame(
+            {"individu_id": [1, 2, 3, 4], "secteur": ["informel", "informel", "formel", "formel"]}
+        ),
+        "opo_hypervel_enquete_or_visites": pd.DataFrame({"id": [10, 20], "agent_id": ["A", "B"]}),
+    }
+    premiere_question = "quel agent a le plus d'individus en emploi informel parmi ceux qu'il a suivis ?"
+    sql_premiere = (
+        "SELECT e.agent_id, COUNT(*) AS n FROM opo_hypervel_presences p "
+        "JOIN opo_hypervel_emplois em ON p.individu_id = em.individu_id "
+        "JOIN opo_hypervel_enquete_or_visites e ON p.enquete_id = e.id "
+        "WHERE em.secteur = 'informel' GROUP BY e.agent_id"
+    )
+    sql_suivi = (
+        "SELECT e.agent_id, COUNT(*) AS n FROM opo_hypervel_presences p "
+        "JOIN opo_hypervel_emplois em ON p.individu_id = em.individu_id "
+        "JOIN opo_hypervel_enquete_or_visites e ON p.enquete_id = e.id "
+        "WHERE em.secteur = 'formel' GROUP BY e.agent_id"
+    )
+    prompts_sql_vus = []
+
+    def _faux_call_llm(prompt, groq_key=None, anthropic_key=None):
+        if "SQL" not in prompt:
+            return "AUCUNE"  # appel classifier_intention : doit echouer pour laisser la place au repli SQL
+        prompts_sql_vus.append(prompt)
+        if len(prompts_sql_vus) == 1:
+            return sql_premiere
+        # Deuxieme appel SQL (question de suivi) : ne renvoie une requete
+        # exploitable QUE si le prompt contient bien la trace de l'echange
+        # precedent - sans quoi le test doit echouer sur l'assertion finale,
+        # pas ici, pour que le message d'echec pointe vers la vraie cause.
+        return sql_suivi if premiere_question in prompt else "AUCUNE"
+
+    monkeypatch.setenv("GROQ_API_KEY", "fake-key")
+    monkeypatch.setattr(rag, "call_llm", _faux_call_llm)
+    at = _app_avec_tables(tables)
+    at.chat_input[0].set_value(premiere_question).run()
+    at.chat_input[0].set_value("et seulement pour le secteur formel ?").run()
+
+    assert len(prompts_sql_vus) == 2
+    assert premiere_question in prompts_sql_vus[1]  # l'historique a bien atteint le prompt du 2e appel
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "B" in reponse
+    assert "2" in reponse
+
+
 def test_question_de_relation_sans_colonne_commune_retombe_sur_le_sql_general(monkeypatch):
     # "quel est le lien entre X et Y" declenche le controle structurel
     # MOTS_RELATION (colonnes de meme nom). Si aucune colonne commune
