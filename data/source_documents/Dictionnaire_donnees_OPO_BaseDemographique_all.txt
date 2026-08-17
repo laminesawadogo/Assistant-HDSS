@@ -1,0 +1,331 @@
+Dictionnaire de données — Observatoire de Population de Ouagadougou (OPO)						
+Base de données de suivi démographique (23 tables)  •  327 variables  •  Source : Dictionnaire_des_variables.doc						
+						
+N°	Table	Description de la table	Nom de la variable	Libellé de la variable	Type de donnée	Modalités / Valeurs codées
+1	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	tv_num	number of televisions	Numérique	
+2	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	fixephone_num	number of land phones	Numérique	
+3	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	mobphone_num	number of mobile phones	Numérique	
+4	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	video_num	number of videos	Numérique	
+5	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	ref_num	number of refrigerators	Numérique	
+6	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	bic_num	number of bicycles	Numérique	
+7	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	moto_num	number of motorcycles	Numérique	
+8	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	auto_num	number of cars	Numérique	
+9	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	big_ruminant_num	number of big ruminants (cattle, dromedary, camel)	Numérique	
+10	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	small_ruminant_num	number of small ruminants (sheep, goat)	Numérique	
+11	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	horse_num	number of horses and donkeys	Numérique	
+12	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	pig_num	number of pigs	Numérique	
+13	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	occ_status	Home ownership status of the household head	Catégorielle (codes)	1=owner | 2=co-owner | 3=tenant | 4=hosted | 99=Don't know or missing
+14	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	Owner	Owner of the household’s house	Catégorielle (codes)	0=not concerned | 1=a parent in the household | 2=a parent outside the household | 3=another person in the household | 4=another person outside the household | 99=Don't know or missing
+15	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	ownerid	ID of the owner of the house	Identifiant	
+16	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	other_help	Help regularly received by the household	Catégorielle (codes)	1=Yes | 2=no | 99=Don't know or missing
+17	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	help_nat_money	Help in terms of money	Catégorielle (codes)	1=Yes | 2=no | 99=Don't know or missing | 0=Not concerned
+18	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	help_nat_food	Help in terms of food	Catégorielle (codes)	1=Yes | 2=no | 99=Don't know or missing | 0=Not concerned
+19	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	help_nat_other	Other kind of help	Catégorielle (codes)	1=Yes | 2=no | 99=Don't know or missing | 0=Not concerned
+20	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	help_level	Level of help	Catégorielle (codes)	1=Insignificant | 2=Helps a little | 3=Helps a lot | 4=Crucial help | 99=Don't know or missing | 0=Not concerned
+21	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	father_read	The father of the household's head is able to read	Catégorielle (codes)	1=Yes | 2=no | 3=don't know | 99=missing
+22	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	family_level	Living standard of the household head’s origin family (at the age of 15)	Catégorielle (codes)	1=Poor | 2=Medium | 3=Rich | 4=don't know | 99=missing
+23	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	inhabitable_room_num	number of inhabitable rooms	Numérique	
+24	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	toilet_nat	Type of toilet	Catégorielle (codes)	1=flushing | 2=simple latrine | 3=ventilated latrine | 4=no toilet (nature) | 5=Other | 99=Don't know or missing
+25	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	toilet_shar	Toilet restricted or shared	Catégorielle (codes)	0=not concerned | 1=Restricted to members of the household | 2=Shared with other households within the courtyard | 3=Common to other households outside the courtyard (neighbors) | 99=Don't know or missing
+26	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	throw_wastewater	Evacuation of wastewater	Catégorielle (codes)	1=Septic pit | 2=Throws in the gutters | 3=Throws in the courtyard | 4=Throw in the street | 5=Throw in a sink | 6=Used for watering | 7=Other | 99=Don't know or missing
+27	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	throw_domwaste	Evacuation of household garbage	Catégorielle (codes)	1=Garbage with collecting service | 2=Public tank with collecting service | 3=Pre-collection center | 4=Waste ground | 5=Street corner | 6=A heap of garbage in the courtyard | 7=Other | 99=Don't know or missing
+28	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	burn_waste	The household burns its waste	Catégorielle (codes)	0=Not concerned | 1=Never | 2=Everyday | 3=Every week | 4=Sometimes | 5=Other | 99=Don't know or missing
+29	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	water_in1	Main source of drinking water in the last 7 days	Catégorielle (codes)	1=Water tap inside accommodation | 2=Water tap outside accommodation | 3=Well | 4=Collective public fountain | 5=Drilling | 6=Manual water pump | 7=Water sellers | 8=Rain water | 9=River/lake/irrigation canal | 10=Other | 99=Don't know or missing
+30	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	water_in2	Secondary source of drinking water in the last 7 days	Catégorielle (codes)	0=not concerned | 1=Water tap inside accommodation | 2=Water tap outside accommodation | 3=Well | 4=Collective public fountain | 5=drilling | 6=manual water pump | 7=water sellers | 8=rain water | 9=river/lake/irrigation canal | 10=Other | 99=Don't know or missing
+31	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	cooking_place	Cooking place	Catégorielle (codes)	0=not concerned | 1=Interior kitchen: restricted to cooking | 2=Interior kitchen: cooking associated with other activities | 3=External kitchen (detached house) | 4=Open-air in the courtyard | 5=Other | 99=Don't know or missing
+32	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	combust_cooking	Main source of energy used for cooking	Catégorielle (codes)	0=not concerned | 1=gas | 2=electricity | 3=firewood (simple format) | 4=firewood (improved format) | 5=coal (simple format) | 6=coal (improved format) | 7=other | 99=Don't know or missing
+33	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	light_mode	Principal source of lighting	Catégorielle (codes)	1=electricity from Sonabel | 2=electricity from a generator | 3=solar energy | 4=gas | 5=lamp with kerosene | 6=candle | 7=firewood | 8=Oil lamp | 9=Flashlight | 10=battery | 11=none | 99=Don't know or missing
+34	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	wall_nat	Wall material	Catégorielle (codes)	1=stone or brick made of cement | 2=wood | 3=local brick made with mud | 4=sheet metal | 5=other | 99=Don't know or missing
+35	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	roof_nat	Roof material	Catégorielle (codes)	1=sheet metal | 2=tile | 3=slab made with cement | 4=wood | 5=mud | 6=thatch/straw/leaves | 99=Don't know or missing
+36	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	floor_nat_int	Floor material (inside the house)	Catégorielle (codes)	1=tile | 2=Cement | 3=Wood | 4=land | 5=other | 99=Don't know or missing
+37	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	floor_nat_ext	Floor material (inside the yard)	Catégorielle (codes)	1=tile or cement | 2=pavements or gravel | 3=Land | 4=Mixed | 5=other | 99=Don't know or missing
+38	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	waste_in	Presence of waste inside the yard	Catégorielle (codes)	1=yes | 2=no | 99=Don't know or missing
+39	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	waste_ext	Presence of waste nearby the yard	Catégorielle (codes)	1=yes | 2=no | 99=Don't know or missing
+40	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	vegetable_garden	Garden inside the yard	Catégorielle (codes)	1=yes | 2=no | 99=Don't know or missing
+41	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	plant_ext	Presence of plants inside the yard	Catégorielle (codes)	1=yes | 2=no | 99=Don't know or missing
+42	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	burglary	Victim of burglary in the last 12 months	Catégorielle (codes)	1=yes | 2=no | 99=Don't know or missing
+43	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	burglary_money	Victim of money burglary in the last 12 months	Catégorielle (codes)	1=yes | 2=no | 99=Don't know or missing | 0=Not concerned
+44	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	burglary_ruminant	Victim of ruminant burglary in the last 12 months	Catégorielle (codes)	1=yes | 2=now | 99=Don't know or missing | 0=Not concerned
+45	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	burglary_fowl	Victim of fowl burglary in the last 12 months	Catégorielle (codes)	1=yes | 2=now | 99=Don't know or missing | 0=Not concerned
+46	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	burglary_harvest	Victim of harvest burglary in the last 12 months	Catégorielle (codes)	1=yes | 2=now | 99=Don't know or missing | 0=Not concerned
+47	Tbase_Socialgp	Household characteristics (housing, assets, amenities)	burglary_equipment	Victim of  equipement burglary in the last 12 months	Catégorielle (codes)	1=yes | 2=now | 99=Don't know or missing | 0=Not concerned
+48	Tindividual	Core individual identification	individid	Individal ID	Identifiant	
+49	Tindividual	Core individual identification	sex	Sex	Catégorielle (codes)	1=Man | 2=Woman
+50	Tindividual	Core individual identification	ethnic_gp	Ethnic group	Catégorielle (codes)	1=Bobo | 2=Dioula | 3=Fulani | 4=Gourmantche | 5=Gourounsi | 6=Lobi | 7=Mossi | 8=Senoufo | 9=Touareg / Bella | 10=Autres | 11=Ne sait pas | 12=Bissa | 13=Samo
+51	Tindividual	Core individual identification	birth_date	Date of birth	Date	
+52	Tindividual	Core individual identification	fatherid	Father's ID if he is in the same concession	Identifiant	
+53	Tindividual	Core individual identification	motherid	Mother's ID if he is in the same concession	Identifiant	
+54	Tindividual	Core individual identification	entry_date	Date of interview	Date	
+55	Tsocialgp	Household identification	socialgpid	Household ID	Identifiant	
+56	Tsocialgp	Household identification	locationid	Location (courtyard) ID	Identifiant	
+57	Tsocialgp	Household identification	entry_date	Date of interview	Date	
+58	Tvsisitor	Visitor characteristics	individid	Individual ID	Identifiant	
+59	Tvsisitor	Visitor characteristics	locationid	Location (courtyard) ID	Identifiant	
+60	Tvsisitor	Visitor characteristics	socialgpid	Household ID	Identifiant	
+61	Tvsisitor	Visitor characteristics	birth_date	Date of birth	Date	
+62	Tvsisitor	Visitor characteristics	ethnic_gp	Ethnic group	Catégorielle (codes)	1=Bobo | 2=Dioula | 3=Fulani | 4=Gourmantche | 5=Gourounsi | 6=Lobi | 7=Mossi | 8=Senoufo | 9=Touareg / Bella | 10=Others | 11=Don’t know or missing | 12=Bissa | 13=Samo
+63	Tvsisitor	Visitor characteristics	Sex	Sex	Catégorielle (codes)	1=Male | 2=Female
+64	Tvsisitor	Visitor characteristics	old_resident	Previously resident in the DSS areas	Catégorielle (codes)	1=Yes | 2=No | 99=Don't know or missing
+65	Tvsisitor	Visitor characteristics	father_alive	Father is alive	Catégorielle (codes)	1=Yes | 2=No | 99=Don't know or missing
+66	Tvsisitor	Visitor characteristics	mother_alive	Mother is alive	Catégorielle (codes)	1=Yes | 2=No | 99=Don't know or missing
+67	Tvsisitor	Visitor characteristics	fatherid	Father's ID if known	Identifiant	
+68	Tvsisitor	Visitor characteristics	motherid	Mother's ID if known	Identifiant	
+69	Tvsisitor	Visitor characteristics	rltn_head	Relation to household head	Texte / Numérique	
+70	Tvsisitor	Visitor characteristics	marital_status	Marital status	Catégorielle (codes)	1=Never married | 2=Married | 3=divorced | 4=widowed | 99=Don't know or missing
+71	Tvsisitor	Visitor characteristics	arrive_date	Date of the first arrival in the location (courtyard)	Date	
+72	Tvsisitor	Visitor characteristics	entry_date	Date of interview	Date	
+73	Tlocation	Location / courtyard characteristics	locationid	Location (courtyard) ID	Identifiant	
+74	Tlocation	Location / courtyard characteristics	zd	cluster ID	Texte / Numérique	
+75	Tlocation	Location / courtyard characteristics	bloc	block ID	Texte / Numérique	
+76	Tlocation	Location / courtyard characteristics	uch_num	location (courtyard) number	Numérique	
+77	Tlocation	Location / courtyard characteristics	owner_id	Owner ID	Identifiant	
+78	Tlocation	Location / courtyard characteristics	uch_empty	The location (courtyard) is empty	Catégorielle (codes)	1=Yes | 2=No
+79	Tlocation	Location / courtyard characteristics	socialgp_nb	Number of households in the location (courtyard)	Numérique	
+80	Tlocation	Location / courtyard characteristics	building_nb	Number of houses (buildings) in the location (courtyard)	Numérique	
+81	Tlocation	Location / courtyard characteristics	fence	Presence of a fence	Catégorielle (codes)	1=Yes | 2=No
+82	Tlocation	Location / courtyard characteristics	altitude	Altitude coordinates	Texte / Numérique	
+83	Tlocation	Location / courtyard characteristics	latitude	Latitude coordinates	Texte / Numérique	
+84	Tlocation	Location / courtyard characteristics	longitude	Longitude coordinates	Texte / Numérique	
+85	Tlocation	Location / courtyard characteristics	dop	GPS accuracy	Texte / Numérique	
+86	Tlocation	Location / courtyard characteristics	lat_texte	Latitude coordinates (detailed)	Texte / Numérique	
+87	Tlocation	Location / courtyard characteristics	long_texte	Longitude coordinates (detailed)	Texte / Numérique	
+88	Tlocation	Location / courtyard characteristics	entry_date	Date of interview	Date	
+89	TBase_Educ	Education_Employment Table	Observeid	OBSERVATION ID	Identifiant	
+90	TBase_Educ	Education_Employment Table	Individid	INDIVIDUAL ID	Identifiant	
+91	TBase_Educ	Education_Employment Table	Socialgpid	HOUSEHOLD ID	Identifiant	
+92	TBase_Educ	Education_Employment Table	school_train	school attendance	Catégorielle (codes)	Goes to school Has already gone to school Has never gone to school | 99=Don’t known or Missing value
+93	TBase_Educ	Education_Employment Table	school_code	School code	Texte / Numérique	
+94	TBase_Educ	Education_Employment Table	class_code	class code	Catégorielle (codes)	0=Not concerned | 1=Preschool 11 CP1 12 CP2 13 CE1 14 CE2 15 CM1 16 CM2 6ème 5ème 4ème 3ème 2nd 1ère Tle SUP1 SUP2 SUP3 SUP4 SUP5 SUP6 SUP7+ | 99=Don’t known or Missing value
+95	TBase_Educ	Education_Employment Table	class_type	class type	Catégorielle (codes)	Morning class Evening class | 99=Don’t known or Missing value | 0=Not concerned
+96	TBase_Educ	Education_Employment Table	alph_train	Has done literacy training	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+97	TBase_Educ	Education_Employment Table	prof_train	Has done professional training	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+98	TBase_Educ	Education_Employment Table	relig_train	Has done religious training	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+99	TBase_Educ	Education_Employment Table	activity	Had activity during last 7 days	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned
+100	TBase_Educ	Education_Employment Table	activity_code	activity code	Texte / Numérique	
+101	TBase_Educ	Education_Employment Table	activity_desc	activity description	Texte / Numérique	
+102	TBase_Educ	Education_Employment Table	activity_type	activity type	Catégorielle (codes)	freelance Public wage earners private wage earners employer mother's helper apprentice/ professional training voluntary | 99=Don’t known or Missing value | 0=Not concerned
+103	TBase_Educ	Education_Employment Table	activity_domain	activity field	Catégorielle (codes)	Farmer/hunting/ forestry fishing/ fish farming/ aquaculture Extractive activities Manufacture Electricity/gas/water production and distribution House building Trade/car repairing Hotel/restaurant Transport and communication Financial activities Real-estate/renting out Public service Education Health activity/social services Collective or individual activity Domestic staff employer Extra-territorial organizations activity | 99=Don’t known or Missing value | 0=Not concerned
+104	TBase_Educ	Education_Employment Table	activity_sect	District number where activity is carried out	Numérique	
+105	TBase_Educ	Education_Employment Table	job_search	Has looked for job during last 7 days	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned
+106	TBase_Educ	Education_Employment Table	helper	extra activity as domestic helper	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned
+107	TBase_Educ	Education_Employment Table	apprentice	extra activity as apprentice	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+108	TBase_Educ	Education_Employment Table	activ_paid	paid extra activity	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned
+109	TBase_Educ	Education_Employment Table	readwrite	literacy	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned
+110	TBase_Educ	Education_Employment Table	moore	literacy in mooré	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned
+111	TBase_Educ	Education_Employment Table	dioula	literacy in dioula	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned
+112	TBase_Educ	Education_Employment Table	fulfulde	literacy in fulfuldé	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+113	TBase_Educ	Education_Employment Table	french	literacy in french	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned
+114	TBase_Educ	Education_Employment Table	other_natlang	literacy in other national language	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned
+115	TBase_Educ	Education_Employment Table	other_intlang	literacy in other international language	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value | 0=Not concerned
+116	TBase_Educ	Education_Employment Table	entry_date	Interview date	Date	
+117	TBase_vacc	Vaccination Table	observeid	OBSERVATION ID	Identifiant	
+118	TBase_vacc	Vaccination Table	individid	INDIVIDUAL ID	Identifiant	
+119	TBase_vacc	Vaccination Table	socialgpid	HOUSEHOLD ID	Identifiant	
+120	TBase_vacc	Vaccination Table	health_record	Child health record seen by field worker	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+121	TBase_vacc	Vaccination Table	bcg	Date of BCG vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+122	TBase_vacc	Vaccination Table	dtcoq1	Date of DTCOQ1 vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+123	TBase_vacc	Vaccination Table	dtcoq2	Date of DTCOQ2 vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+124	TBase_vacc	Vaccination Table	dtcoq3	Date of DTCOQ3 vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+125	TBase_vacc	Vaccination Table	polio0	Date of POLIO0 vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+126	TBase_vacc	Vaccination Table	polio1	Date of POLIO1 vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+127	TBase_vacc	Vaccination Table	polio2	Date of POLIO2 vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+128	TBase_vacc	Vaccination Table	polio3	Date of POLIO3 vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+129	TBase_vacc	Vaccination Table	hepb1	Date of HEPB1 vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+130	TBase_vacc	Vaccination Table	hepb2	Date of HEPB2 vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+131	TBase_vacc	Vaccination Table	hepb3	Date of HEPB3 vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+132	TBase_vacc	Vaccination Table	hib1	Date of HIB1 vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+133	TBase_vacc	Vaccination Table	hib2	Date of HIB2 vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+134	TBase_vacc	Vaccination Table	hib3	Date of HIB3 vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+135	TBase_vacc	Vaccination Table	yellow_fever	Date of yellow fever vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+136	TBase_vacc	Vaccination Table	measles	Date of measles vaccination	Catégorielle (codes)	01/01/1960 Health record shows vaccine is done but no date reported 01/01/1966 Vaccine is done but date unknown. No health record. 01/01/1800 Doesn’t know if vaccine is done 01/01/1860 Vaccine is done but date not showed in the health record. 01/01/1900 Child has not been vaccined
+137	TBase_vacc	Vaccination Table	vitamin_a	Vitamin A in last 12 months	Catégorielle (codes)	1=Yes | 2=No | 3=Don’t know | 99=Missing value
+138	TBase_vacc	Vaccination Table	disinfest	Disinfested in last 12 months	Catégorielle (codes)	1=Yes | 2=No | 3=Don’t know | 99=Missing value
+139	TBase_vacc	Vaccination Table	entry_date	Interview date	Date	
+140	TBase_HistMig	Migratory Event	observeid	OBSERVATION ID	Identifiant	
+141	TBase_HistMig	Migratory Event	socialgpid	HOUSEHOLD ID	Identifiant	
+142	TBase_HistMig	Migratory Event	individid	INDIVIDUAL ID	Identifiant	
+143	TBase_HistMig	Migratory Event	birth_place	Place of birth	Catégorielle (codes)	1=Ouagadougou | 2=Other town in Burkina | 3=Rural area in Burkina | 4=Côte d’Ivoire | 5=Other African country | 6=Other country (no Africa) 7 Don’t know 8 In this location | 99=Missing value
+144	TBase_HistMig	Migratory Event	birth_place_sect	District of Birth	Texte / Numérique	
+145	TBase_HistMig	Migratory Event	birth_place_prov	Province of birth	Texte / Numérique	
+146	TBase_HistMig	Migratory Event	arrive_year	Year of First arrival in Ouaga	Texte / Numérique	
+147	TBase_HistMig	Migratory Event	where_lived	Place of residence prior to arriving for the first time in this location (courtyard)	Catégorielle (codes)	1=Ouagadougou | 2=Other town in Burkina | 3=Rural area in Burkina | 4=Côte d’Ivoire | 5=Other African country | 6=Other country (no Africa) 7 Don’t know 8 In this location | 99=Missing value
+148	TBase_HistMig	Migratory Event	where_lived_sect	District of residence before arriving in this location (courtyard)	Catégorielle (codes)	0. Not concerned
+149	TBase_HistMig	Migratory Event	where_lived_prov	Province of residence before arriving in this location (courtyard)	Catégorielle (codes)	0. Not concerned
+150	TBase_HistMig	Migratory Event	return_lastplace	Stayed during at least three months last year in one of its previous residences	Catégorielle (codes)	1=Yes | 2=No | 3=Don’t know | 99=Missing value | 0=Not concerned
+151	TBase_HistMig	Migratory Event	arrive_uch_year	Year of o first arrival live in this location (courtyard)	Texte / Numérique	
+152	TBase_HistMig	Migratory Event	last_livedplace	Place of residence prior to arriving for the first time in Ouaga	Catégorielle (codes)	2=Other town in Burkina | 3=Rural area in Burkina | 4=Côte d’Ivoire | 5=Other African country | 6=Other country (no Africa) 7 Don’t know | 99=Missing value | 0=Not concerned
+153	TBase_HistMig	Migratory Event	last_livedplace_prov	Province of residence before arriving in Ouagadougou for the first time	Catégorielle (codes)	0. Not concerned
+154	TBase_HistMig	Migratory Event	reason_outp	Reason for leaving the previous place of residence (by category)	Catégorielle (codes)	1 for family reasons 2 for security reasons 3 due to habitat characteristics 4 due to an employment 5 for cost reasons 6 for health reason 7 for education reasons 8 due to a conflict 9 other reasons | 99=Missing value | 0=Not concerned
+155	TBase_HistMig	Migratory Event	reason_outs	Reason for leaving the previous place of residence (detailed)	Catégorielle (codes)	11=one of family member or friend has gone | 12=married | 13=moved with his family / parent | 14=divorced / separated or became widower | 15=took its independence from the family | 16=left in some body's care | 17=other family reasons 21 insecurity (crime, burglary) | 22=other security reason | 31=poor habitat(floor, wall, roof) | 32=poor conditions of toilet / bathroom / electricity 33 rooms / too small houses | 34=damaged house | 35=construction of a new home | 36=other reason related to habitat | 41=lost a job | 42=little employment prospects | 43=too far from the workplace | 44=no land to cultivate | 45=other reason related to employment | 51=rent too high | 52=too expensive food | 53=health fees too high | 54=schooling fees too high | 55=other cost reasons | 61=poor health services | 62=dirty environment | 63=health other reason | 71=for schooling (primary or secondary) | 72=for schooling University / professional school | 73=finished school (primary or secondary) | 74=finished school (University / professional school) | 75=other reason linked to education | 81=conflict with a family member / friend | 82=civil conflict | 83=banished | 84=other reason related to a conflict | 91=just for changing | 92=other | 93=Don’t know | 99=Missing value | 0=Not concerned
+156	TBase_HistMig	Migratory Event	reason_inp	Reasons for coming in this location (by category)	Catégorielle (codes)	1 for family reasons 2 for security reasons 3 due to habitat characteristics 4 due to an employment 5 for cost reasons 6 for health reason 7 for education reasons 9 other reasons | 99=Don’t known or Missing value | 0=Not concerned
+157	TBase_HistMig	Migratory Event	reason_ins	Reasons for coming in this location (detailed)	Catégorielle (codes)	11=one of family member or friend has gone | 12=married | 13=moved with his family / parent | 14=divorced / separated or became widower | 15=took its independence from the family | 16=left in some body's care | 17=other family reasons 21 insecurity (crime, burglary) | 22=other security reason | 31=poor habitat(floor, wall, roof) | 32=poor conditions of toilet / bathroom / electricity 33 rooms / too small houses | 34=damaged house | 35=construction of a new home | 36=other reason related to habitat | 41=lost a job | 42=little employment prospects | 43=too far from the workplace | 44=no land to cultivate | 45=other reason related to employment | 51=rent too higth | 52=too expensive food | 53=health fees too high | 54=schooling fees too high | 55=other cost reasons | 61=poor health services | 62=dirty environment | 63=health other reason | 71=for schooling (primary or secondary) | 72=for schooling University / professional school | 73=finished school (primary or secondary) | 74=finished school (University / professional school) | 75=other reason linked to education | 91=just for changing | 92=other | 93=Don’t know | 99=Missing value | 0=Not concerned
+158	TBase_HistMig	Migratory Event	indiv_relig	Religion	Catégorielle (codes)	1 No religion 2 Catholic 3 Muslim 4 Protestant 5 Traditional religion | 6=Other religion 9 Don’t know | 99=Missing value
+159	TBase_HistMig	Migratory Event	entry_date	Interview date	Date	
+160	TBase_HistMat	Marriage Event	observeid	OBSERVATION ID	Identifiant	
+161	TBase_HistMat	Marriage Event	individid	INDIVIDUAL ID	Identifiant	
+162	TBase_HistMat	Marriage Event	socialgpid	HOUSEHOLD ID	Identifiant	
+163	TBase_HistMat	Marriage Event	union_ended	Has already been in a union which ended	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+164	TBase_HistMat	Marriage Event	union_num	Total number of unions	Numérique	
+165	TBase_HistMat	Marriage Event	union_age	Age at first union	Texte / Numérique	
+166	TBase_HistMat	Marriage Event	entry_date	Interview date	Date	
+167	TBase_HistMat	Marriage Event	field_wrkr		Texte / Numérique	
+168	TBase_HistMat	Marriage Event	status_dat		Texte / Numérique	
+169	TBase_HistGen	Births History	histgen_num	GENESIQUE EVENT ID	Numérique	
+170	TBase_HistGen	Births History	observeid	OBSERVATION ID	Identifiant	
+171	TBase_HistGen	Births History	socialgpid	HOUSEHOLD ID	Identifiant	
+172	TBase_HistGen	Births History	individid	INDIVIDUAL ID (WOMAN ID)	Identifiant	
+173	TBase_HistGen	Births History	already_had_child	Woman already had a living birth	Catégorielle (codes)	1=Yes | 2=No | 4=No answer
+174	TBase_HistGen	Births History	childid	CHILD ID	Identifiant	
+175	TBase_HistGen	Births History	uch_resident	Child currently resides in the location	Catégorielle (codes)	1=Yes | 2=No | 4=No answer | 0=Not concerned
+176	TBase_HistGen	Births History	birth_place	Child birth place	Catégorielle (codes)	In Ouaga Elsewhere | 4=No answer | 0=Not concerned
+177	TBase_HistGen	Births History	gender	Child gender	Catégorielle (codes)	Male Female | 4=No answer | 0=Not concerned
+178	TBase_HistGen	Births History	died	Child died	Catégorielle (codes)	1=Yes | 2=No | 4=No answer | 0=Not concerned
+179	TBase_HistGen	Births History	death_age	Age at his death	Catégorielle (codes)	98 Not concerned
+180	TBase_HistGen	Births History	death_place	Death place	Catégorielle (codes)	In ouaga Elsewhere | 4=No answer | 0=Not concerned
+181	TBase_HistGen	Births History	current_age	Current age or age  if he wasn’t died	Catégorielle (codes)	98 Not concerned
+182	TBase_HistGen	Births History	unwanted_pregnancy	Desire for the pregnancy	Catégorielle (codes)	1=At this time | 2=Later | 3=Unwanted | 4=No answer | 0=Not concerned
+183	TBase_HistGen	Births History	Register	Birth registered at the registry office	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value | 4=No answer | 0=Not concerned
+184	TBase_HistGen	Births History	Entry_date	Interview date	Date	
+185	TBirth	Birth Table	eventid	EVENT ID	Identifiant	
+186	TBirth	Birth Table	pregoutid	DELIVERY ID	Identifiant	
+187	TBirth	Birth Table	observeid	OBSERVATION ID	Identifiant	
+188	TBirth	Birth Table	individid	INDIVIDUAL ID(Child ID)	Identifiant	
+189	TBirth	Birth Table	Sex	Sex	Catégorielle (codes)	1=Male | 2=Female
+190	TBirth	Birth Table	birth_date	Birth date	Date	
+191	TBirth	Birth Table	weight	Weight at birth	Texte / Numérique	
+192	TBirth	Birth Table	height	Height at birth	Texte / Numérique	
+193	TBirth	Birth Table	bcg	BCG date	Date	
+194	TBirth	Birth Table	polio	POLIO 0 date	Date	
+195	TBirth	Birth Table	rltn_head	relation to household head	Catégorielle (codes)	3 Son or daughter 4 Son-in-law or daughter-in-law 5 Grandson/daughter 8 Brother or sister | 9=Other parent | 10=no relationship | 11=nephew | 12=Don’t know | 99=Missing value
+196	TBirth	Birth Table	register	Birth registered at the registry office	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+197	TBirth	Birth Table	unwanted_pregnancy	Desire for the pregnancy	Catégorielle (codes)	1=At this time | 2=Later | 3=Unwanted | 4=No answer
+198	TBirth	Birth Table	entry_date	Interview date	Date	
+199	TDeath	Death Table	eventid	EVENT ID	Identifiant	
+200	TDeath	Death Table	observeid	OBSERVATION ID	Identifiant	
+201	TDeath	Death Table	individid	INDIVIDUAL DIED	Identifiant	
+202	TDeath	Death Table	evtdate	Date of death	Date	
+203	TDeath	Death Table	diedinhs	Died in a health structure	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+204	TDeath	Death Table	died_struct_code	Code of health structure	Catégorielle (codes)	0. Not concerned
+205	TDeath	Death Table	gonetohs	Gone to a health structure before died	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+206	TDeath	Death Table	gone_struct_code	Code of health structure he has gone before died	Catégorielle (codes)	0. Not concerned
+207	TDeath	Death Table	entry_date	Interview date	Date	
+208	TPregnancy	Pregnancy Table	eventid	EVENT ID	Identifiant	
+209	TPregnancy	Pregnancy Table	observeid	OBSERVATION ID	Identifiant	
+210	TPregnancy	Pregnancy Table	individid	INDIVIDUAL ID (WOMAN ID)	Identifiant	
+211	TPregnancy	Pregnancy Table	evtdate	Pregnancy starting date	Date	
+212	TPregnancy	Pregnancy Table	entry_date	Interview date	Date	
+213	TPregoutcome	Pregnancy Outcome Table	eventid	EVENT ID	Identifiant	
+214	TPregoutcome	Pregnancy Outcome Table	locationid	LOCATION ID	Identifiant	
+215	TPregoutcome	Pregnancy Outcome Table	peventid	PREGNANCY OUTCOME ID EVENT ID	Identifiant	
+216	TPregoutcome	Pregnancy Outcome Table	observeid	OBSERVATION ID	Identifiant	
+217	TPregoutcome	Pregnancy Outcome Table	individid	INDIVIDUAL (WOMAN ID)	Identifiant	
+218	TPregoutcome	Pregnancy Outcome Table	outcome	Pregnancy outcome	Catégorielle (codes)	delivery abortion
+219	TPregoutcome	Pregnancy Outcome Table	evtdate	Outcome date	Date	
+220	TPregoutcome	Pregnancy Outcome Table	birth_place	delivery place	Catégorielle (codes)	health facility Home of a provider Home (the mother or another home) Other | 99=Don’t known or Missing value
+221	TPregoutcome	Pregnancy Outcome Table	struct_code	Code of the health structure	Catégorielle (codes)	0. Not concerned
+222	TPregoutcome	Pregnancy Outcome Table	struct_specified		Texte / Numérique	
+223	TPregoutcome	Pregnancy Outcome Table	type_acc	Type of DELIVERY	Catégorielle (codes)	1=Normal 2 by caesarean section | 3=Other | 99=Don’t known or Missing value
+224	TPregoutcome	Pregnancy Outcome Table	birth_assistant	Person who assist woman for delivery	Catégorielle (codes)	Health staff traditional birth attendant Another | 99=Don’t know or Missing value
+225	TPregoutcome	Pregnancy Outcome Table	birth_nb	Number of children at DELIVERY	Numérique	
+226	TPregoutcome	Pregnancy Outcome Table	livebirth_nb	Number of children born alive	Numérique	
+227	TPregoutcome	Pregnancy Outcome Table	birthinlive_nb	Number of children still alive	Numérique	
+228	TPregoutcome	Pregnancy Outcome Table	fatherid	children father id	Identifiant	
+229	TPregoutcome	Pregnancy Outcome Table	father_ethnic_gp	children father ethnic group	Catégorielle (codes)	1=Bobo | 2=Dioula | 3=Fulani | 4=Gourmantche | 5=Gourounsi | 6=Lobi | 7=Mossi | 8=Senoufo | 9=Touareg / Bella | 10=Others | 11=Don’t know or missing value | 12=Bissa | 13=Samo
+230	TPregoutcome	Pregnancy Outcome Table	entry_date	Interview date	Date	
+231	TPresences	Presence Table	eventid	EVENT ID	Identifiant	
+232	TPresences	Presence Table	episodeid_res	RESIDENCY EPISODE ID	Texte / Numérique	
+233	TPresences	Presence Table	observeid	OBSERVATION ID	Identifiant	
+234	TPresences	Presence Table	individid	INDIVIDUAL ID	Identifiant	
+235	TPresences	Presence Table	enter_periode	Usually sleep in the household since more than 6 months (Only for round zero individuals)	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+236	TPresences	Presence Table	sleep_lastnight	Slept last night in the location (courtyard)	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+237	TPresences	Presence Table	arrive_date	Date of last arrival in location (courtyard)	Date	
+238	TPresences	Presence Table	depart_date	Date of last depart from location (courtyard)	Date	
+239	TPresences	Presence Table	entry_date	Interview date	Date	
+240	TMigration_out	Table Migration Out	eventid	EVENT ID	Identifiant	
+241	TMigration_out	Table Migration Out	individid	INDIVIDUAL ID	Identifiant	
+242	TMigration_out	Table Migration Out	episodeid_res	RESIDENCY EPISODE ID	Texte / Numérique	
+243	TMigration_out	Table Migration Out	locationid	LOCATION ID	Identifiant	
+244	TMigration_out	Table Migration Out	observeid	OBSERVATION ID	Identifiant	
+245	TMigration_out	Table Migration Out	destination	Place of destination	Catégorielle (codes)	1=Ouagadougou | 2=Other town in Burkina | 3=Rural area in Burkina | 4=Ivory Coast | 5=Other African country | 6=Other country (no Africa) 7 Don’t know | 99=Missing value
+246	TMigration_out	Table Migration Out	depart_date	Date of departure	Date	
+247	TMigration_out	Table Migration Out	reason_outp	Reasons for departure (By Categories)	Catégorielle (codes)	1 for family reasons 2 for security reasons 3 due to habitat characteristics 4 due to an employment 5 for cost reasons 6 for health reasons 7 for education reasons 8 due to a conflict 9 other reasons | 99=Don’t known or Missing value
+248	TMigration_out	Table Migration Out	reason_outs	Reasons for departure (Detailed)	Catégorielle (codes)	11=A member of the family or a friend has gone | 12=married | 13=moved with his family / parent | 14=divorced / separated or became widower | 15=took its independence from the family | 16=left in some body's care | 17=other family reasons 21 insecurity (crime, burglary) | 22=other security reason | 31=poor habitat(floor, wall, roof) | 32=poor conditions of toilet / bathroom / electricity 33 rooms / too small houses | 34=damaged house | 35=construction of a new home | 36=other reason related to habitat | 41=lost a job | 42=little employment prospects | 43=too far from the workplace | 44=no land to cultivate | 45=other reason related to employment | 51=rent too higth | 52=too expensive food | 53=health fees too high | 54=schooling fees too high | 55=other cost reasons | 61=poor health services | 62=dirty environment | 63=health other reason | 71=for schooling (primary or secondary) | 72=for schooling University / professional school | 73=finished school (primary or secondary) | 74=finished school (University / professional school) | 75=other reason linked to education | 81=conflict with a family member / friend | 82=civil conflict | 83=banished | 84=other reason related to a conflict | 91=just for changing | 92=other | 98=Don’t know | 99=Missing value
+249	TMigration_out	Table Migration Out	entry_date	Interview date	Date	
+250	TMigration_out	Table Migration Out	field_wrkr		Texte / Numérique	
+251	TMigration_out	Table Migration Out	status_dat		Texte / Numérique	
+252	TRelationship	Table Relationship	eventid	EVENT ID	Identifiant	
+253	TRelationship	Table Relationship	individid	INDIVIDUAL ID	Identifiant	
+254	TRelationship	Table Relationship	individid2	SPOUSE ID	Texte / Numérique	
+255	TRelationship	Table Relationship	sobserveid	EVENT STARTING OBSERVATION ID	Identifiant	
+256	TRelationship	Table Relationship	sdate	Starting date of union	Date	
+257	TRelationship	Table Relationship	conj_res	Spouse resides in the same home	Catégorielle (codes)	Yes No
+258	TRelationship	Table Relationship	uni_start	Has ever cohabited	Catégorielle (codes)	Yes No | 99=Don’t known or Missing value
+259	TRelationship	Table Relationship	uni_relig	Religious wedding realized	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+260	TRelationship	Table Relationship	uni_trad	Traditional wedding realized	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+261	TRelationship	Table Relationship	uni_civil	Civil wedding realized	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+262	TRelationship	Table Relationship	uni_start_date	Date of entry into cohabitation	Date	
+263	TRelationship	Table Relationship	uni_relig_date	Date of religious wedding	Date	
+264	TRelationship	Table Relationship	uni_trad_date	Date of traditional wedding	Date	
+265	TRelationship	Table Relationship	uni_civil_date	Date of civil wedding	Date	
+266	TRelationship	Table Relationship	entry_date	Interview date	Date	
+267	TUpdRelationship	Table Updrelationship	eventid	EVENT ID	Identifiant	
+268	TUpdRelationship	Table Updrelationship	individid	INDIVIDUAL ID	Identifiant	
+269	TUpdRelationship	Table Updrelationship	individid2	SPOUSE ID	Texte / Numérique	
+270	TUpdRelationship	Table Updrelationship	locationid	LOCATION ID	Identifiant	
+271	TUpdRelationship	Table Updrelationship	sobserveid	EVENT STARTING OBSERVATION ID	Identifiant	
+272	TUpdRelationship	Table Updrelationship	sdate	Starting date of union	Date	
+273	TUpdRelationship	Table Updrelationship	conj_res	Spouse resides in the same home	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+274	TUpdRelationship	Table Updrelationship	uni_relig	Religious wedding realized	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+275	TUpdRelationship	Table Updrelationship	uni_trad	Traditional wedding realized	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+276	TUpdRelationship	Table Updrelationship	uni_civil	Civil wedding realized	Catégorielle (codes)	1=Yes | 2=No | 99=Don’t known or Missing value
+277	TUpdRelationship	Table Updrelationship	uni_start_date	Date of entry into cohabitation	Date	
+278	TUpdRelationship	Table Updrelationship	uni_relig_date	Date of religious wedding	Date	
+279	TUpdRelationship	Table Updrelationship	uni_trad_date	Date of traditional wedding	Date	
+280	TUpdRelationship	Table Updrelationship	uni_civil_date	Date of civil wedding	Date	
+281	TUpdRelationship	Table Updrelationship	eobserveid	EVENT END OBSERVATION ID	Identifiant	
+282	TUpdRelationship	Table Updrelationship	eeventtype	Reasons of end of union	Catégorielle (codes)	Separation / divorce Death of spouse
+283	TUpdRelationship	Table Updrelationship	edate	Date of end of union	Date	
+284	TUpdRelationship	Table Updrelationship	entry_date	Interview date	Date	
+285	TResidency	Table Residency	episodeid	EPISODE OF RESIDENCE ID	Identifiant	
+286	TResidency	Table Residency	locationid	Location id	Identifiant	
+287	TResidency	Table Residency	individid	INDIVIDUAL ID	Identifiant	
+288	TResidency	Table Residency	res_status	Residence status	Catégorielle (codes)	Resident Visitor
+289	TResidency	Table Residency	sobserveid	Observation at the beginning of residence	Identifiant	
+290	TResidency	Table Residency	sdate	date at the beginning of residence	Date	
+291	TResidency	Table Residency	eobserveid	Observation at the end of residence	Identifiant	
+292	TResidency	Table Residency	edate	date at the end of residence	Date	
+293	TResidency	Table Residency	eeventtype	Reasons of ending residence	Catégorielle (codes)	Migration out Death
+294	TResidency	Table Residency	entry_date	Date of Interview	Date	
+295	TMembership	Table Membership	episodeid	EPISODE OF MEMBERSHIP ID	Identifiant	
+296	TMembership	Table Membership	episodeid_res	EPISODE OF RESIDENCE ID	Texte / Numérique	
+297	TMembership	Table Membership	socialgpid	HOUSEHOLD ID	Identifiant	
+298	TMembership	Table Membership	individid	INDIVIDUAL ID	Identifiant	
+299	TMembership	Table Membership	sobserveid	Observation at the beginning of the membership	Identifiant	
+300	TMembership	Table Membership	sdate	date at the beginning of the membership	Date	
+301	TMembership	Table Membership	eobserveid	Observation at the end of the membership	Identifiant	
+302	TMembership	Table Membership	edate	date at the end of the membership	Date	
+303	TMembership	Table Membership	eeventtype	Reason of ending membership	Catégorielle (codes)	Migration out Death
+304	TMembership	Table Membership	entry_date	Date of Interview	Date	
+305	TSocialgp_head	Table Socialgp_Head	episodeid	EPISODE OF HEADSHIP ID	Identifiant	
+306	TSocialgp_head	Table Socialgp_Head	episodeid_res	EPISODE OF RESIDENCE ID	Texte / Numérique	
+307	TSocialgp_head	Table Socialgp_Head	headid	INDIVIDUAL ID (HEAD ID)	Identifiant	
+308	TSocialgp_head	Table Socialgp_Head	sobserveid	Observation at the beginning of the headship	Identifiant	
+309	TSocialgp_head	Table Socialgp_Head	sdate	Date at the beginning of the headship	Date	
+310	TSocialgp_head	Table Socialgp_Head	eobserveid	Observation at the end of the headship	Identifiant	
+311	TSocialgp_head	Table Socialgp_Head	edate	Date at the end of the headship	Date	
+312	TSocialgp_head	Table Socialgp_Head	eeventtype	Reason of ending headship	Catégorielle (codes)	1 or 3 Migrations out 1 or 4 Deaths
+313	TSocialgp_head	Table Socialgp_Head	entry_date	Date of Interview	Date	
+314	TSocialgp_rltn	Table Socialgp_Relation	eventid	EVENT ID	Identifiant	
+315	TSocialgp_rltn	Table Socialgp_Relation	episodeid_head	EPISODE OF HEADSHIP ID	Texte / Numérique	
+316	TSocialgp_rltn	Table Socialgp_Relation	episodeid_res	EPISODE RESIDENCE ID	Texte / Numérique	
+317	TSocialgp_rltn	Table Socialgp_Relation	individid	INDIVIDUAL ID	Identifiant	
+318	TSocialgp_rltn	Table Socialgp_Relation	observeid	Observation ID for the relationship	Identifiant	
+319	TSocialgp_rltn	Table Socialgp_Relation	evtdate	Date at the beginning of the relationship	Date	
+320	TSocialgp_rltn	Table Socialgp_Relation	rltn_head	Date of Interview	Catégorielle (codes)	1 Socialgp head 2 Wife / husband 3 Son / daughter 4 Undefined / stepdaughter 5 Grandson / granddaughter 6 Father / mother 7 Stepfather / stepmother 8 Brother / sister 9 Nephew / niece 10 No kinship 11 Another parent 12 Don’t know
+321	TSocialgp_rltn	Table Socialgp_Relation	entry_date	Date of Interview	Date	
+322	Tindividual_charact	Individual characteristics (updatable)	individid	Individual ID	Identifiant	
+323	Tindividual_charact	Individual characteristics (updatable)	observeid	Observation ID for the characteristic	Identifiant	
+324	Tindividual_charact	Individual characteristics (updatable)	entry_date	Date of interview	Date	
+325	Tindividual_charact	Individual characteristics (updatable)	father_alive	Father is alive	Catégorielle (codes)	1=Yes | 2=No | 99=Don't know or missing
+326	Tindividual_charact	Individual characteristics (updatable)	mother_alive	Mother is alive	Catégorielle (codes)	1=Yes | 2=No | 99=Don't know or missing
+327	Tindividual_charact	Individual characteristics (updatable)	marital_status	Marital status	Catégorielle (codes)	1=Never married | 2=Married | 3=divorced | 4=widowed | 99=Don't know or missing

@@ -121,32 +121,33 @@ st.markdown(
     <style>
     :root {
         --opo-navy: #0B2545;
-        --opo-teal: #13795B;
+        --opo-jaune: #E8A33D;
+        --opo-jaune-clair: #F4C874;
         --opo-sand: #F4EDE4;
     }
     .opo-header {
-        background: linear-gradient(135deg, var(--opo-navy) 0%, var(--opo-teal) 100%);
+        background: linear-gradient(135deg, var(--opo-jaune) 0%, var(--opo-jaune-clair) 100%);
         padding: 1.6rem 2rem;
         border-radius: 14px;
         margin-bottom: 1.4rem;
         box-shadow: 0 4px 18px rgba(11, 37, 69, 0.25);
     }
     .opo-header h1 {
-        color: #FFFFFF;
+        color: var(--opo-navy);
         font-size: 1.7rem;
         font-weight: 700;
         margin: 0;
         letter-spacing: 0.2px;
     }
     .opo-header p {
-        color: var(--opo-sand);
+        color: rgba(11, 37, 69, 0.8);
         margin: 0.35rem 0 0 0;
         font-size: 0.95rem;
     }
     .opo-badge {
         display: inline-block;
-        background: rgba(255,255,255,0.15);
-        color: #FFFFFF;
+        background: rgba(11, 37, 69, 0.12);
+        color: var(--opo-navy);
         border-radius: 999px;
         padding: 0.15rem 0.7rem;
         font-size: 0.72rem;

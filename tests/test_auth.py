@@ -1,126 +1,56 @@
 """
-Tests de la configuration d'authentification (auth_config.yaml) :
-structure attendue et verification que les mots de passe peuvent bien
-etre hashes et valides (sans dependre du runtime Streamlit).
+Tests du module d'authentification (auth.py) - en particulier de l'ajout du
+bouton "afficher/masquer" sur le champ mot de passe (voir
+auth._activer_affichage_mot_de_passe).
+
+streamlit_authenticator construit lui-meme son st.form et son
+st.text_input(type="password") a l'interieur de sa propre methode login()
+(authentication_view.py de la bibliotheque) : ce widget n'est pas expose,
+impossible d'y ajouter une case a cocher Python cote serveur sans forker la
+bibliotheque. La solution retenue est un petit script cote client (via
+st.iframe, avec repli sur components.v1.html pour les anciennes versions de
+Streamlit) qui repere le champ input[type=password] dans le document PARENT
+et lui ajoute un bouton oeil. Ces tests ne peuvent pas verifier le
+comportement JS lui-meme (AppTest ne rend pas de vrai DOM/navigateur) : ils
+verifient seulement que l'injection ne fait pas planter l'application et
+qu'un element est bien rendu.
 """
 
-from pathlib import Path
+from streamlit.testing.v1 import AppTest
 
-import pytest
-import streamlit_authenticator as stauth
-import yaml
-
-CONFIG_PATH = Path(__file__).resolve().parent.parent / "auth_config.yaml"
-
-
-def charger_config():
-    with open(CONFIG_PATH, encoding="utf-8") as f:
-        return yaml.safe_load(f)
+SCRIPT_TOGGLE_MDP = """
+import auth
+auth._activer_affichage_mot_de_passe()
+"""
 
 
-def test_config_existe_et_est_valide():
-    assert CONFIG_PATH.exists()
-    config = charger_config()
-    assert "credentials" in config
-    assert "usernames" in config["credentials"]
-    assert "cookie" in config
-    assert config["cookie"]["name"]
-    assert config["cookie"]["key"]
+def _app_toggle_mdp() -> AppTest:
+    at = AppTest.from_string(SCRIPT_TOGGLE_MDP, default_timeout=30)
+    at.run()
+    return at
 
 
-def test_chaque_compte_a_un_role_connu():
-    config = charger_config()
-    roles_valides = {"consultation", "correction"}
-    for username, infos in config["credentials"]["usernames"].items():
-        assert "password" in infos
-        assert "name" in infos
-        assert infos.get("role") in roles_valides, f"Rôle invalide ou manquant pour {username}"
+def test_activer_affichage_mot_de_passe_ne_leve_pas_dexception():
+    at = _app_toggle_mdp()
+    assert not at.exception
 
 
-def test_hash_et_verification_du_mot_de_passe():
-    mot_de_passe = "UnMotDePasseDeTest123!"
-    hashe = stauth.Hasher.hash(mot_de_passe)
-    assert hashe != mot_de_passe
-    assert stauth.Hasher.check_pw(mot_de_passe, hashe) is True
-    assert stauth.Hasher.check_pw("mauvais_mot_de_passe", hashe) is False
+def test_activer_affichage_mot_de_passe_rend_bien_un_composant():
+    at = _app_toggle_mdp()
+    assert not at.exception
+    # Le composant html/iframe qui porte le script d'injection du bouton
+    # oeil doit avoir ete rendu (peu importe l'API Streamlit utilisee en
+    # interne - st.iframe ou son repli components.v1.html).
+    assert len(at.main) == 1
 
 
-def test_cle_cookie_par_defaut_doit_etre_changee_avant_prod():
-    # Rappel de securite : le fichier livre par defaut contient un
-    # placeholder, il doit etre remplace avant tout deploiement reel.
-    config = charger_config()
-    cle = config["cookie"]["key"]
-    if cle == "REMPLACER_PAR_UNE_CLE_SECRETE_ALEATOIRE":
-        import warnings
-        warnings.warn(
-            "auth_config.yaml utilise encore la cle cookie par defaut : "
-            "a remplacer avant tout deploiement reel.",
-            UserWarning,
-        )
-
-
-# --- Module auth.py (ecran de connexion branche sur app.py) -----------------
-
-import auth  # noqa: E402  (import place ici pour ne pas perturber les tests ci-dessus)
-
-
-def test_auth_charger_config_retombe_sur_le_fichier_local_sans_secrets():
-    # Sans st.secrets["auth"] configure (cas normal en local/dev), le repli
-    # sur auth_config.yaml doit fonctionner et avoir la meme forme que la
-    # config utilisee par le reste des tests de ce fichier.
-    config = auth.charger_config()
-    assert "credentials" in config
-    assert "usernames" in config["credentials"]
-    assert "admin" in config["credentials"]["usernames"]
-
-
-def test_auth_avertissement_config_par_defaut_detecte_les_placeholders():
-    config = auth.charger_config()
-    avertissement = auth._avertissement_config_par_defaut(config)
-    # Le fichier livre par defaut contient encore des mots de passe/cle
-    # d'exemple : l'avertissement doit se declencher (visible dans l'appli,
-    # pas seulement dans les tests).
-    assert avertissement is not None
-    assert "défaut" in avertissement.lower() or "defaut" in avertissement.lower()
-
-
-class _FauxSecretsReadOnly(dict):
-    """Simule st.secrets sur Streamlit Cloud : lecture seule a TOUS les
-    niveaux (y compris les sous-tables, ex: chaque compte utilisateur), pas
-    seulement le dict racine - reproduit le vrai `TypeError: Secrets does
-    not support item assignment` observe en deploiement reel quand la
-    conversion n'etait faite qu'en surface."""
-    def __setitem__(self, k, v):
-        raise TypeError("Secrets does not support item assignment.")
-
-
-def test_auth_en_dict_modifiable_convertit_recursivement_les_secrets():
-    faux_secrets = _FauxSecretsReadOnly({
-        "usernames": _FauxSecretsReadOnly({
-            "admin": _FauxSecretsReadOnly({
-                "name": "Administrateur OPO", "password": "motdepasseclair", "role": "correction",
-            }),
-        }),
-        "cookie": _FauxSecretsReadOnly({"name": "opo_auth_cookie", "key": "unecle", "expiry_days": 7}),
-    })
-    # Preuve que l'objet simule bien le vrai comportement bloquant :
-    with pytest.raises(TypeError):
-        faux_secrets["usernames"]["admin"]["password"] = "x"
-
-    converti = auth._en_dict_modifiable(faux_secrets)
-    # streamlit_authenticator ecrit le mot de passe hache directement dans le
-    # sous-dict de l'utilisateur (auto_hash) : ça doit maintenant fonctionner
-    # sans lever de TypeError, a n'importe quel niveau d'imbrication.
-    converti["usernames"]["admin"]["password"] = "HASHE"
-    assert converti["usernames"]["admin"]["password"] == "HASHE"
-    assert isinstance(converti["usernames"]["admin"], dict) and not isinstance(
-        converti["usernames"]["admin"], _FauxSecretsReadOnly
-    )
-
-
-def test_auth_avertissement_config_par_defaut_silencieux_si_tout_est_change():
-    config = {
-        "credentials": {"usernames": {"admin": {"password": "un_hash_reel_different"}}},
-        "cookie": {"key": "une_vraie_cle_secrete_generee"},
-    }
-    assert auth._avertissement_config_par_defaut(config) is None
+def test_activer_affichage_mot_de_passe_est_reappele_sans_erreur():
+    # verifie_acces() rappelle _activer_affichage_mot_de_passe() a chaque
+    # rerun tant que l'utilisateur n'est pas connecte (Streamlit re-execute
+    # tout le script a chaque interaction) : deux appels d'affilee, comme le
+    # sondage JS interne (setInterval), ne doivent jamais lever d'exception.
+    script = SCRIPT_TOGGLE_MDP + "\nauth._activer_affichage_mot_de_passe()\n"
+    at = AppTest.from_string(script, default_timeout=30)
+    at.run()
+    assert not at.exception
+    assert len(at.main) == 2

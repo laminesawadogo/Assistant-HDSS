@@ -15,6 +15,7 @@ import base64
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 import streamlit_authenticator as stauth
 import yaml
 
@@ -117,7 +118,8 @@ def _css_ecran_connexion() -> str:
     <style>
     :root {
         --opo-navy: #0B2545;
-        --opo-teal: #13795B;
+        --opo-jaune: #E8A33D;
+        --opo-jaune-clair: #F4C874;
         --opo-sand: #F4EDE4;
     }
     .opo-login-header {
@@ -165,11 +167,11 @@ def _css_ecran_connexion() -> str:
         border-radius: 8px !important;
     }
     div[data-testid="stForm"] button {
-        background: linear-gradient(135deg, var(--opo-navy) 0%, var(--opo-teal) 100%);
-        color: #FFFFFF !important;
+        background: linear-gradient(135deg, var(--opo-jaune) 0%, var(--opo-jaune-clair) 100%);
+        color: var(--opo-navy) !important;
         border: none;
         border-radius: 8px;
-        font-weight: 600;
+        font-weight: 700;
         width: 100%;
         padding: 0.55rem 0;
         margin-top: 0.5rem;
@@ -177,7 +179,7 @@ def _css_ecran_connexion() -> str:
     }
     div[data-testid="stForm"] button:hover {
         opacity: 0.9;
-        color: #FFFFFF !important;
+        color: var(--opo-navy) !important;
     }
     </style>
     """
@@ -206,6 +208,72 @@ def _afficher_entete_connexion() -> None:
     )
 
 
+def _activer_affichage_mot_de_passe() -> None:
+    """Ajoute une icone 'oeil' a cote du champ mot de passe pour permettre a
+    l'utilisateur de voir ce qu'il saisit.
+
+    streamlit_authenticator construit lui-meme son st.form et son
+    st.text_input(type="password") a l'interieur de sa methode login() (voir
+    authentication_view.py de la bibliotheque) : ce widget n'est pas expose,
+    impossible d'y ajouter une case a cocher Python cote serveur sans forker
+    la bibliotheque. La solution robuste et independante de la version de la
+    bibliotheque est un petit script cote client (injecte via
+    components.v1.html, qui s'execute dans le document PARENT - la page
+    Streamlit elle-meme, pas l'iframe du composant) : il repere le champ
+    input[type=password] dans le DOM et lui ajoute un bouton oeil qui bascule
+    son type entre "password" et "text". Le sondage toutes les 500ms (au lieu
+    d'une detection unique) est necessaire car Streamlit re-rend le DOM a
+    chaque interaction (rerun) - la fonction se contente de ne rien faire si
+    le bouton est deja present pour rester silencieuse et peu couteuse."""
+    html = """
+        <script>
+        (function() {
+            function ajouterBoutonOeil() {
+                var doc = window.parent.document;
+                var champs = doc.querySelectorAll('input[type="password"]');
+                champs.forEach(function(champ) {
+                    var conteneur = champ.closest('div[data-baseweb="input"]');
+                    if (!conteneur || conteneur.querySelector('.opo-toggle-mdp')) {
+                        return;
+                    }
+                    conteneur.style.position = 'relative';
+                    champ.style.paddingRight = '2.4rem';
+                    var bouton = doc.createElement('span');
+                    bouton.className = 'opo-toggle-mdp';
+                    bouton.textContent = '\\u{1F441}';
+                    bouton.title = 'Afficher/masquer le mot de passe';
+                    bouton.style.cssText = 'position:absolute;right:10px;top:50%;'
+                        + 'transform:translateY(-50%);cursor:pointer;font-size:1rem;'
+                        + 'user-select:none;z-index:5;opacity:0.6;line-height:1;';
+                    bouton.addEventListener('click', function() {
+                        if (champ.type === 'password') {
+                            champ.type = 'text';
+                            bouton.style.opacity = '1';
+                        } else {
+                            champ.type = 'password';
+                            bouton.style.opacity = '0.6';
+                        }
+                    });
+                    conteneur.appendChild(bouton);
+                });
+            }
+            ajouterBoutonOeil();
+            setInterval(ajouterBoutonOeil, 500);
+        })();
+        </script>
+        """
+    # st.iframe (>=1.4x) est l'API actuelle recommandee pour embarquer du HTML
+    # avec execution JS et acces same-origin ; components.v1.html est
+    # deprecie depuis 2026-06-01 et sert seulement de repli pour d'anciennes
+    # versions de Streamlit (voir requirements.txt : streamlit>=1.38, pas de
+    # borne haute - l'environnement de deploiement peut avoir l'une ou
+    # l'autre API selon la version installee).
+    if hasattr(st, "iframe"):
+        st.iframe(html, height=1)
+    else:  # pragma: no cover - compatibilite anciennes versions de Streamlit
+        components.html(html, height=0)
+
+
 def verifier_acces() -> dict:
     """Affiche l'ecran de connexion et bloque l'execution du reste de l'appli
     (st.stop()) tant que l'utilisateur n'est pas authentifie avec succes.
@@ -230,6 +298,7 @@ def verifier_acces() -> dict:
     if st.session_state.get("authentication_status") is not True:
         _afficher_entete_connexion()
         authenticator.login(location="main", fields=CHAMPS_FORMULAIRE_FR)
+        _activer_affichage_mot_de_passe()
         statut = st.session_state.get("authentication_status")
 
         if statut is False:
