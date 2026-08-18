@@ -98,12 +98,16 @@ st.set_page_config(page_title="Assistant OPO", page_icon=_icone_page, layout="wi
 identite_utilisateur = auth.verifier_acces()
 
 # --- Préparation silencieuse de l'index ---------------------------------------
-# L'index de recherche doit exister avant de pouvoir répondre a une question
-# documentaire. Plutot que d'exposer un bouton technique "construire l'index"
-# a l'equipe, on le construit automatiquement au premier demarrage si besoin
-# (utile notamment sur un hebergement neuf, ex: Streamlit Community Cloud).
-if not rag.index_exists():
-    with st.spinner("Préparation de l'assistant (première initialisation)..."):
+# L'index de recherche doit exister ET être à jour avant de pouvoir répondre
+# a une question documentaire. Plutot que d'exposer un bouton technique
+# "construire l'index" a l'equipe, on le (re)construit automatiquement des
+# que necessaire (utile notamment sur un hebergement neuf, ex: Streamlit
+# Community Cloud, ET quand un document est depose directement dans
+# data/source_documents/ sans passer par le bouton d'upload de l'interface -
+# voir ingest.index_obsolete, qui corrige un vrai bug ou l'index ne se
+# reconstruisait plus jamais une fois cree la premiere fois, meme perime).
+if ingest.index_obsolete():
+    with st.spinner("Préparation de l'assistant (indexation des documents)..."):
         try:
             ingest.build_index()
             rag.reset_cache()

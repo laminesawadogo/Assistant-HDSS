@@ -238,6 +238,28 @@ et des `.pdf` s'appuie sur des outils externes (LibreOffice / poppler
 libreoffice poppler-utils` sinon) ; les `.docx`/`.pptx` modernes sont lus
 directement en Python sans dépendance externe.
 
+**Format non géré : `.rtf`.** Un fichier `.rtf` déposé dans
+`data/source_documents/` est silencieusement ignoré (ni erreur, ni conversion) —
+`prepare_corpus.EXTENSIONS_SUPPORTEES` ne le liste pas. Si le même contenu
+existe déjà en `.doc`/`.docx`/`.pdf`/`.ppt`/`.pptx` à côté, ce n'est pas une
+perte réelle ; sinon, convertir le fichier en `.docx` ou `.pdf` avant de le
+déposer (ou demander l'ajout du format si le besoin est récurrent).
+
+**L'index se reconstruit automatiquement dès qu'il est périmé**, pas
+seulement à la toute première utilisation : `ingest.index_obsolete()` compare
+la date de l'index à celle de chaque fichier de `data/docs/` et
+`data/source_documents/`, et l'application relance `ingest.build_index()`
+dès qu'un fichier plus récent que l'index est détecté. Corrige un bug réel
+constaté sur le projet : avant ce correctif, l'appli ne (re)construisait
+l'index qu'à la toute première exécution (`if not rag.index_exists()`) —
+un document déposé directement dans `data/source_documents/` (en dehors du
+bouton d'upload de l'interface, qui reconstruit déjà l'index lui-même) restait
+alors ignoré indéfiniment, même après redémarrage, puisque l'index existait
+déjà (juste périmé). Concrètement, plusieurs fiches R14 (`.doc`) et deux
+documents (`Dictionnaire_variables.txt`, `Manual of.txt`) déposés après la
+dernière construction manuelle de l'index n'étaient jamais apparus dans les
+réponses de l'assistant, sans aucune erreur visible nulle part.
+
 ## Construire l'index (une seule fois, ou après modification du dictionnaire)
 
 ```bash

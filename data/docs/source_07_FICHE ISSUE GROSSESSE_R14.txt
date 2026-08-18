@@ -1,0 +1,106 @@
+Document: 07_FICHE ISSUE GROSSESSE_R14
+
+﻿FICHE ISSUE GROSSESSE		Numéro de fiche: |__|__|__|__|
+
+ROUND N°........
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant:
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+Identification de la personne concernée
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+Nom et Prénoms.............................................................
+
+Issue de la grossesse………………………………|___|
+(Deux modalités : avortement spontané ou provoqué
+accouchement : enfant mort né ou né vivant).
+
+Date de l’issue............../........./...........
+jj          mm        année.
+
+Si accouchement lieu d'accouchement
+
+    1. Dans une formation sanitaire
+   ===> code F.S.....[     ]     ]
+		1 = CHR/CHU
+2 = CM/CMU
+3 = CMA
+4= CSPS
+6 = Infirmerie
+8 = Cabinet de soins
+9 = Clinique médicale
+10 = Polyclinique
+92= Autre à préciser ...........................................
+
+    2. Domicile du prestataire
+
+    3. Domicile (de l’accouchée ou d’un tiers)
+
+    4. Autre
+Type d’accouchement
+
+1 Normal
+2 par césarienne
+3 Autre
+
+Assistance à l’accouchement
+
+    1. Personnel de santé (Médecin, infirmier / infirmière, Sage-femme/ accoucheuse)
+    2. Accoucheuse traditionnelle
+    3. Autre
+
+Nombre d'enfants nés de cet accouchement (sortis du ventre, y compris nés vivants et morts nés) ......................... . |___|
+
+Nombre d'enfants nés vivants de cet accouchement..................................................... |___|
+
+Nombre d'enfants de cet accouchement encore en vie  ................................................ |___|
+(Remplir une fiche décès pour chaque enfant né vivant qui n’est plus en vie)
+
+Enquêteur : si nombre d'enfants nés vivants différent de zéro, remplir la suite pour les enfants nés vivants seulement.
+
+Nom et prénoms du père :...........................................................................................................
+
+ID SSD du père si connu :..........................................................................................
+
+Ethnie du père si ID SSD inconnu ..................................[   ]   ]
+
+Recensez tous les enfants nés vivants issus de l'accouchement en leur attribuant un numéro..
+01/01/9998 :	NSP
+
+Fiche naissance
+
+Numéro
+	Nom et prénoms	Sexe
+M / F	Date de naissance	Quelle est le lieu de naissance de (nom) ?
+1. Ouaga
+2. autres villes Burkina
+3. rural Burkina
+4. Côte d’Ivoire
+5. autre pays africain
+6. autres pays
+	Poids
+(en grammes) à la naissance (carnet de santé)	Taille
+(en cm) à la naissance (carnet de santé)	Lien de parenté des enfants avec le chef de ménage.......|___|___|
+	L’ enfant (les enfants) a-t-il (ont-ils ) été inscrit(s) à l’état civil ?.....oui/ non
+	Au moment où vous êtes tombée enceinte de ce (ces) enfant(s), vouliez-vous tomber enceinte à ce moment là ou vouliez vous attendre plus tard ou vouliez vous ne plus avoir d’enfants ?
+A ce moment là / plus tard / ne voulait plus / NSP.
+
+1)
+2)
+3)
+4)
+
+Module CPN
+
+Avez-vous eu une CPN oui/ non
+Si oui : combien ?......
+Dates des CPN
+CPN1 : jj/mm/aaaa
+CPN2 : jj/mm/aaaa
+CPN3 : jj/mm/aaaa

@@ -23,6 +23,35 @@ DOCS_DIR = Path(__file__).parent / "data" / "docs"
 INDEX_PATH = Path(__file__).parent / "data" / "index" / "index.pkl"
 
 
+def index_obsolete() -> bool:
+    """Detecte si l'index est perime : absent, ou plus ancien qu'un document
+    depose/modifie depuis dans data/docs/ ou data/source_documents/.
+
+    Bug reel corrige ici : l'appli ne reconstruisait l'index QU'AU TOUT
+    PREMIER demarrage (`if not rag.index_exists()`), jamais ensuite - un
+    fichier depose directement dans data/source_documents/ (en dehors du
+    bouton d'upload de l'interface, qui reconstruit deja l'index lui-meme)
+    restait donc silencieusement ignore indefiniment, meme apres un
+    redemarrage de l'appli, puisque l'index existait deja (juste perime).
+    Constate concretement : plusieurs fiches R14 (.doc) et deux documents
+    (Dictionnaire_variables.txt, Manual of.txt) deposes le 11 aout etaient
+    absents de l'index construit le 3 aout, sans aucune erreur visible.
+
+    Ne verifie que les dates de modification (rapide, aucune conversion) -
+    la conversion elle-meme reste geree par `prepare_corpus.preparer_corpus`,
+    appele par `build_index` uniquement si necessaire."""
+    if not INDEX_PATH.exists():
+        return True
+    index_mtime = INDEX_PATH.stat().st_mtime
+    for dossier in (DOCS_DIR, prepare_corpus.SOURCE_DIR):
+        if not dossier.exists():
+            continue
+        for f in dossier.iterdir():
+            if f.is_file() and f.stat().st_mtime > index_mtime:
+                return True
+    return False
+
+
 def chunk_file(path: Path) -> list[dict]:
     """Decoupe un fichier doc en chunks a partir des blocs separes par une
     ligne vide (un bloc = une variable pour les docs du dictionnaire, un

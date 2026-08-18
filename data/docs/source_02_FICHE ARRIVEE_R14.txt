@@ -1,0 +1,104 @@
+Document: 02_FICHE ARRIVEE_R14
+
+﻿FICHE ARRIVEE	Numéro de fiche : |__|__|__|__|
+
+ROUND N°........
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+Pour les personnes qui étaient visiteur avec une nouvelle ID au passage précédant, passer toute la fiche.
+Pour les personnes qui était visiteur avec une ID venant directement d’une autre UCH de l’OPO au passage précédant, ne remplir que la partie CIRCONSTANCES DE LA VENUE DANS L’UCH
+
+HISTOIRE MARITALE
+
+Pour toutes les femmes de 12 et + et les hommes de 15 ans et +
+(NOM) a-t il déjà été dans une union qui est terminée aujourd’hui ?
+1. oui
+2. non
+Si la réponse = 2, passer à l’union en cours
+
+Nombre total d’unions terminées
+Âge à la première union terminée
+
+HISTOIRE GENESIQUE
+Pour les femmes de 12 à 49 ans (en face à face)
+
+Q1. Avez-vous déjà connu une naissance vivante ? Oui/ Non.
+Si non, passez à l’histoire génésique de la femme suivante.
+
+Q2. Combien d'enfants avez-vous donné naissance au total? 	 |___|___|
+
+Q3. Combien d'enfants sont encore en vie ? 				 |___|___|
+
+Q4. Combien d'enfants sont décédés ? 				 |___|___|
+
+HISTOIRE MIGRATOIRE
+Résidents de 15 ans et +
+
+J1. Lieu de naissance
+Quelle est le lieu de naissance de (nom) ?
+1. Ouaga
+2. autres villes Burkina
+3. rural Burkina
+4. Côte d’Ivoire
+5. Autre pays africains
+6. autres pays
+
+Si réponse = 1 préciser le secteur
+Si réponse = 2 préciser la province
+
+J2. En quelle année (nom) est-il arrivé pour habiter à Ouaga pour la première fois ?
+(9999 si NSP)
+
+J3. Où habitait (nom) avant de venir habiter à Ouaga pour la première fois ?
+Modalités : Ouaga (secteur), autres villes Burkina (province), rural Burkina (province), Côte d’Ivoire, Autres pays africains, Autres pays
+
+J4. Demander si (Nom) est retourné l’année précédente pour un séjour de plus de 3 mois dans une des résidences antérieures à Ouagadougou. |___|___|___|___|
+
+J5 : Donnez l’année d’installation de l’individu dans l’UCH |___|___|___|___|
+
+J6. CIRCONSTANCES DE LA VENUE DANS OUAGADOUGOU (L’UCH)
+
+Lieu d’où la personne vient (avant d’habiter dans cette UCH)……………………..|___|___|
+Modalités : Ouaga, Autres villes Burkina, Rural Burkina, Côte d’Ivoire, Autre pays africains, Autres pays
+Raison pour laquelle la personne est venue Ouagadougou …………… |___|___|
+(une raison possible)
+
+01 S’est marié
+02 A déménagé avec sa famille / des parents
+03 A divorcé / est devenu veuf / s’est séparé
+04 Autres raisons familiales
+05 A emménagé dans sa propre maison
+06 Autre raison liée à l’habitat
+07 Pour raison professionnelle
+08 Pour faire une formation
+09 Déplacement en raison catastrophe ou d'une crise (Préciser)
+Catastrophe naturelle
+Raison sécuritaire / terrorisme
+A cause d’un autre conflit
+10 Autre, préciser
+98 NSP
+
+EDUCATION
+
+Nom	Fréquentation scolaire	Classe
+1. Relever le nom et le n° de ligne de tous les membres du ménage	G1
+ Fréquente actuellement ?
+
+1. fréquente actuellement            =>G2
+2. déjà fréquenté                          =>G2
+3.jamais fréquenté     fin du questionnaire	G2
+Quelle est la classe suivie ou la dernière classe achevée ?
+
+Les modalités de la question G2
+
+0. Not concerned 	21.  6ème 	31.  SUP1
+10. MATERNELLE	22.  5ème	32.  SUP2
+11. CP1 	23.  4ème 	33.  SUP3
+12. CP2 	24.  3ème 	34.  SUP4
+13. CE1 	25. 2nd 	35.  SUP5 & +
+14. CE2 	26. 1ère 	39. SUPERIEUR CLASSE INCONNUE
+15. CM1 	27. Tle
+16. CM2 	21.  6ème
+19. PRIMAIRE CLASSE INCONNUE	29. SECONDAIRE CLASSE INCONNUE

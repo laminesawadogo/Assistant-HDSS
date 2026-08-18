@@ -1,0 +1,156 @@
+Document: Table&Format
+
+Feuille: FNewBase_HistMig
+observeid | individid | socialgpid | birth_place | birth_place_sect | birth_place_prov | arrive_year | where_lived | where_lived_sect | where_lived_prov | return_lastplace | arrive_uch_year | last_livedplace | last_livedplace_prov | reason_outp | reason_outs | reason_inp | reason_ins | indiv_relig | others_raison | update_date | entry_date | field_wrkr | status_dat | recID
+26B013AA0038H00113 | 26B013AA0038H001013 | 26B013AA0038H001 | 1 | 30 | 0 | 0 | 0 | 0 | 0 | 0 | 2022 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2025-03-26 | 2025-03-26 | AAB | 3 | 13AAB0000000001
+26B013AA0037H00113 | 26B013AA0037H001014 | 26B013AA0037H001 | 3 | 0 | 9 | 2019 | 3 | 0 | 9 | 2 | 2023 | 3 | 9 | 0 | 0 | 1 | 0 | 0 | 2025-04-30 | 2025-03-26 | AAB | 3 | 13AAB0000000002
+
+Feuille: FNewBase_HistMat
+observeid | individid | socialgpid | union_ended | union_num | union_age | update_date | entry_date | field_wrkr | status_dat | recID
+26B011AF0020H00113 | 21B001AB0009H001015 | 26B011AF0020H001 | 2 | 0 | 0 | 2025-06-12 | 2025-04-02 | OO | 4 | 13OO_0000000361
+23C012AE0099H00113 | 21B008AB0112H001005 | 23C012AE0099H001 | 1 | 1 | 12 | 2025-03-28 | 2025-03-28 | AEN | 4 | 13AEN0000000013
+
+Feuille: FNewBirth
+eventid | pregoutid | observeid | individid | name | forename | gender | birth_date | estimated_birth_date | birth_place | ethnic_gp | fatherid | motherid | weight | height | bcg | polio | rltn_head | register | register_date | unwanted_pregnancy | update_date | entry_date | field_wrkr | status_dat | recID
+1 | 1 | 23C012AA0019H00113 | 23C012AA0019H001019 | SAWADOGO | EZÉCHIEL  | 1 | 2024-09-21 00:00:00 | 2 | 1 | 7 | 23C012AA0019H001006 | 23C012AA0019H001016 | 3155 | 50 | 2024-09-25 00:00:00 | 2024-09-25 00:00:00 | 5 | 1 | 2024-09-29 00:00:00 | 1 | 2025-03-26 | 2025-03-26 | OD | 4 | 13OD_0000000001
+38 | 43 | 23C012AA0023H00513 | 23C012AA0023H005006 | BARRO | ABDOUL MAGUID | 1 | 2024-11-29 00:00:00 | 2 | 2 | 10 | 23C012AA0023H005001 | 23C012AA0023H005002 | 4000 | 49 | 2024-12-06 00:00:00 | 2024-12-06 00:00:00 | 3 | 1 | 2024-12-29 00:00:00 | 1 | 2025-04-06 | 2025-04-06 | OD | 4 | 13OD_0000000039
+
+Feuille: FNewDeath
+eventid | socialgpid | locationid | observeid | respondid | individid | evtdate | estimated_death_date | diedinhs | died_struct_code | struct_specified | gonetohs | gone_struct_code | death_place_specified | struct_type_specified | otherstruct_before_death | is_ViolentDeath | update_date | entry_date | field_wrkr | status_dat | recID
+1 | 26B013AA0021H002 | 26B013AA0021 | 26B013AA0021H00213 | 26B013AA0021H002002 | 26B013AA0021H002001 | 2021-08-15 | 1 | 2 | 0 | 1 | 5 |  |  |  | 2 | 2025-03-27 | 2025-03-27 | AAB | 4 | 13AAB0000000001
+1 | 26B013AB0143H001 | 26B013AB0143 | 26B013AB0143H00113 | 26B013AB0143H001002 | 26B013AB0143H001001 | 2025-02-12 | 2 | 1 | 3 | 0 | 0 |  |  |  | 2 | 2025-03-27 | 2025-03-27 | BI | 4 | 13BI_0000000001
+
+Feuille: FNewEducation
+observeid | individid | socialgpid | education_level | class_code | beginyearschool | endyearschool | update_date | entry_date | field_wrkr | status_dat | recID | frequentation | Other
+26B011AF0020H00113 | 21B001AB0009H001015 | 26B011AF0020H001 | 2 | 22 | 0 | 0 | 2025-04-02 | 2025-04-02 | OO | 1 | 13OO_0000000153
+23C012AE0099H00113 | 21B008AB0112H001005 | 23C012AE0099H001 | 2 | 27 | 0 | 0 | 2025-03-28 | 2025-03-28 | AEN | 1 | 13AEN0000000071
+
+Feuille: FNewEmploi
+observeid | socialgpid | individid | respondid | E1 | E2 | entry_date | Update_date | field_wrkr | status_dat | recID
+23E025AB0062H00113 | 23E025AB0062H001 | 21A004AE0555H001013 | 23E025AB0062H001012 | 1 | 1 | 2025-04-25 | 2025-04-25 | JTN | 1 | 13JTN0000000781
+23E023AA0194H00113 | 23E023AA0194H001 | 21A005AD0327H001004 | 23E023AA0194H001005 | 1 | 1 | 2025-04-12 | 2025-04-12 | OD | 1 | 13OD_0000000481
+
+Feuille: FNewHistoireGnesique
+eventid | observeid | individid | socialgpid | having_live_birth | total_number_children | living_children_number | died_chlidren_number | update_date | entry_date | field_wrkr | status_dat | recID
+189 | 26B011AF0020H00113 | 21B001AB0009H001015 | 26B011AF0020H001 | 2 | 0 | 0 | 0 | 2025-06-12 | 2025-04-02 | OO | 1 | 13OO_0000000189
+10 | 23C012AE0099H00113 | 21B008AB0112H001005 | 23C012AE0099H001 | 1 | 1 | 1 | 0 | 2025-03-28 | 2025-03-28 | AEN | 1 | 13AEN0000000010
+
+Feuille: FNewIndividual
+observeid | socialgpid | individid | name | forename | gender | ethnic_gp | rltn_head | birth_date | fatherid | motherid | field_wrkr | status_dat | update_date | entry_date | recID | estimated_birth_date
+26B011AF0020H00113 | 26B011AF0020H001 | 21B001AB0009H001015 | COMPAORE | SAIBATA | 2 | 7 | 9 | 2005-06-30 00:00:00 |   |   | OO | 4 | 2025-04-02 00:00:00 | 2025-04-02 00:00:00 | 13OO_0000000085 | 1
+23C012AE0099H00113 | 23C012AE0099H001 | 21B008AB0112H001005 | KABORE | GWLADYS | 2 | 7 | 6 | 1993-06-03 00:00:00 |  |  | AEN | 4 | 2025-03-28 00:00:00 | 2025-03-28 00:00:00 | 13AEN0000000017 | 2
+
+Feuille: FNewLocation
+locationid | zd | bloc | uch_num | owner_name | owner_id | uch_empty | socialgp_nb | building_nb | fence | altitude | latitude | longitude | dop | lat_texte | long_texte | update_date | entry_date | field_wrkr | status_dat | recID | data_clerk | date_add
+23C014AD0692 | 23C014 | AD | 692 | KBORE ALI |  | 2 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |  |  | 2025-03-29 00:00:00 | 2025-03-29 00:00:00 | ZS | 3 | 13ZS_0000000001
+23C014AD0693 | 23C014 | AD | 693 | KABORE ALI |  | 2 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |  |  | 2025-03-29 00:00:00 | 2025-03-29 00:00:00 | ZS | 3 | 13ZS_0000000002
+
+Feuille: FNewMigration_IN
+eventid | individid | locationid | observeid | socialgpid | respondid | arrive_date | join_socialgp | update_date | entry_date | field_wrkr | status_dat | recID
+72 | 21B001AB0009H001015 | 26B011AF0020 | 26B011AF0020H00113 | 26B011AF0020H001 | 26B011AF0020H001002 | 2024-04-15 00:00:00 | 1 | 2025-04-02 | 2025-04-02 | OO | 1 | 13OO_0000000075
+644 | 21B001AB0009H001015 | 26B011AF0020 | 26B011AF0020H00113 | 26B011AF0020H001 | 26B011AF0157H001002 | 2024-04-15 00:00:00 | 1 | 2025-06-12 | 2025-06-12 | OO | 1 | 13OO_0000000704
+
+Feuille: FNewMigration_Out
+individid | episodeid_res | eventid | locationid | observeid | respondid | destination | depart_date | reason_outp | reason_outs | update_date | entry_date | field_wrkr | status_dat | recID | estimated_depart_date
+21B003AJ0010H001003 | 504141 | 120 | 23E023AC0062 | 23E023AC0062H00513 | NSP | 1 | 2023-06-15 | 1 | 13 | 2025-04-22 | 2025-04-15 | OAM | 4 | 13OAM0000000131 | 1
+23C012AA0019H001014 | 436396 | 1 | 23C012AA0019 | 23C012AA0019H00113 | 23C012AA0019H001016 | 2 | 2024-09-15 | 7 | 71 | 2025-03-26 | 2025-03-26 | OD | 4 | 13OD_0000000001 | 1
+
+Feuille: FNewObservation
+observeid | socialgpid | locationid | round_num | respondid | begin_time | end_time | int_lang | int_status | consent | reason | comment | int_closed | entry_date | Update_date | field_wrkr | status_dat | recID
+23C012AA0019H00113 | 23C012AA0019H001 | 23C012AA0019 | 13 | 12:02 | 13:48 | 2 | 1 | 0 | 0 |  | 1 | 2025-03-26 | 2025-06-11 | OD | 4 | M
+23C012AA0023H00513 | 23C012AA0023H005 | 23C012AA0023 | 13 | 08:09 | 08:46 | 4 | 1 | 0 | 0 |  | 1 | 2025-04-06 | 2025-05-15 | OD | 4 | 13OD_0000000078
+
+Feuille: FNewPauvreteSubjective
+observeid | socialgpid | locationid | respondid | M1_A | M1_B | M1_C | M1_D | M1_E | M2 | begin_time | end_time | int_lang | int_status | consent | reason | comment | int_closed | entry_date | Update_date | field_wrkr | status_dat | recID
+23C012AA0019H00113 | 23C012AA0019H001 | 23C012AA0019 | 23C012AA0019H001002 | 3 | 1 | 2 | 3 | 4 | 3 | 13:14 |  | 2 | 1 | 0 |  | 2 | 2025-03-26 | 2025-03-26 | OD | 1 | 13OD_0000000004
+23C012AA0023H00513 | 23C012AA0023H005 | 23C012AA0023 | 23C012AA0023H005001 | 2 | 1 | 1 | 1 | 1 | 4 | 08:42 |  | 1 | 1 | 0 |  | 2 | 2025-04-06 | 2025-04-06 | OD | 1 | 13OD_0000000065
+
+Feuille: FNewPregnancy
+eventid | locationid | observeid | respondid | individid | evtdate | pregnancy_number | update_date | entry_date | field_wrkr | status_dat | recID
+1 | 26B013AA0037 | 26B013AA0037H00113 | 26B013AA0037H001004 | 26B013AA0037H001004 | 2021-04-05 00:00:00 | 1 | 2025-03-26 | 2025-03-26 | AAB | 4 | 13AAB0000000001
+2 | 26B013AA0037 | 26B013AA0037H00113 | 26B013AA0037H001004 | 26B013AA0037H001004 | 2020-02-07 00:00:00 | 1 | 2025-03-26 | 2025-03-26 | AAB | 4 | 13AAB0000000002
+
+Feuille: FNewPregnancy_CPN
+eventid | locationid | peventid | observeid | respondid | individid | cpn | nb_cpn | cpn_date1 | cpn_date2 | cpn_date3 | cpn_date4 | cpn_date5 | cpn_date6 | cpn_date7 | cpn_date8 | update_date | entry_date | field_wrkr | status_dat | recID
+1 | 23C012AF0227 | 1 | 23C012AF0227H00113 | 23C012AF0227H001001 | 23C012AF0227H001002 | 1 | 6 | 2024-03-07 | 2024-05-07 | 2024-06-13 | 2024-07-18 | 2024-08-13 | 2024-08-13 | 1900-01-01 | 1900-01-01 | 2025-03-26 | 2025-03-26 | AEN | 4 | 13AEN0000000001
+2 | 23C012AF0279 | 2 | 23C012AF0279H00813 | 23C012AF0279H008002 | 23C012AF0279H008002 | 1 | 3 | 2021-10-04 | 2021-11-16 | 2021-12-16 | 1900-01-01 | 1900-01-01 | 1900-01-01 | 1900-01-01 | 1900-01-01 | 2025-03-26 | 2025-03-26 | AEN | 4 | 13AEN0000000002
+
+Feuille: FNewPregoutcome
+eventid | locationid | peventid | observeid | respondid | individid | outcome | evtdate | birth_place | struct_code | struct_specified | struct_type_specified | type_acc | birth_assistant | birth_nb | livebirth_nb | birthinlive_nb | fatherid | father_name | father_ethnic_gp | update_date | entry_date | field_wrkr | status_dat | recID
+1 | 26B013AA0037 | 2 | 26B013AA0037H00113 | 26B013AA0037H001004 | 26B013AA0037H001004 | 2 | 2020-11-05 | 1 | 4 |  | 1 | 1 | 1 | 1 | 1 | 26B013AA0037H001001 | BAMOGO  ISSAKA | 7 | 2025-03-26 | 2025-03-26 | AAB | 4 | 13AAB0000000001
+2 | 26B013AA0037 | 3 | 26B013AA0037H00113 | 26B013AA0037H001012 | 26B013AA0037H001012 | 2 | 2024-10-14 | 1 | 4 |  | 1 | 1 | 1 | 1 | 1 | 26B013AA0037H001009 | BAMOGO ALASSANE | 7 | 2025-03-26 | 2025-03-26 | AAB | 4 | 13AAB0000000002
+
+Feuille: FNewPresences
+eventid | locationid | observeid | individid | respondid | sleep_lastnight | depart_date | estimated_depart_date | arrive_date | estimated_arrive_date | update_date | entry_date | field_wrkr | status_dat | recID
+1303 | 23E025AB0062 | 23E025AB0062H00113 | 21A004AE0555H001013 | 23E025AB0062H001012 | 1 | 1900-01-01 00:00:00 | 0 | 1900-01-01 00:00:00 | 2 | 2025-04-25 | 2025-04-25 | JTN | 1 | 13JTN0000001303
+757 | 23E023AA0194 | 23E023AA0194H00113 | 21A005AD0327H001004 | 23E023AA0194H001005 | 1 | 1900-01-01 00:00:00 | 0 | 1900-01-01 00:00:00 | 2 | 2025-04-12 | 2025-04-12 | OD | 1 | 13OD_0000000757
+
+Feuille: FNewRelationship
+eventid | individid | individid2 | locationid | sobserveid | srespondid | seventtype | sdate | estimated_sdate | conj_name | conj_res | uni_start | uni_relig | uni_trad | uni_civil | uni_start_date | estimated_start_date | uni_relig_date | estimated_relig_date | uni_trad_date | estimated_trad_date | uni_civil_date | estimated_civil_date | update_date | entry_date | field_wrkr | status_dat | recID
+29 | 23C012AA0023H005001 | 23C012AA0023H005002 | 23C012AA0023 |  | 23C012AA0023H005001 | 0 | 2015-09-17 00:00:00 | 2 | OUATTARA ANGELE | 1 | 1 | 1 | 1 | 2 | 2015-09-17 00:00:00 | 2 | 2015-09-17 00:00:00 | 2 | 2015-09-17 00:00:00 | 2 | 1900-01-01 00:00:00 | 2 | 2025-04-06 | 2025-04-06 | OD | 4 | 13OD_0000000029
+30 | 23C012AA0023H006001 | 23C012AA0023H006002 | 23C012AA0023 | 23C012AA0023H00613 | 23C012AA0023H006002 | 0 | 2023-10-28 00:00:00 | 2 | OUEDRAOGO TEWENDE EUGENIE | 1 | 1 | 1 | 1 | 2 | 2023-10-28 00:00:00 | 2 | 2023-10-28 00:00:00 | 2 | 2023-10-28 00:00:00 | 2 | 1900-01-01 00:00:00 | 2 | 2025-04-06 | 2025-04-06 | OD | 4 | 13OD_0000000030
+
+Feuille: FNewResidency
+locationid | individid | res_status | sobserveid | srespondid | sdate | update_date | entry_date | field_wrkr | status_dat | recID
+26B011AF0020 | 21B001AB0009H001015 | 2 | 26B011AF0020H00113 | 26B011AF0020H001002 | 2024-04-15 00:00:00 | 2025-04-02 | 2025-04-02 | OO | 1 | 13OO_0000000059
+23C012AE0099 | 21B008AB0112H001005 | 2 | 23C012AE0099H00113 | NSP | 2021-06-30 00:00:00 | 2025-03-28 | 2025-03-28 | AEN | 1 | 13AEN0000000006
+
+Feuille: FNewSante
+observeid | socialgpid | respondid | S1 | S2_A | S2_B | S2_C | S3_1 | S3_2 | S3_3 | S3_4 | S3_5 | S3_6 | S3_7 | S3_8 | S3_9 | S3_10 | S4_1 | S4_2 | S4_2mm | S4_2aa | S5_1 | S5_2A | S5_2B | S5_2C | entry_date | Update_date | field_wrkr | status_dat | recID
+23C012AA0019H00113 | 23C012AA0019H001 | 23C012AA0019H001002 | 4 | 2 | 2 | 2 | 3 | 1 | 1 | 1 | 1 | 1 | 2 | 2 | 2 | 3 | -9 | 0 | 0 | 0 | 7 | 5 | 5 | 5 | 2025-03-26 | 2025-03-26 | OD | 2 | 13OD_0000000004
+23C012AA0023H00513 | 23C012AA0023H005 | 23C012AA0023H005001 | 2 | 2 | 2 | 2 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | -9 | 0 | 0 | 0 | 1 | 1 | 1 | 2 | 2025-04-06 | 2025-04-06 | OD | 2 | 13OD_0000000067
+
+Feuille: FNewsocialgp
+socialgpid | locationid | observeid | respondid | old_socialgp | head_name | head_ethnic_gp | sect_num | owner_name | old_indiv1 | old_indiv2 | old_indiv3 | socialgp_num | arrive_date | update_date | entry_date | field_wrkr | status_dat | recID
+23C012AA0023H005 | 23C012AA0023 | 23C012AA0023H00513 | NSP | 2 | BARRO MOUSSA | 10 | 23 |  |  |  |  | 5 | 2021-06-15 00:00:00 | 2025-04-06 00:00:00 | 2025-04-06 00:00:00 | OD | 4 | 13OD_0000000013
+23C012AA0023H006 | 23C012AA0023 | 23C012AA0023H00613 | NSP | 2 | LABRE GHISLAIN ABDOUL RAZACK | 7 | 23 |  |  |  |  | 6 | 2021-06-15 00:00:00 | 2025-04-06 00:00:00 | 2025-04-06 00:00:00 | OD | 4 | 13OD_0000000014
+
+Feuille: FNewTelephone
+individid | observeid | socialgpid | NumTelephone | update_date | entry_date | field_wrkr | status_dat | recID
+26B013AA0038H001003 | 26B013AA0038H00113 | 26B013AA0038H001 | 76077755 | 2025-03-26 | 2025-03-26 | AAB | 1 | 13AAB0000000001
+26B013AA0038H001013 | 26B013AA0038H00113 | 26B013AA0038H001 | 77800551 | 2025-03-26 | 2025-03-26 | AAB | 1 | 13AAB0000000009
+
+Feuille: FNewVisitor
+eventid | individid | locationid | observeid | socialgpid | respondid | name | forename | birth_date | ethnic_gp | gender | old_locationid | old_socialgpid | old_resident | old_headname | old_headethnic_gp | old_sect_num | old_ownername | old_indivname1 | old_indivname2 | old_indivname3 | father_alive | mother_alive | fatherid | motherid | rltn_head | marital_status | arrive_date | estimated_arrive_date | join_socialgp | update_date | entry_date | field_wrkr | status_dat | recID | estimated_birth_date
+70 | 21B001AB0009H001015 | 26B011AF0020 | 26B011AF0020H00113 | 26B011AF0020H001 | 26B011AF0020H001002 | COMPAORE | SAIBATA | 2005-06-30 00:00:00 | 7 | 2 | 1 |  | 0 | 0 |  |  |  |  | 1 | 1 |   |   | 9 | 1 | 2024-04-15 00:00:00 | 1 | 1 | 2025-04-02 | 2025-04-02 | OO | 4 | 13OO_0000000070 | 1
+6 | 21B008AB0112H001005 | 23C012AE0099 | 23C012AE0099H00113 | 23C012AE0099H001 | NSP | KABORE | GWLADYS | 1993-06-03 00:00:00 | 7 | 2 | 1 |  | 0 | 0 |  |  |  |  | 1 | 1 |  |  | 6 | 1 | 2021-06-30 00:00:00 | 1 | 1 | 2025-03-28 | 2025-03-28 | AEN | 4 | 13AEN0000000006 | 2
+
+Feuille: FNewBase_Socialgp
+observeid | socialgpid | tv_num | mobphone_num | ref_num | bic_num | moto_num | auto_num | canal_subscription | monthly_subscription_amount | wifi_subscription | wifi_monthly_subscription_amount | occ_status | owner | ownerid | other_help | helper | help_nat_money | help_nat_food | help_nat_other | help_level | father_read | family_level | inhabitable_room_num | toilet_nat | toilet_shar | throw_wastewater | throw_domwaste | burn_waste | water_in1 | water_in2 | cooking_place | combust_cooking | light_mode | wall_nat | roof_nat | floor_nat_int | floor_nat_ext | waste_in | waste_ext | vegetable_garden | plant_ext | burglary | burglary_money | burglary_ruminant | burglary_fowl | burglary_harvest | burglary_equipment | update_date | entry_date | field_wrkr | status_dat | recID | chef_menage | fixephone_num | video_num | big_ruminant_num | small_ruminant_num | horse_num | pig_num
+26B013AA0038H00113 | 26B013AA0038H001 | 1 | 6 | 0 | 2 | 1 | 0 | 2 | 0 | 2 | 0 | 1 | 0 |  | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 3 | 4 | 1 | 2 | 4 | 4 | 3 | 1 | 1 | 2 | 3 | 2025-04-14 | 2025-03-26 | AAB | 4 | 13AAB0000000001 | 26B013AA0038H001004 | -1 | -1 | -1 | -1 | -1 | -1
+26B013AA0042H00513 | 26B013AA0042H005 | 1 | 3 | 0 | 0 | 1 | 0 | 2 | 0 | 2 | 0 | 3 | 0 |  | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 4 | 1 | 4 | 5 | 1 | 3 | 1 | 1 | 2 | 3 | 2025-03-29 | 2025-03-29 | AAB | 4 | 13AAB0000000022 | 26B013AA0042H005002 | -1 | -1 | -1 | -1 | -1 | -1
+
+Feuille: FupBase_Information
+observeid | individid | socialgpid | marital_conj_status | resid_conj_status | conjointid | conj_name | father_alive | resid_father_status | fatherid | mother_alive | resid_mother_status | motherid | residency_length | indiv_relig | uni_start_date | uni_trad_date | uni_relig_date | uni_civil_date | update_date | entry_date | field_wrkr | status_dat | recID
+23E023AA0194H00113 | 21A005AD0327H001004 | 23E023AA0194H001 | 2 | 0 |  |  | 2 | 0 |  | 2 | 0 |  | 3 | 3 | 1900-01-01 00:00:00 | 1900-01-01 00:00:00 | 1900-01-01 00:00:00 | 1900-01-01 00:00:00 | 2025-04-12 | 2025-04-12 | OD | 4 | 13OD_0000000232
+26B011AF0020H00113 | 21B001AB0009H001015 | 26B011AF0020H001 | 2 | 0 |  |  | 1 | 2 |  | 1 | 2 |  | 1 | 3 | 1900-01-01 00:00:00 | 1900-01-01 00:00:00 | 1900-01-01 00:00:00 | 1900-01-01 00:00:00 | 2025-06-12 | 2025-04-02 | OO | 4 | 13OO_0000000050
+
+Feuille: FupdBase_HistMat
+observeid | individid | socialgpid | union_ended | union_num | union_age | update_date | entry_date | field_wrkr | status_dat | recID
+23C012AA0019H00113 | 23C012AA0019H001006 | 23C012AA0019H001 | 1 | 1 | 25 | 2025-03-26 | 2025-03-26 | OD | 4 | 13OD_0000000003
+23C012AA0043H00313 | 23C012AA0043H003001 | 23C012AA0043H003 | 1 | 1 | 17 | 2025-03-26 | 2025-03-26 | OD | 4 | 13OD_0000000002
+
+Feuille: FudpBase_HistMig
+observeid | individid | socialgpid | birth_place | birth_place_sect | birth_place_prov | arrive_year | where_lived | where_lived_sect | where_lived_prov | return_lastplace | arrive_uch_year | last_livedplace | last_livedplace_prov | reason_outp | reason_outs | reason_inp | reason_ins | indiv_relig | others_raison | update_date | entry_date | field_wrkr | status_dat | recID
+26B013AA0268H00213 | 26B013AA0247H001001 | 26B013AA0268H002 | 3 | 0 | 9 | 2009 | 3 | 0 | 9 | 2 | 2009 | 3 | 9 | 1 | 17 | 1 | 11 | 0 | 2025-03-29 | 2025-03-29 | AAB | 4 | 13AAB0000000021
+23C012AF0291H00113 | 23C012AF0291H001006 | 23C012AF0291H001 | 1 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 2021 | 0 | 0 | 0 | 0 | 4 | 0 | 2 | 2025-03-26 | 2025-03-26 | AEN | 3 | 13AEN0000000001
+
+Feuille: FupdBirth
+eventid | pregoutid | observeid | individid | name | forename | gender | birth_date | birth_place | ethnic_gp | fatherid | motherid | weight | height | bcg | polio | rltn_head | register | register_date | unwanted_pregnancy | update_date | entry_date | field_wrkr | status_dat | recID | estimated_birth_date
+1 | 2 | 23C012AA0061H00213 | 23C012AA0061H002018 | KABORE | TASLILA | 2 | 2021-09-30 00:00:00 | 1 | 7 | 23C012AA0061H002001 | 23C012AA0061H002002 | 3400 | 51 | 2021-09-30 00:00:00 | 2021-09-30 00:00:00 | 3 | 1 | 2021-10-30 | 1 | 2025-04-01 | 2025-04-01 | OD | 4 | 13OD_0000000015 | 2
+4 | 5 | 23C014AD0531H00113 | 23C014AD0531H001015 | ROUMBA | AGUIRA | 2 | 2021-11-05 00:00:00 | 1 | 7 | 23C014AD0531H001002 | 23C014AD0531H001013 | 2300 | 49 | 2021-11-10 00:00:00 | 2021-11-11 00:00:00 | 3 | 1 | 2021-11-15 | 1 | 2025-05-14 | 2025-04-26 | ZS | 4 | 13ZS_0000000086 | 2
+
+Feuille: FupdRelationship
+eventid | individid | individid2 | locationid | sobserveid | srespondid | seventtype | sdate | estimated_sdate | conj_name | conj_res | uni_start | uni_relig | uni_trad | uni_civil | uni_start_date | estimated_start_date | uni_relig_date | estimated_relig_date | uni_trad_date | estimated_trad_date | uni_civil_date | estimated_civil_date | eobserveid | erespondid | eeventtype | edate | estimated_edate | update_date | entry_date | field_wrkr | status_dat | recID
+4107 | 21A004AE0555H001013 |  | 23E025AB0062 | 23E025AB0062H00113 | 23E025AB0062H001012 | 0 | 1999-06-30 00:00:00 | 2 | OUEDRAOGO NATA | 2 | 1 | 1 | 1 | 2 | 1999-06-30 00:00:00 | 2 | 1999-06-30 00:00:00 | 2 | 1999-06-30 00:00:00 | 2 | 1900-01-01 00:00:00 | 2 |  |  | 0 | 1900-01-01 00:00:00 | 0 | 2025-04-25 | 2025-04-25 | JTN | 4 | 13JTN0000000181
+5 | 23C012AA0019H001001 | 23C012AA0019H001002 | 23C012AA0019 | 23C012AA0019H00113 | 23C012AA0019H001002 | 0 | 1991-06-15 00:00:00 | 2 | OUEDRAOGO   HELENE | 1 | 1 | 1 | 1 | 1 | 1991-06-15 00:00:00 | 2 | 1996-06-15 00:00:00 | 2 | 1996-06-15 00:00:00 | 2 | 2004-06-15 00:00:00 | 2 |  |  | 0 | 1900-01-01 00:00:00 | 0 | 2025-03-26 | 2025-03-26 | OD | 4 | 13OD_0000000003
+
+Feuille: RegAllIndividual
+individid | name | forename | birth_date | gender | ethnic_gp | fatherid | motherid | father_alive | mother_alive | marital_status | soundex_name | soundex_forename | soundex_identite | estimated_birth_date
+21A001AA1027H001001 | OUEDRAOGO | PAUL | 1978-06-30 00:00:00 | 1 | 7 |  | 21A001AA1027H001006 | 1 | 1 | 2 | O362 | P400 | O362 | 2
+21A001AA1027H001002 | NAYEGA | MARCELINE | 1981-12-31 00:00:00 | 2 | 7 |  |  | 1 | 2 | 2 | N200 | M624 | N200 | 2
+
+Feuille: FupdPregoutcome
+eventid | locationid | peventid | observeid | respondid | individid | outcome | evtdate | birth_place | struct_code | struct_specified | struct_type_specified | type_acc | birth_assistant | birth_nb | livebirth_nb | birthinlive_nb | fatherid | father_name | father_ethnic_gp | update_date | entry_date | field_wrkr | status_dat | recID
+1 | 26B013AA0012 | 30959 | 26B013AA0012H00113 | 26B013AA0012H001014 | 26B013AA0012H001009 | 2 | 2021-05-01 | 1 | 3 |  | 1 | 1 | 1 | 1 | 1 | 26B013AA0012H001001 | OUEDRAOGO KASSOUM | 7 | 2025-08-28 | 2025-03-27 | AAB | 4 | 13AAB0000000006
+1 | 26B013AD0019 | 31088 | 26B013AD0019H00113 | 26B013AD0019H001001 | 26B013AD0019H001002 | 2 | 2021-11-04 | 1 | 3 |  | 2 | 1 | 1 | 1 | 1 | 26B013AD0019H001001 | ILBOUDO MARCELIN | 7 | 2025-04-05 | 2025-03-29 | EZ | 4 | 13EZ_0000000017

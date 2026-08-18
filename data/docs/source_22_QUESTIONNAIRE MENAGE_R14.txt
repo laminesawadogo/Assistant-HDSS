@@ -1,0 +1,130 @@
+Document: 22_QUESTIONNAIRE MENAGE_R14
+
+﻿Enquête de base : questionnaire ménage
+(Questionnaire à administré chaque trois ans)
+
+Numéro du questionnaire : |__|__|__|__|
+
+IDENTIFICATION MENAGE
+ID ZD......................................................………………..........|_____|_____|_____|_____|_____|_____|
+ID UCH....................……………………………....................…………...|_____|_____|_____|
+ID MENAGE............................................……………………………….. |_____|_____|_____|
+NOM ET PRENOMS DU CHEF DE MENAGE……………………………………………………
+
+IDENTIFICATION ENQUETEUR
+DATE DE L’ENQUETE ……/……./ 20…
+NOM DE L’ENQUETEUR.....................................................................................................…
+Heure et minute du début de l'entretien………………………………………
+Heure et minute dE LA FIN de l'entretien……………………………………….
+LANGUE UTILISEE LORS DE L'ENTRETIEN……………………………………………..
+STATUT DU QUESTIONNAIRE : 1. Complet   2. Incomplet
+SI STATUT EST INCOMPLET, POURQUOI ?   1…ABSENCE DES MEMBRES   2….REFUS
+
+A : Biens durables du ménage (fonctionnels pour usage domestique)
+
+- Nombre de téléviseurs
+- Nombre de téléphones dans le ménage : portables          |___|___|
+- Abonnement canal Oui/Non      |___|
+Si Oui, montant mensuel |___|___|___|___|___|___|___|___|
+- Ordinateur
+- Nombre de réfrigérateurs / congélateurs
+- Nombre de vélos
+- Nombre de mobylettes
+- Nombre d’automobiles
+
+B. Statut d’occupation dans le logement
+
+B1. Quel est le statut d'occupation du chef de ménage dans son logement ?
+- Propriétaire
+- Co-propriétaire
+- Locataire
+- Hébergé
+D. Caractéristiques de l’habitat du chef de ménage
+Les questions sur l’habitat concernent tous les bâtiments habités par le ménage et principalement le logement du chef de ménage. Enregistrer pour chaque question le code correspondant à la bonne réponse.
+
+D1. Combien de pièces habitables comporte le logement de ce ménage ? |___|___|
+
+D2. Quel type de toilettes est utilisé par la plupart des membres du ménage ?
+WC avec chasse d'eau (aussi avec seau d'eau)
+Latrines simples
+Latrines améliorées (ventilées)
+Aucun: rue/buissons / champs / bois / rivière / canal d'irrigation / égout (ouvert / public), etc.
+Autre
+
+D3. Actuellement comment vous débarrassez-vous le plus souvent des eaux ménagères?
+Fosse septique
+Jette dans les caniveaux extérieurs
+Jette dans la cour
+Jette dans la rue/nature
+Jette dans un puits perdu
+Utilisées pour l'arrosage
+Autre
+
+D4. Actuellement comment vous débarrassez-vous le plus souvent des ordures ménagères ?
+Poubelle privée avec service de ramassage
+Bac (benne) public avec service de ramassage public
+Centre de pré-collecte
+Terrain vague/parcelles vides (tas d’ordures)
+Rue à proximité
+Tas dans la cour
+Autre
+
+5. Au cours des 7 derniers jours, quels ont été les deux principaux modes d’approvisionnement en eau dans ce ménage ?
+Enquêteur : indiquez d’abord le principal mode d’approvisionnement, puis le second éventuel (quand il y a coupure par exemple). Si pas de second, codez « 00 »
+
+01. Robinet d’eau à l’intérieur du logement				D 5a
+02. Robinet d’eau à l’extérieur du logement				D 5b
+03. Puits
+04. Borne-fontaine collective
+05. Forage
+06. Pompe manuelle
+07. Vendeurs d’eau
+08. Eau de pluie (citerne sur toit ou au sol)
+09. Rivière/lac/mare/source/réservoir/canal d’irrigation
+10. Autre
+D6. Actuellement quel type de foyer utilise-t-on dans ce ménage pour préparer les repas le plus souvent ?
+Cuisinière à gaz
+Cuisinière électrique
+Foyer simple + bois
+Foyer amélioré + bois
+Foyer simple + charbon
+Foyer amélioré + charbon
+Autre
+
+D7. Quel principal mode d'éclairage utilisez-vous ?
+Electricité branchement réseau SONABEL
+Electricité Groupe électrogène
+Electricité Plaque solaire
+Lampe torche
+Autre
+
+D8. Nature du matériau utilisé pour les murs du bâtiment
+Pierres / briques en ciment
+Banco
+Autre
+
+QUESTIONNAIRE D’OBSERVATION
+
+Enquêteur : observez vous-même l’habitation et renseignez les questions. Demandez toutefois à voir l’habitation du chef de ménage. Ce sont ces caractéristiques que vous allez devoir renseigner.
+
+D 9. Nature du matériau utilisé pour le toit du bâtiment
+Tôle
+Tuiles/ardoises
+Dalle en ciment
+Bois
+Banco
+
+D 10. Nature du matériau utilisé pour le sol intérieur du bâtiment
+Carrelage
+Ciment
+Terre (battue)
+Autre
+
+D 11. Nature du matériau utilisé pour le sol de l’extérieur
+Maintenant, à l’extérieur de l’habitation, dans la cour, observez le matériau du sol. Si le sol est constitué de différents matériaux, indiquez le plus utilisé.
+La modalité « mixte » indique que la moitié des sols de l’extérieur est composé de pavé ou gravier et l’autre moitié est fait de terre et/ou herbe ou gazon.
+Carrelage ou ciment
+Pavé ou gravier
+Terre (avec herbe éventuellement) uniquement
+Mixte
+Autre

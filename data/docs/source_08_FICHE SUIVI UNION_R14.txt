@@ -1,0 +1,41 @@
+Document: 08_FICHE SUIVI UNION_R14
+
+﻿FICHE SUIVI DES UNIONS				    Numéro de fiche: |__|__|__|__|
+
+ROUND N°........
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant:
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+Identification de la personne concernée
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+Nom et Prénoms.............................................................
+
+Nouvelle union
+
+Nouvelle union ? ………………………………………………..|___|
+Si OUI Nom et Prénom conjoint………………………………………………………………..
+ID du conjoint si dans UCH
+
+Mariage religieux……………………………..|___| Si OUI date |___|___| |___|___| |___|___|
+Mariage coutumier……………………………|___| Si OUI date |___|___| |___|___| |___|___| Mariage civil………………………………….|___| Si OUI date |___|___| |___|___| |___|___|
+Date du début de cohabitation…………………………………….|___|___| |___|___| |___|___|
+
+Evolution des unions
+
+Rupture d’union ? ………………………………………………..|___|
+Si OUI motif ………………………………….………………….|___|
+(Deux modalités : séparation/ divorce, décès du conjoint)
+Date fin d’union…………………………………….|___|___| |___|___| |___|___|
+
+Si NON
+Début cohabitation…………………………………….|___|___| |___|___| |___|___|
+Mariage religieux……………………………..|___| Si OUI date |___|___| |___|___| |___|___|
+Mariage coutumier……………………………|___| Si OUI date |___|___| |___|___| |___|___| Mariage civil………………………………….|___| Si OUI date |___|___| |___|___| |___|___|
+(Prévoir un filtre pour que ces questions ne soient pas posées à chaque fois)

@@ -1,0 +1,186 @@
+Document: 23_Manuel baseline R14
+
+﻿30 avril 2026
+
+    I. Manuel de l’enquête de base : questionnaire exhaustif
+
+Ce questionnaire comprend des questions pour l’ensemble du ménage (par exemple la question sur les biens du ménage), ou portant sur certaines personnes du ménage. Quelles sont les personnes du ménage à prendre en compte pour l’enquête exhaustive ? Sauf indication contraire dans le manuel, nous prendrons en compte ici toutes les personnes résident au R12 dans le ménage, c’est à dire les résidents présents et les résidents absents (liste actualisée des membres du ménage), sauf les enfants qui sont nés depuis le passage précédant. Pour certaines parties du questionnaire (histoire maritale mais surtout histoire génésique), un entretien avec l’intéressé lui-même est nécessaire. Dans ce cas, il ne sera pas possible de collecter l’information pour les résidents absents : un code spécial doit être utilisé dans ce cas, et l’information sera demandée à nouveau au passage suivant.
+
+A noter que les modules A à D seront actualisé chaque deux ans, ainsi que la question J4.
+
+A : Biens du ménage
+La possession de certains biens (il s’agit des biens possédés par le ménage et non des biens utilisés) est une information qui sert à mesurer de façon approximative le statut socio-économique ou le niveau de vie du ménage. Les biens peuvent se trouver dans l’UCH ou ailleurs, et appartiennent aux membres du ménage tels que définis par le répondant lui-même (le bien peut donc appartenir à un non résidant). Notez bien qu’il s’agit des biens fonctionnels, c’est-à-dire en bon état au moment de l’enquête. Les biens qui ne sont plus d’usage mais présents dans le ménage ne devront pas être comptabilisés.
+
+Pour chacun des biens listés, demander le nombre total de ces biens possédés par l’ensemble des membres résidents du ménage et l’inscrire dans la (les) case (s) correspondante (s).
+
+B. Statut d'occupation du logement
+Cette question renseigne sur le statut d’occupation du logement et comporte deux volets. Le premier volet (B1) renseigne le statut de propriété : propriétaire, co-propriétaire, locataire, hébergé. Pour ceux qui sont locataires ou hébergés.
+
+B1 :
+Propriétaire : cas où le logement est la propriété du ménage. Même si le ménage paie un crédit hypothécaire, il demeure propriétaire. En cas de location-vente, le ménage est aussi considéré comme propriétaire.
+
+Co-propriétaire : à la différence du statut de « propriétaire », le statut de « co-propriétaire » fait référence au fait que le logement n’est pas la propriété du seul ménage. Il s’agit d’une propriété commune, c’est-à-dire partagée avec une tierce personne.
+
+Locataire : le ménage paie un loyer à un tiers (personne physique ou morale) pour l’occupation du logement.
+
+Hébergé : certains ménages sont logés gratuitement par des connaissances (parents ou amis), un employeur, etc. Ils ne sont ni propriétaires, ni co-propriétaires, ni locataires.
+
+D. Caractéristiques de l’habitat du chef de ménage
+
+Les questions sur l’habitat concernent tous les bâtiments habités par le ménage et principalement le logement du chef de ménage. Enregistrer pour chaque question le code correspondant à la bonne réponse.
+
+Pour ce module, il est préférable d’interroger une femme du ménage, sauf si le ménage ne comporte pas de femmes. Comme ces questions concernent la gestion quotidienne du ménage, vous devez, s’il y a lieu, indiquer au chef de ménage qu’il est sans doute plus approprié d’interroger son épouse ou une de ses épouses. Si aucune d’entre elles n’est disponible, vous pouvez vous adresser à une femme adulte du ménage, et susceptible de pouvoir répondre convenablement à ce module.
+
+D1. Combien de pièces habitables comporte cette habitation ?
+
+Demander au chef de ménage combien de pièces habitables comporte son habitation. Incluez chambres, cuisine, patio couvert et toute pièce pour l'accueil d’hôtes ! N'incluez pas salle de bain, toilettes, entrée, véranda, porche ou pièces uniquement réservées à un usage professionnel, c.-à-d. fabrication ou vente de produits ou de services.
+
+D2. Quel type de toilettes est utilisé par la plupart des membres du ménage ?
+
+Demandez à la répondante dans quel lieu les membres du ménage vont se « soulager » ou « faire leur besoin ». N’indiquez que le lieu principal, où la plupart des membres vont.
+Donnez des exemples de types de toilettes, en commençant par le plus vraisemblable, en regard du type d’habitation dans lequel vous vous trouvez.
+Le système de chasse d’eau dans des toilettes type WC peut-être cassé. On peut alors évacuer les déchets à l’aide d’un seau d’eau. L’eau est jetée dans la cuvette des WC et les déchets sont évacués. Le principe des WC repose sur la fosse septique : les déchets sont évacués dans une fosse septique, que la chasse d’eau soit fonctionnelle ou non.
+La différence entre des latrines simples et des latrines améliorées réside dans le caractère ventilé de la fosse : dans les latrines améliorées, il existe un système d’évacuation des odeurs de la fosse en dehors de l’enceinte des latrines, à l’extérieur de celles-ci.
+
+WC avec chasse d'eau (aussi avec seau d'eau)
+Latrines simples
+Latrines améliorées (ventilées)
+Aucun : rue/buissons / champs / bois / rivière / canal d'irrigation / égout (ouvert / public), etc.
+Autre
+
+D3. Actuellement comment vous débarrassez-vous le plus souvent des eaux ménagères?
+
+Demandez à la répondante comment sont évacuées les « eaux ménagères » le plus souvent.
+La fosse septique indique qu’il existe dans l’habitation, un système d’évacuation directe dans la fosse, par le biais de tuyaux branchés directement à l’évier, lavabo, etc.
+
+Fosse septique
+Jette dans les caniveaux extérieurs
+Jette dans la cour
+Jette dans la rue/nature
+Jette dans un puits perdu
+Utilisées pour l'arrosage
+Autre
+
+D4. Actuellement comment vous débarrassez-vous le plus souvent des ordures ménagères ?
+
+Demandez à la répondante comment sont évacuées les « ordures ménagères » ou « déchets domestiques » le plus souvent.
+
+Poubelle privée avec service de ramassage
+Bac (benne) public avec service de ramassage public
+Centre de pré-collecte
+Terrain vague/parcelles vides (tas d’ordures)
+Rue à proximité
+Tas dans la cour
+Autre
+
+D5. Au cours des 7 derniers jours, quels ont été les deux principaux modes d’approvisionnement en eau dans ce ménage ?
+
+Demandez à la répondante quels ont été les deux principaux modes d’approvisionnement en eau de boisson du ménage.
+Indiquez d’abord le principal mode d’approvisionnement, puis le second éventuel (quand il y a coupure par exemple). Si pas de second, codez « 00 » . Si 01 est codé comme première source, demander pour une autre source hormis 02.
+
+Exemple : si un membre du ménage se déplace à la borne-fontaine, indiquez 04. Si l’eau est achetée à un vendeur qui se déplace à domicile indiquez 07, même si l’eau provient de la borne-fontaine
+
+01. Robinet d’eau à l’intérieur du logement					E7a
+02. Robinet d’eau à l’extérieur du logement					E7b
+03. Puits
+04. Borne-fontaine collective
+05. Forage
+06. Pompe manuelle
+07. Vendeurs d’eau
+08. Eau de pluie (citerne sur toit ou au sol)
+09. Rivière/lac/mare/source/réservoir/canal d’irrigation
+10. Autre
+
+Le puit peut être couvert ou non, hors ou dans l’UCH.
+
+D6. Actuellement quel type de foyer utilise-t-on dans ce ménage pour préparer les repas le plus souvent ?
+
+Demandez à la répondante quel type de foyer est utilisé dans ce ménage pour préparer les repas le plus souvent au cours des 7 derniers jours. A ce type de foyer, est associé un type de combustible. Indiquez le type de foyer + le type de combustible associé.
+Si habituellement, il n’y a pas de préparation de cuisine pour le ménage (achète à l’extérieur par exemple), indiquer « 0 », pour non concerné.
+
+Cuisinière à gaz
+Cuisinière électrique
+Foyer simple + bois
+Foyer amélioré + bois
+Foyer simple + charbon
+Foyer amélioré + charbon
+Autre
+
+D7. Quel principal mode d'éclairage utilisez-vous ?
+
+Demandez à la répondante quel principal mode d'éclairage est utilisé dans ce ménage.
+
+Electricité branchement réseau SONABEL
+Electricité Groupe électrogène
+Electricité Plaque solaire
+Lampe à torche
+Autre
+
+D8. Nature du matériau utilisé pour les murs du bâtiment
+
+Demandez à la répondante quel type de matériau est utilisé pour la confection des murs du bâtiment le plus utilisé par le chef de ménage. Si les murs de l’habitation sont constitués par divers matériaux, retenez le plus utilisé.
+
+Pierres / briques en ciment
+Banco
+Autre
+
+QUESTIONNAIRE D’OBSERVATION
+
+Les questions de ce questionnaire d’observation n’ont pas besoin d’être posées à un-e répondant-e. Cela permet de gagner du temps. Observez vous-même l’habitation et renseignez les questions.
+Demandez toutefois à voir l’habitation du chef de ménage. Ce sont ces caractéristiques que vous allez devoir renseigner.
+
+D9. Nature du matériau utilisé pour le toit du bâtiment
+
+Si le toit de l’habitation du chef de ménage est constitué de différents matériaux, indiquez le plus utilisé.
+
+Tôle
+Tuiles/ardoises
+Dalle en ciment
+Bois
+Banco
+
+D10. Nature du matériau utilisé pour le sol intérieur du bâtiment
+
+Si le sol de l’habitation du chef de ménage est constitué de différents matériaux, indiquez le plus utilisé.
+S’il y a de la moquette ou un tapis, demandez quel type de matériau de trouve dessous.
+
+Carrelage
+Ciment
+Terre (battue)
+Autre
+
+D11. Nature du matériau utilisé pour le sol de l’extérieur
+
+Maintenant, à l’extérieur de l’habitation, dans la cour, observez le matériau du sol. Si le sol est constitué de différents matériaux, indiquez le plus utilisé.
+La modalité « mixte » indique que la moitié des sols de l’extérieur est composé de pavé ou gravier et l’autre moitié est fait de terre et/ou herbe ou gazon.
+
+Carrelage ou ciment
+Pavé ou gravier
+Terre (avec herbe éventuellement) uniquement
+Mixte
+Autre
+
+    II. Questionnaire de ménage de pauvreté subjective :
+
+Ce module est intégré à partir du R13 et est à administrer à chaque round. Il permet de collecter les informations sur les privations vécues par le ménage au cours des 12 dernier mois et la pauvreté auto perçue le ménage dans sa localité.
+M1. Au cours des 12 derniers mois, combien de fois, le cas échéant, est-ce que vous, ou un membre de votre famille, avez-dû faire face à un manque de [Lire à haute voix les options de réponse] : (Source Afro baromètre Round)
+La question permet de mesurer au cours des 12 derniers mois précédant l'entretien, la privation vécue ou ressentie par un ménage sur concernant les besoins suivants :
+A.	Nourriture suffisante pour manger à sa faim ?
+B.	Eau potable pour les besoins domestiques ?
+C.	Médicaments ou de soins médicaux ?
+D.	Combustible pour la cuisson des repas ?
+E.	Revenus en espèces ?
+
+Pour chaque dimension, il existe une échelle de réponse à cinq niveaux basés sur la fréquence à laquelle le ménage a éprouvé ces privations particulières. Les options de réponse sont les suivantes :
+    • Jamais
+    • Juste 1 ou 2 fois
+    • Quelques fois
+    • Plusieurs fois
+    • Toujours
+
+M2. Compte tenu de votre niveau de vie et celui des ménages de votre localité, vous estimez- vous : (EMC 2014, INSD Burkina Faso) :
+1. Très pauvre
+2. Pauvre
+3. Ni pauvre ni riche
+4. Riche
+5. Très riche

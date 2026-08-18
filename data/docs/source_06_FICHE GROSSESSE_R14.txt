@@ -1,0 +1,21 @@
+Document: 06_FICHE GROSSESSE_R14
+
+﻿FICHE GROSSESSE		Numéro de fiche : |__|__|__|__|
+
+ROUND N°........
+Enquêteur..................................................................................................... |___|___|
+
+Date enquête......../...../.....
+
+ID répondant:
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+Identification de la personne enceinte
+|____|____|____|____|____|____|	|___|___|  |___|___|___|___|	|____|____|____|___I . |___|___|___|
+   x       x        β     x       x        x	    β    β       x      x     x     x	    H       x        x     x          x    x     x
+
+Nom et Prénoms.............................................................
+
+Estimation date de début de grossesse……../……./……
+                                                                                   jj     mm      an

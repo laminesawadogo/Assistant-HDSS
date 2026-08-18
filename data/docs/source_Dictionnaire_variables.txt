@@ -1,0 +1,1108 @@
+Document: Dictionnaire_variables
+
+OBSERVATOIRE DE POPULATION DE OUAGADOUGOU
+
+DICTIONNAIRE DES VARIABLES
+
+1. Table Tbase_Socialgp
+2. Table Tindividual
+3. Table Tsocialgp
+4. Tvsisitor
+5.  Tlocation
+6. EDUCATION_EMPLOYMENT TABLE :TBase_Educ
+7. VACCINATION TABLE : TBase_vacc
+8. MIGRATORY EVENT : TBase_HistMig
+9. MARRIAGE EVENT :TBase_HistMat
+10. BIRTHS HISTORY : TBase_HistGen
+11. BIRTH TABLE :TBirth
+12. DEATH TABLE : TDeath
+13. PREGNANCY TABLE :TPregnancy
+14. PREGNANCY OUTCOME TABLE : TPregoutcome
+15. PRESENCE TABLE :TPresences
+16. TABLE MIGRATION OUT: TMigration_out
+17. TABLE RELATIONSHIP:TRelationship
+18. TABLE UPDRELATIONSHIP: TUpdRelationship
+19. TABLE RESIDENCY: TResidency
+20. TABLE MEMBERSHIP: TMembership
+21. TABLE SOCIALGP_HEAD: TSocialgp_head
+22. TABLE SOCIALGP_RELATION: TSocialgp_rltn
+23. Table Tindividual_charact
+
+1. Table Tbase_Socialgp
+
+CODES	VARIABLES	VALUES
+tv_num	number of televisions
+fixephone_num	number of land phones
+mobphone_num	number of mobile phones
+video_num	number of videos
+ref_num	number of refrigerators
+bic_num	number of bicycles
+moto_num	number of motorcycles
+auto_num	number of cars
+big_ruminant_num	number of big ruminants (cattle, dromedary, camel)
+small_ruminant_num	number of small ruminants (sheep, goat)
+horse_num	number of horses and donkeys
+pig_num	number of pigs
+occ_status	Home ownership status of the household head	1. owner
+2. co-owner
+3. tenant
+4. hosted
+99. Don't know or missing
+
+Owner	Owner of the household’s house	0. not concerned
+1. a parent in the household
+2. a parent outside the household
+3. another person in the household
+4. another person outside the household
+99. Don't know or missing
+ownerid	ID of the owner of the house
+other_help	Help regularly received by the household	1. Yes
+2. no
+99. Don't know or missing
+help_nat_money	Help in terms of money	1. Yes
+2. no
+99. Don't know or missing
+0. Not concerned
+help_nat_food	Help in terms of food	1. Yes
+2. no
+99. Don't know or missing
+0. Not concerned
+help_nat_other	Other kind of help	1. Yes
+2. no
+99. Don't know or missing
+0. Not concerned
+help_level	Level of help	1. Insignificant
+2. Helps a little
+3. Helps a lot
+4. Crucial help
+99. Don't know or missing
+0. Not concerned
+father_read	The father of the household's head is able to read	1. Yes
+2. no
+3. don't know
+99. missing
+family_level	 Living standard of the household head’s origin family (at the age of 15)  	1. Poor
+2. Medium
+3. Rich
+4. don't know
+99.  missing
+inhabitable_room_num	number of inhabitable rooms
+toilet_nat	Type of toilet	1. flushing
+2. simple latrine
+3. ventilated latrine
+4. no toilet (nature)
+5. Other
+99. Don't know or missing
+toilet_shar	Toilet restricted or shared 	0. not concerned
+1. Restricted to members of the household
+2. Shared with other households within the courtyard
+3. Common to other households outside the courtyard (neighbors)
+99. Don't know or missing
+throw_wastewater	Evacuation of wastewater	1. Septic pit
+2. Throws in the gutters
+3. Throws in the courtyard
+4. Throw in the street
+5. Throw in a sink
+6. Used for watering
+7. Other
+99. Don't know or missing
+throw_domwaste	Evacuation of household garbage	1. Garbage with collecting service
+2. Public tank with collecting service
+3. Pre-collection center
+4. Waste ground
+5. Street corner
+6. A heap of garbage in the courtyard
+7. Other
+99. Don't know or missing
+burn_waste	The household burns its waste	0. Not concerned
+1. Never
+2. Everyday
+3. Every week
+4. Sometimes
+5. Other
+99. Don't know or missing
+water_in1	Main source of drinking water in the last 7 days	1. Water tap inside accommodation
+2. Water tap outside accommodation
+3. Well
+4. Collective public fountain
+5. Drilling
+6. Manual water pump
+7. Water sellers
+8. Rain water
+9. River/lake/irrigation canal
+10. Other
+99. Don't know or missing
+water_in2	Secondary source of drinking water in the last 7 days	0. not concerned
+1. Water tap inside accommodation
+2. Water tap outside accommodation
+3. Well
+4. Collective public fountain
+5. drilling
+6. manual water pump
+7. water sellers
+8. rain water
+9. river/lake/irrigation canal
+10. Other
+99. Don't know or missing
+cooking_place	Cooking place	0. not concerned
+1. Interior kitchen: restricted to cooking
+2. Interior kitchen: cooking associated with other activities
+3. External kitchen (detached house)
+4. Open-air in the courtyard
+5. Other
+99. Don't know or missing
+combust_cooking	Main source of energy used for cooking	0. not concerned
+1. gas
+2. electricity
+3. firewood (simple format)
+4. firewood (improved format)
+5. coal (simple format)
+6. coal (improved format)
+7. other
+99. Don't know or missing
+light_mode	Principal source of lighting	1. electricity  from Sonabel
+2. electricity from a generator
+3. solar energy
+4. gas
+5. lamp with kerosene
+6. candle
+7. firewood
+8. Oil lamp
+9. Flashlight
+10. battery
+11. none
+99. Don't know or missing
+wall_nat	Wall material	1. stone or brick made of cement
+2. wood
+3. local brick made with mud
+4. sheet metal
+5. other
+99. Don't know or missing
+roof_nat	Roof material	1. sheet metal
+2. tile
+3. slab  made with cement
+4. wood
+5. mud
+6. thatch/straw/leaves
+99. Don't know or missing
+floor_nat_int	Floor material (inside the house)	1. tile
+2. Cement
+3. Wood
+4. land
+5. other
+99. Don't know or missing
+floor_nat_ext	Floor material (inside the yard)	1. tile or cement
+2. pavements or gravel
+3. Land
+4. Mixed
+5. other
+99. Don't know or missing
+waste_in	Presence of waste inside the yard	1. yes
+2. no
+99. Don't know or missing
+waste_ext	Presence of waste nearby the yard	1. yes
+2. no
+99. Don't know or missing
+vegetable_garden	Garden inside the yard	1. yes
+2. no
+99. Don't know or missing
+plant_ext	Presence of plants inside the yard	1. yes
+2. no
+99. Don't know or missing
+burglary	Victim of burglary in the last 12 months	1. yes
+2. no
+99. Don't know or missing
+burglary_money	Victim of money burglary in the last 12 months	1. yes
+2. no
+99. Don't know or missing
+0. Not concerned
+burglary_ruminant	Victim of ruminant burglary in the last 12 months	1. yes
+2. now
+99. Don't know or missing
+0. Not concerned
+burglary_fowl	Victim of fowl burglary in the last 12 months	1. yes
+2. now
+99. Don't know or missing
+0. Not concerned
+burglary_harvest	Victim of harvest burglary in the last 12 months	1. yes
+2. now
+99. Don't know or missing
+0. Not concerned
+burglary_equipment	Victim of  equipement burglary in the last 12 months	1. yes
+2. now
+99. Don't know or missing
+0. Not concerned
+
+2. Table Tindividual
+
+CODES	VARIABLES	VALUES
+individid	Individal ID
+sex	Sex	1. Man
+2. Woman
+ethnic_gp	Ethnic group	1. Bobo
+2. Dioula
+3. Fulani
+4. Gourmantche
+5. Gourounsi
+6. Lobi
+7. Mossi
+8. Senoufo
+9. Touareg / Bella
+10. Autres
+11. Ne sait pas
+12. Bissa
+13. Samo
+birth_date	Date of birth
+fatherid	Father's ID if he is in the same concession
+motherid	Mother's ID if he is in the same concession
+entry_date	Date of interview
+
+3. Table Tsocialgp
+
+CODES	VARIABLES	VALUES
+socialgpid	Household ID
+locationid	Location (courtyard) ID
+entry_date	Date of interview
+
+ 4. Tvsisitor
+
+CODES	VARIABLES	VALUES
+individid	Individual ID
+locationid	Location (courtyard) ID
+socialgpid	Household ID
+birth_date	Date of birth
+ethnic_gp	Ethnic group	1. Bobo
+2. Dioula
+3. Fulani
+4. Gourmantche
+5. Gourounsi
+6. Lobi
+7. Mossi
+8. Senoufo
+9. Touareg / Bella
+10. Others
+11. Don’t know or missing
+12. Bissa
+13. Samo
+Sex	Sex	1. Male
+2. Female
+old_resident	Previously resident in the DSS areas	1. Yes
+2. No
+99. Don't know or missing
+father_alive	Father is alive	1. Yes
+2. No
+99. Don't know or missing
+mother_alive	Mother is alive	1. Yes
+2. No
+99. Don't know or missing
+fatherid	Father's ID if known
+motherid	Mother's ID if known
+rltn_head	Relation to household head
+marital_status	Marital status	1. Never married
+2. Married
+3. divorced
+4. widowed
+99. Don't know or missing
+arrive_date	Date of the first arrival in the location (courtyard)
+entry_date	Date of interview
+
+5.  Tlocation
+
+CODES	VARIABLES	VALUES
+locationid	Location (courtyard) ID
+zd	cluster ID
+bloc	block ID
+uch_num	location (courtyard) number
+owner_id	Owner ID
+uch_empty	The location (courtyard) is empty	1. Yes
+2. No
+socialgp_nb	Number of households in the location (courtyard)
+building_nb	Number of houses (buildings) in the location (courtyard)
+fence	Presence of a fence 	1. Yes
+2. No
+altitude	Altitude coordinates
+latitude	Latitude coordinates
+longitude	Longitude coordinates
+dop	GPS accuracy
+lat_texte	Latitude coordinates (detailed)
+long_texte	Longitude coordinates (detailed)
+entry_date	Date of interview
+
+6. EDUCATION_EMPLOYMENT TABLE :TBase_Educ
+
+CODES	VARIABLES	VALUES
+Observeid	OBSERVATION ID
+Individid	INDIVIDUAL ID
+Socialgpid	HOUSEHOLD ID
+school_train	school attendance	1.Goes to school
+2.Has already gone to school
+3.Has never gone to school
+99. Don’t known or Missing value
+school_code	School code
+class_code	class code	0. Not concerned
+1. Preschool
+11 CP1
+12 CP2
+13 CE1
+14 CE2
+15 CM1
+16 CM2
+21.6ème
+22.5ème
+23.4ème
+24.3ème
+25.2nd
+26.1ère
+27.Tle
+31.SUP1
+32.SUP2
+33.SUP3
+34.SUP4
+35.SUP5
+36.SUP6
+37.SUP7+
+99. Don’t known or Missing value
+class_type	class type	1.Morning class
+2.Evening class
+99. Don’t known or Missing value
+ 0. Not concerned
+alph_train	Has done literacy training	1. Yes
+2. No
+99. Don’t known or Missing value
+prof_train	Has done professional training	1. Yes
+2. No
+99. Don’t known or Missing value
+relig_train	Has done religious training	1. Yes
+2. No
+99. Don’t known or Missing value
+activity	Had activity during last 7 days	1. Yes
+2. No
+99. Don’t known or Missing value
+0. Not concerned
+activity_code	activity code
+activity_desc	activity description
+activity_type	activity type	1.freelance
+2.Public wage earners
+3.private wage earners
+4.employer
+5.mother's helper
+6.apprentice/ professional training
+7.voluntary
+99. Don’t known or Missing value
+0. Not concerned
+activity_domain	activity field	1.Farmer/hunting/ forestry
+2.fishing/ fish farming/ aquaculture
+3.Extractive activities
+4.Manufacture
+5.Electricity/gas/water production and distribution
+6.House building
+7.Trade/car repairing
+8.Hotel/restaurant
+9.Transport and communication
+10.Financial activities
+11.Real-estate/renting out
+12.Public service
+13.Education
+14.Health activity/social services
+15.Collective or individual activity
+16.Domestic staff employer
+17.Extra-territorial organizations activity
+99. Don’t known or Missing value
+0. Not concerned
+activity_sect	District number where activity is carried out
+job_search	Has looked for job during last 7 days	1. Yes
+2. No
+99. Don’t known or Missing value
+0. Not concerned
+helper	extra activity as domestic helper	1. Yes
+2. No
+99. Don’t known or Missing value
+0. Not concerned
+apprentice	extra activity as apprentice	1. Yes
+2. No
+99. Don’t known or Missing value
+activ_paid	paid extra activity 	1. Yes
+2. No
+99. Don’t known or Missing value
+0. Not concerned
+readwrite	literacy	1. Yes
+2. No
+99. Don’t known or Missing value
+0. Not concerned
+moore	literacy in mooré	1. Yes
+2. No
+99. Don’t known or Missing value
+0. Not concerned
+dioula	literacy in dioula	1. Yes
+2. No
+99. Don’t known or Missing value
+0. Not concerned
+fulfulde	literacy in fulfuldé	1. Yes
+2. No
+99. Don’t known or Missing value
+french	literacy in french	1. Yes
+2. No
+99. Don’t known or Missing value
+0. Not concerned
+other_natlang	literacy in other national language	1. Yes
+2. No
+99. Don’t known or Missing value
+0. Not concerned
+other_intlang	literacy in other international language	1. Yes
+2. No
+99. Don’t known or Missing value
+0. Not concerned
+entry_date	Interview date
+
+7. VACCINATION TABLE : TBase_vacc
+
+CODES	VARIABLES	VALUES
+observeid	OBSERVATION ID
+individid	INDIVIDUAL ID
+socialgpid	HOUSEHOLD ID
+health_record	Child health record seen by field worker	1. Yes
+2. No
+99. Don’t known or Missing value
+bcg	Date of BCG vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+dtcoq1	Date of DTCOQ1 vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+dtcoq2	Date of DTCOQ2 vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+dtcoq3	Date of DTCOQ3 vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+polio0	Date of POLIO0 vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+polio1	Date of POLIO1 vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+polio2	Date of POLIO2 vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+polio3	Date of POLIO3 vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+hepb1	Date of HEPB1 vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+hepb2	Date of HEPB2 vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+hepb3	Date of HEPB3 vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+hib1	Date of HIB1 vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+hib2	Date of HIB2 vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+hib3	Date of HIB3 vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+yellow_fever	Date of yellow fever vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+measles	Date of measles vaccination	01/01/1960 Health record shows vaccine is done but no date reported
+01/01/1966 Vaccine is done but date unknown. No health record.
+01/01/1800 Doesn’t know if vaccine is done
+01/01/1860 Vaccine is done but date not showed in the health record.
+01/01/1900 Child has not been vaccined
+vitamin_a	Vitamin A in last 12 months	1. Yes
+2. No
+3. Don’t know
+99. Missing value
+disinfest	Disinfested in last 12 months	1. Yes
+2. No
+3. Don’t know
+99. Missing value
+entry_date	Interview date
+
+8. MIGRATORY EVENT : TBase_HistMig
+
+CODES	VARIABLES	VALUES
+observeid	OBSERVATION ID
+socialgpid	HOUSEHOLD ID
+individid	INDIVIDUAL ID
+birth_place	Place of birth	1. Ouagadougou
+2. Other town in Burkina
+3. Rural area in Burkina
+4. Côte d’Ivoire
+5. Other African country
+6. Other country (no Africa)
+7 Don’t know
+8 In this location
+99. Missing value
+birth_place_sect	District of Birth
+birth_place_prov	Province of birth
+arrive_year	Year of First arrival in Ouaga
+where_lived	Place of residence prior to arriving for the first time in this location (courtyard)	1. Ouagadougou
+2. Other town in Burkina
+3. Rural area in Burkina
+4. Côte d’Ivoire
+5. Other African country
+6. Other country (no Africa)
+7 Don’t know
+8 In this location
+99.Missing value
+where_lived_sect	District of residence before arriving in this location (courtyard)	0. Not concerned
+where_lived_prov	Province of residence before arriving in this location (courtyard)	0. Not concerned
+return_lastplace	Stayed during at least three months last year in one of its previous residences	1. Yes
+2. No
+3. Don’t know
+99.Missing value
+0. Not concerned
+arrive_uch_year	Year of o first arrival live in this location (courtyard)
+last_livedplace	Place of residence prior to arriving for the first time in Ouaga	2. Other town in Burkina
+3. Rural area in Burkina
+4. Côte d’Ivoire
+5. Other African country
+6. Other country (no Africa)
+7 Don’t know
+99.Missing value
+0. Not concerned
+last_livedplace_prov	Province of residence before arriving in Ouagadougou for the first time	0. Not concerned
+reason_outp	Reason for leaving the previous place of residence (by category)	1 for family reasons
+2 for security reasons
+3 due to habitat characteristics
+4 due to an employment
+5 for cost reasons
+6 for health reason
+7 for education reasons
+8 due to a conflict
+9 other reasons
+99.Missing value
+0. Not concerned
+reason_outs	Reason for leaving the previous place of residence (detailed)	11 = one of family member or friend has gone
+12 = married
+13 = moved with his family / parent
+14 = divorced / separated or became widower
+15 = took its independence from the family
+16 = left in some body's care
+17 = other family reasons
+21 insecurity (crime, burglary)
+22 = other security reason
+31 = poor habitat(floor, wall, roof)
+32 = poor conditions of toilet / bathroom / electricity
+33 rooms / too small houses
+34 = damaged house
+35 = construction of a new home
+36 = other reason related to habitat
+41 = lost a job
+42 = little employment prospects
+43 = too far from the workplace
+44 = no land to cultivate
+45 = other reason related to employment
+51 = rent too high
+52 = too expensive food
+53 = health fees too high
+54 =schooling fees too high
+55 = other cost reasons
+61 = poor health services
+62 = dirty environment
+63 = health other reason
+71 = for schooling (primary or secondary)
+72 = for schooling University / professional school
+73 = finished school (primary or secondary)
+74 = finished school (University / professional school)
+75 =other reason linked to education
+81 = conflict with a family member / friend
+82 = civil conflict
+83 =banished
+84 =other reason related to a conflict
+91 = just for changing
+92 = other
+93= Don’t know
+99.Missing value
+0. Not concerned
+reason_inp	Reasons for coming in this location (by category)	1 for family reasons
+2 for security reasons
+3 due to habitat characteristics
+4 due to an employment
+5 for cost reasons
+6 for health reason
+7 for education reasons
+9 other reasons
+99. Don’t known or Missing value
+0. Not concerned
+reason_ins	Reasons for coming in this location (detailed)	11 = one of family member or friend has gone
+12 = married
+13 = moved with his family / parent
+14 = divorced / separated or became widower
+15 = took its independence from the family
+16 = left in some body's care
+17 = other family reasons
+21 insecurity (crime, burglary)
+22 = other security reason
+31 = poor habitat(floor, wall, roof)
+32 = poor conditions of toilet / bathroom / electricity
+33 rooms / too small houses
+34 = damaged house
+35 = construction of a new home
+36 = other reason related to habitat
+41 = lost a job
+42 = little employment prospects
+43 = too far from the workplace
+44 = no land to cultivate
+45 = other reason related to employment
+51 = rent too higth
+52 = too expensive food
+53 = health fees too high
+54 =schooling fees too high
+55 = other cost reasons
+61 = poor health services
+62 = dirty environment
+63 = health other reason
+71 = for schooling (primary or secondary)
+72 = for schooling University / professional school
+73 = finished school (primary or secondary)
+74 = finished school (University / professional school)
+75 =other reason linked to education
+91 = just for changing
+92 = other
+93= Don’t know
+99.Missing value
+0. Not concerned
+indiv_relig	Religion 	1 No religion
+2 Catholic
+3 Muslim
+4 Protestant
+5 Traditional religion
+6. Other religion
+9 Don’t know
+99.Missing value
+entry_date	Interview date
+
+9. MARRIAGE EVENT :TBase_HistMat
+
+CODES	VARIABLES	VALUES
+observeid	OBSERVATION ID
+individid	INDIVIDUAL ID
+socialgpid	HOUSEHOLD ID
+union_ended	Has already been in a union which ended	1. Yes
+2. No
+99. Don’t known or Missing value
+union_num	Total number of unions
+union_age	Age at first union
+entry_date	Interview date
+field_wrkr
+status_dat
+
+10. BIRTHS HISTORY : TBase_HistGen
+
+CODES	VARIABLES	VALUES
+histgen_num	GENESIQUE EVENT ID
+observeid	OBSERVATION ID
+socialgpid	HOUSEHOLD ID
+individid	INDIVIDUAL ID (WOMAN ID)
+already_had_child	Woman already had a living birth	1. Yes
+2. No
+4. No answer
+childid	CHILD ID
+uch_resident	Child currently resides in the location	1. Yes
+2. No
+4. No answer
+0. Not concerned
+birth_place	Child birth place	1.In Ouaga
+2.Elsewhere
+4. No answer
+0. Not concerned
+gender	Child gender	1.Male
+2.Female
+4. No answer
+0. Not concerned
+died	Child died	1. Yes
+2. No
+4. No answer
+0. Not concerned
+death_age	Age at his death	98 Not concerned
+death_place	Death place	1.In ouaga
+2.Elsewhere
+4. No answer
+0. Not concerned
+current_age	Current age or age  if he wasn’t died 	98 Not concerned
+unwanted_pregnancy	Desire for the pregnancy	1. At this time
+2. Later
+3. Unwanted
+4. No answer
+0. Not concerned
+Register	Birth registered at the registry office	1. Yes
+2. No
+99. Don’t known or Missing value
+4. No answer
+0. Not concerned
+Entry_date	Interview date
+
+11. BIRTH TABLE :TBirth
+
+CODES	VARIABLES	VALUES
+eventid	EVENT ID
+pregoutid	DELIVERY ID
+observeid	OBSERVATION ID
+individid	INDIVIDUAL ID(Child ID)
+Sex	Sex	1. Male
+2. Female
+birth_date	Birth date
+weight	Weight at birth
+height	Height at birth
+bcg	BCG date
+polio	POLIO 0 date
+rltn_head	relation to household head	3 Son or daughter
+4 Son-in-law or daughter-in-law
+5 Grandson/daughter
+8 Brother or sister
+9. Other parent
+10. no relationship
+11. nephew
+12. Don’t know
+99. Missing value
+register	Birth registered at the registry office	1. Yes
+2. No
+99. Don’t known or Missing value
+unwanted_pregnancy	Desire for the pregnancy	1. At this time
+2. Later
+3. Unwanted
+4. No answer
+entry_date	Interview date
+
+12. DEATH TABLE : TDeath
+
+CODES	VARIABLES	VALUES
+eventid	EVENT ID
+observeid	OBSERVATION ID
+individid	INDIVIDUAL DIED
+evtdate	Date of death
+diedinhs	Died in a health structure	1. Yes
+2. No
+99. Don’t known or Missing value
+died_struct_code	Code of health structure 	0. Not concerned
+gonetohs	Gone to a health structure before died	1. Yes
+2. No
+99. Don’t known or Missing value
+gone_struct_code	Code of health structure he has gone before died	0. Not concerned
+entry_date	Interview date
+
+13. PREGNANCY TABLE :TPregnancy
+
+CODES	VARIABLES	VALUES
+eventid	EVENT ID
+observeid	OBSERVATION ID
+individid	INDIVIDUAL ID (WOMAN ID)
+evtdate	Pregnancy starting date
+entry_date	Interview date
+
+14. PREGNANCY OUTCOME TABLE : TPregoutcome
+
+CODES	VARIABLES	VALUES
+eventid	EVENT ID
+locationid	LOCATION ID
+peventid	PREGNANCY OUTCOME ID EVENT ID
+observeid	OBSERVATION ID
+individid	INDIVIDUAL (WOMAN ID)
+outcome	Pregnancy outcome	1.delivery
+2.abortion
+evtdate	Outcome date
+birth_place	delivery place	1.health facility
+2.Home of a provider
+3.Home (the mother or another home)
+4.Other
+5.99. Don’t known or Missing value
+struct_code	Code of the health structure	0. Not concerned
+struct_specified
+type_acc	Type of DELIVERY	1. Normal
+2 by caesarean section
+3. Other
+99. Don’t known or Missing value
+birth_assistant	Person who assist woman for delivery	1.Health staff
+2.traditional birth attendant
+3.Another
+4.99. Don’t know or Missing value
+birth_nb	Number of children at DELIVERY
+livebirth_nb	Number of children born alive
+birthinlive_nb	Number of children still alive
+fatherid	children father id
+father_ethnic_gp	children father ethnic group	1. Bobo
+2. Dioula
+3. Fulani
+4. Gourmantche
+5. Gourounsi
+6. Lobi
+7. Mossi
+8. Senoufo
+9. Touareg / Bella
+10. Others
+11. Don’t know or missing value
+12. Bissa
+13. Samo
+entry_date	Interview date
+
+15. PRESENCE TABLE :TPresences
+
+CODES	VARIABLES	VALUES
+eventid	EVENT ID
+episodeid_res	RESIDENCY EPISODE ID
+observeid	OBSERVATION ID
+individid	INDIVIDUAL ID
+enter_periode	Usually sleep in the household since more than 6 months (Only for round zero individuals)	1. Yes
+2.  No
+99. Don’t known or Missing value
+sleep_lastnight	Slept last night in the location (courtyard)	1. Yes
+2. No
+99. Don’t known or Missing value
+arrive_date	Date of last arrival in location (courtyard)
+depart_date	Date of last depart from location (courtyard)
+entry_date	Interview date
+
+16. TABLE MIGRATION OUT: TMigration_out
+
+CODES	VARIABLES	VALUES
+eventid	EVENT ID
+individid	INDIVIDUAL ID
+episodeid_res	RESIDENCY EPISODE ID
+locationid	LOCATION ID
+observeid	OBSERVATION ID
+destination	Place of destination 	1. Ouagadougou
+2. Other town in Burkina
+3. Rural area in Burkina
+4. Ivory Coast
+5. Other African country
+6. Other country (no Africa)
+7 Don’t know
+99. Missing value
+depart_date	Date of departure
+reason_outp	Reasons for departure
+(By Categories)	1 for family reasons
+2 for security reasons
+3 due to habitat characteristics
+4 due to an employment
+5 for cost reasons
+6 for health reasons
+7 for education reasons
+8 due to a conflict
+9 other reasons
+99. Don’t known or Missing value
+reason_outs	Reasons for departure
+(Detailed)	11 = A member of the family or a friend has gone
+12 = married
+13 = moved with his family / parent
+14 = divorced / separated or became widower
+15 = took its independence from the family
+16 = left in some body's care
+17 = other family reasons
+21 insecurity (crime, burglary)
+22 = other security reason
+31 = poor habitat(floor, wall, roof)
+32 = poor conditions of toilet / bathroom / electricity
+33 rooms / too small houses
+34 = damaged house
+35 = construction of a new home
+36 = other reason related to habitat
+41 = lost a job
+42 = little employment prospects
+43 = too far from the workplace
+44 = no land to cultivate
+45 = other reason related to employment
+51 = rent too higth
+52 = too expensive food
+53 = health fees too high
+54 =schooling fees too high
+55 = other cost reasons
+61 = poor health services
+62 = dirty environment
+63 = health other reason
+71 = for schooling (primary or secondary)
+72 = for schooling University / professional school
+73 = finished school (primary or secondary)
+74 = finished school (University / professional school)
+75 =other reason linked to education
+81 = conflict with a family member / friend
+82 = civil conflict
+83 =banished
+84 =other reason related to a conflict
+91 = just for changing
+92 = other
+98= Don’t know
+99. Missing value
+entry_date	Interview date
+field_wrkr
+status_dat
+
+17. TABLE RELATIONSHIP:TRelationship
+
+CODES	VARIABLES	VALUES
+eventid	EVENT ID
+individid	INDIVIDUAL ID
+individid2	SPOUSE ID
+sobserveid	EVENT STARTING OBSERVATION ID
+sdate	Starting date of union
+conj_res	Spouse resides in the same home	1.Yes
+2. No
+uni_start	Has ever cohabited	1.Yes
+2.No
+99. Don’t known or Missing value
+uni_relig	Religious wedding realized	1. Yes
+2. No
+99. Don’t known or Missing value
+uni_trad	Traditional wedding realized	1. Yes
+2. No
+99. Don’t known or Missing value
+uni_civil	Civil wedding realized	1. Yes
+2. No
+99. Don’t known or Missing value
+uni_start_date	Date of entry into cohabitation
+uni_relig_date	Date of religious wedding
+uni_trad_date	Date of traditional wedding
+uni_civil_date	Date of civil wedding
+entry_date	Interview date
+
+18. TABLE UPDRELATIONSHIP: TUpdRelationship
+
+CODES	VARIABLES	VALUES
+eventid	EVENT ID
+individid	INDIVIDUAL ID
+individid2	SPOUSE ID
+locationid	LOCATION ID
+sobserveid	EVENT STARTING OBSERVATION ID
+sdate	Starting date of union
+conj_res	Spouse resides in the same home	1. Yes
+2. No
+99. Don’t known or Missing value
+uni_relig	Religious wedding realized	1. Yes
+2. No
+99. Don’t known or Missing value
+uni_trad	Traditional wedding realized	1. Yes
+2. No
+99. Don’t known or Missing value
+uni_civil	Civil wedding realized	1. Yes
+2. No
+99. Don’t known or Missing value
+uni_start_date	Date of entry into cohabitation
+uni_relig_date	Date of religious wedding
+uni_trad_date	Date of traditional wedding
+uni_civil_date	Date of civil wedding
+eobserveid	EVENT END OBSERVATION ID
+eeventtype	Reasons of end of union 	1.Separation / divorce
+2.Death of spouse
+edate	Date of end of union
+entry_date	Interview date
+
+19. TABLE RESIDENCY: TResidency
+
+CODES	VARIABLES	VALUES
+episodeid	EPISODE OF RESIDENCE ID
+locationid	Location id
+individid	INDIVIDUAL ID
+res_status	Residence status	1.Resident
+2.Visitor
+sobserveid	Observation at the beginning of residence
+sdate	date at the beginning of residence
+eobserveid	Observation at the end of residence
+edate	date at the end of residence
+eeventtype	Reasons of ending residence	3.Migration out
+4.Death
+entry_date	Date of Interview
+
+20. TABLE MEMBERSHIP: TMembership
+
+CODES	VARIABLES	VALUES
+episodeid	EPISODE OF MEMBERSHIP ID
+episodeid_res	EPISODE OF RESIDENCE ID
+socialgpid	HOUSEHOLD ID
+individid	INDIVIDUAL ID
+sobserveid	Observation at the beginning of the membership
+sdate	date at the beginning of the membership
+eobserveid	Observation at the end of the membership
+edate	date at the end of the membership
+eeventtype	Reason of ending membership	3.Migration out
+4.Death
+entry_date	Date of Interview
+
+21. TABLE SOCIALGP_HEAD: TSocialgp_head
+
+CODES	VARIABLES	VALUES
+episodeid	EPISODE OF HEADSHIP ID
+episodeid_res	EPISODE OF RESIDENCE ID
+headid	INDIVIDUAL ID (HEAD ID)
+sobserveid	Observation at the beginning of the headship
+sdate	Date at the beginning of the headship
+eobserveid	Observation at the end of the headship
+edate	Date at the end of the headship
+eeventtype	Reason of ending headship	1 or 3 Migrations out
+1 or 4 Deaths
+entry_date	Date of Interview
+
+22. TABLE SOCIALGP_RELATION: TSocialgp_rltn
+
+CODES	VARIABLES	VALUES
+eventid	EVENT ID
+episodeid_head	EPISODE OF HEADSHIP ID
+episodeid_res	EPISODE RESIDENCE ID
+individid	INDIVIDUAL ID
+observeid	Observation ID for the relationship
+evtdate	Date at the beginning of the relationship
+rltn_head	Date of Interview 	1 Socialgp head
+2 Wife / husband
+3 Son / daughter
+4 Undefined / stepdaughter
+5 Grandson / granddaughter
+6 Father / mother
+7 Stepfather / stepmother
+8 Brother / sister
+9 Nephew / niece
+10 No kinship
+11 Another parent
+12 Don’t know
+entry_date	Date of Interview
+
+23. Table Tindividual_charact
+
+CODES	VARIABLES	VALUES
+individid	Individual ID
+observeid	Observation ID for the characteristic
+entry_date	Date of interview
+father_alive	Father is alive	1. Yes
+2. No
+99. Don't know or missing
+mother_alive	Mother is alive	1. Yes
+2. No
+99. Don't know or missing
+marital_status	Marital status	1. Never married
+2. Married
+3. divorced
+4. widowed
+99. Don't know or missing
