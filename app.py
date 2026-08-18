@@ -722,8 +722,13 @@ def formater_reponse_requete(resultat: dict, nom_table: str) -> dict:
     if operation == "compter":
         contenu = _habiller_reponse(
             f"**{resultat['resultat']}** ligne(s) dans **{nom_table}**{filtres_txt}.",
-            intro=f"Voici le décompte demandé sur **{nom_table}**.",
+            intro=(
+                f"Réponse directe : **{resultat['resultat']}** ligne(s)."
+                if not resultat.get("filtres_appliques")
+                else f"En appliquant ta condition, je trouve **{resultat['resultat']}** ligne(s) correspondantes."
+            ),
             explication=f"j'ai compté les lignes de **{nom_table}**{explication_filtres}.",
+            suggestions=[f"la liste détaillée de ces lignes plutôt que le seul décompte"],
         )
         return {"content": contenu}
 
@@ -736,8 +741,12 @@ def formater_reponse_requete(resultat: dict, nom_table: str) -> dict:
         )
         contenu = _habiller_reponse(
             contenu,
-            intro=f"Voici la liste demandée dans **{nom_table}**.",
+            intro=(
+                f"J'ai trouvé **{resultat['n_total']}** ligne(s) correspondant à ta demande dans **{nom_table}**"
+                + (f", je t'affiche les 50 premières" if resultat["n_total"] > 50 else "") + "."
+            ),
             explication=f"j'ai sélectionné les lignes de **{nom_table}**{explication_filtres}.",
+            suggestions=[f"le décompte seul plutôt que le détail", f"une moyenne/somme sur une colonne numérique de **{nom_table}** pour ce même sous-groupe"],
         )
         return {"content": contenu, "table": table_resultat, "table_label": f"requete_{nom_table}"}
 
@@ -755,11 +764,13 @@ def formater_reponse_requete(resultat: dict, nom_table: str) -> dict:
     )
     contenu = _habiller_reponse(
         contenu,
-        intro=f"Voici le calcul demandé sur `{resultat['colonne_cible']}`.",
+        intro=f"La {libelles[operation].lower()} de `{resultat['colonne_cible']}` demandée est de **{resultat['resultat']:.2f}**.",
         explication=(
             f"j'ai calculé {libelles[operation].lower()} de `{resultat['colonne_cible']}` sur les "
-            f"{resultat['n_valeurs']} valeur(s) numériques exploitables de **{nom_table}**{explication_filtres}."
+            f"{resultat['n_valeurs']} valeur(s) numériques exploitables de **{nom_table}**{explication_filtres} "
+            "(les valeurs manquantes ou non numériques ont été ignorées, pas comptées comme des zéros)."
         ),
+        suggestions=[f"la répartition de `{resultat['colonne_cible']}` pour voir sa distribution complète"],
     )
     return {"content": contenu}
 
@@ -966,18 +977,26 @@ def tenter_requete_sql(
             if tentative == 1:
                 return None
 
+    # Tables reellement mentionnees dans la requete generee (heuristique par
+    # nom, juste pour rendre l'explication concrete - la validite de la
+    # requete elle-meme est deja garantie par dt.executer_sql, pas par ceci).
+    tables_utilisees = [nom for nom in tables if re.search(rf"\b{re.escape(nom)}\b", requete_sql, re.IGNORECASE)]
+    tables_txt = ", ".join(f"**{n}**" for n in tables_utilisees) if tables_utilisees else "les tables concernées"
+
     explication_sql = (
-        "j'ai écrit et exécuté (en lecture seule) une requête SQL qui croise directement les tables "
-        "nécessaires à partir de leur schéma réel, en te la montrant ci-dessous pour que tu puisses "
-        "la vérifier ou la réutiliser."
+        f"ta question demandait de croiser plusieurs tables, donc j'ai écrit et exécuté (en lecture "
+        f"seule) une requête SQL directement sur {tables_txt}, à partir de leur schéma réel et des "
+        "clés de jointure documentées par l'observatoire — elle est affichée ci-dessus pour que tu "
+        "puisses la vérifier ou la réutiliser telle quelle."
     )
 
     if resultat.empty:
         contenu = f"Aucun résultat trouvé.\n\n_Requête utilisée (sur les données réellement chargées) :_ `{requete_sql}`"
         contenu = _habiller_reponse(
             contenu,
-            intro="J'ai interrogé les données pour répondre à ta question, mais aucun résultat ne correspond.",
+            intro=f"J'ai interrogé {tables_txt}, mais aucune ligne ne correspond à ta question.",
             explication=explication_sql,
+            suggestions=["la même question avec un critère moins strict (ex: sans le filtre de date)"],
         )
         return {"content": contenu}
 
@@ -986,7 +1005,8 @@ def tenter_requete_sql(
         f"_Requête utilisée (sur les données réellement chargées) :_ `{requete_sql}`"
     )
     plus_grande_table = max((len(df) for df in tables.values()), default=0)
-    if plus_grande_table and len(resultat) > plus_grande_table:
+    surjointure = bool(plus_grande_table and len(resultat) > plus_grande_table)
+    if surjointure:
         contenu += (
             "\n\n⚠️ _Ce résultat contient plus de lignes que la plus grande table utilisée : "
             "vérifie la jointure avant de t'y fier (indice possible d'une jointure qui multiplie "
@@ -994,7 +1014,10 @@ def tenter_requete_sql(
         )
     contenu = _habiller_reponse(
         contenu,
-        intro="Voici le résultat obtenu en croisant les tables nécessaires à ta question.",
+        intro=(
+            f"En croisant {tables_txt}, j'obtiens **{len(resultat)}** ligne(s)."
+            + (" ⚠️ Ce chiffre me semble suspect, voir l'avertissement ci-dessous." if surjointure else "")
+        ),
         explication=explication_sql,
         suggestions=["une autre question sur ces mêmes tables croisées", "un contrôle de cohérence sur l'une des tables utilisées"],
     )
@@ -1044,16 +1067,29 @@ def reponse_repartition(df, nom_table: str, colonne: str) -> dict:
         f"Répartition de `{colonne}` dans **{nom_table}** :\n\n{rep.to_markdown()}"
         f"\n\n{dt.syntaxe_repartition(nom_table, colonne)}"
     )
+    n_valeurs = len(rep)
+    valeur_frequente, effectif_frequent, part_frequente = rep.index[0], int(rep["effectif"].iloc[0]), rep["pourcentage"].iloc[0]
+    autre_colonne = next((c for c in df.columns if c != colonne), None)
     contenu = _habiller_reponse(
         contenu,
-        intro=f"Voici la répartition des valeurs de `{colonne}` que tu as demandée.",
+        intro=(
+            f"`{colonne}` prend **{n_valeurs}** valeur(s) distincte(s) dans **{nom_table}** "
+            f"({len(df)} ligne(s) au total) — la plus fréquente est **{valeur_frequente}**, "
+            f"portée par {effectif_frequent} ligne(s) (soit {part_frequente:.1f} % de la table)."
+        ),
         explication=(
-            f"j'ai compté, pour chaque valeur distincte de `{colonne}`, le nombre de lignes de "
-            f"**{nom_table}** qui la portent (équivalent à un `value_counts()`/`tab` Stata)."
+            f"pour chaque valeur distincte de `{colonne}`, j'ai compté combien de lignes de "
+            f"**{nom_table}** la portent — c'est un simple dénombrement sur la colonne entière, sans "
+            f"filtre (équivalent à `df['{colonne}'].value_counts()` en Python, ou `tab {colonne}` en "
+            f"Stata/R)."
         ),
         suggestions=[
-            f"une répartition de `{colonne}` croisée avec une autre colonne",
-            f"un contrôle de cohérence sur **{nom_table}**",
+            (
+                f"le croisement entre `{colonne}` et `{autre_colonne}` (ex: \"tableau croisé "
+                f"{colonne} et {autre_colonne}\")" if autre_colonne
+                else f"un contrôle de cohérence sur **{nom_table}**"
+            ),
+            f"la même répartition sur un sous-groupe précis (ex: \"répartition de {colonne} chez les femmes\")",
         ],
     )
     return {"content": contenu, "table": rep.reset_index(), "table_label": f"repartition_{colonne}_{nom_table}"}
@@ -1067,12 +1103,19 @@ def reponse_echantillon(df, nom_table: str, n: int) -> dict:
     )
     contenu = _habiller_reponse(
         contenu,
-        intro=f"Voici un échantillon aléatoire tiré de **{nom_table}**.",
-        explication=(
-            f"{len(ech)} ligne(s) tirée(s) au hasard dans **{nom_table}**, avec une graine fixe "
-            "(20260729) pour que le même tirage soit reproductible si tu relances la même demande."
+        intro=(
+            f"Voici {len(ech)} ligne(s) tirée(s) au hasard parmi les {len(df)} de **{nom_table}** "
+            f"({df.shape[1]} colonnes chacune)."
         ),
-        suggestions=[f"un échantillon d'une autre taille sur **{nom_table}**", f"un contrôle de cohérence sur **{nom_table}**"],
+        explication=(
+            f"j'ai utilisé un tirage aléatoire (`sample`) avec une graine fixe (20260729) plutôt qu'un "
+            "simple `head()` : le tirage n'est donc pas biaisé vers le début du fichier, et relancer "
+            "exactement la même demande te redonnera le même échantillon (reproductibilité)."
+        ),
+        suggestions=[
+            f"un échantillon plus grand sur **{nom_table}**",
+            f"un contrôle de cohérence sur **{nom_table}** pour vérifier que rien d'anormal ne s'y cache",
+        ],
     )
     return {"content": contenu, "table": ech, "table_label": f"echantillon_{nom_table}"}
 
@@ -1085,19 +1128,29 @@ def reponse_doublons(df, nom_table: str) -> dict:
     dups = dt.doublons(df, colonne)
     if len(dups) == 0:
         return {"content": f"Aucun doublon d'identifiant détecté dans **{nom_table}** (colonne `{colonne}`)."}
+    n_identifiants_dupliques = dups[colonne].nunique()
     contenu = (
         f"**{len(dups)} lignes en doublon** trouvées dans **{nom_table}** (colonne `{colonne}`) :\n\n"
         f"{dups.to_markdown(index=False)}\n\n{dt.syntaxe_doublons(nom_table, colonne)}"
     )
     contenu = _habiller_reponse(
         contenu,
-        intro=f"J'ai recherché les doublons d'identifiant dans **{nom_table}**, voici ce que j'ai trouvé.",
-        explication=(
-            f"j'ai comparé les valeurs de la colonne d'identifiant `{colonne}` (détectée "
-            f"automatiquement) et gardé les lignes où cette valeur apparaît plus d'une fois dans "
-            f"**{nom_table}**."
+        intro=(
+            f"J'ai trouvé **{n_identifiants_dupliques}** valeur(s) de `{colonne}` répétée(s) plus "
+            f"d'une fois dans **{nom_table}**, représentant {len(dups)} ligne(s) au total sur "
+            f"{len(df)} — à vérifier : ressaisie accidentelle de la même fiche, ou plusieurs "
+            f"événements réels qui partagent le même identifiant ?"
         ),
-        suggestions=[f"un contrôle de cohérence complet sur **{nom_table}**"],
+        explication=(
+            f"j'ai détecté automatiquement `{colonne}` comme colonne d'identifiant de **{nom_table}**, "
+            f"compté combien de fois chaque valeur y apparaît, et gardé toutes les lignes dont "
+            f"l'identifiant apparaît plus d'une fois (donc chaque doublon est bien listé avec ses "
+            f"copies, pas seulement signalé)."
+        ),
+        suggestions=[
+            f"un contrôle de cohérence complet sur **{nom_table}** (dates, autres colonnes)",
+            f"la fiche complète de l'un de ces identifiants (ex: \"recherche l'identifiant {dups[colonne].iloc[0]}\")",
+        ],
     )
     return {"content": contenu, "table": dups, "table_label": f"doublons_{nom_table}"}
 
@@ -1111,15 +1164,32 @@ def reponse_coherence(df, nom_table: str) -> dict:
             nom_table, rapport.get("colonnes_id_verifiees", []), rapport.get("colonnes_date_verifiees", [])
         )
     )
+    anomalies = rapport.get("anomalies") or {}
+    total_anomalies = sum(anomalies.values())
+    if total_anomalies:
+        pire = max(anomalies, key=anomalies.get)
+        intro = (
+            f"J'ai trouvé **{total_anomalies} anomalie(s)** au total dans **{nom_table}** — la plus "
+            f"fréquente est « {pire} » ({anomalies[pire]} cas). Rien de bloquant automatiquement, mais "
+            "à faire vérifier par une personne habilitée."
+        )
+    else:
+        intro = (
+            f"Bonne nouvelle : **{nom_table}** ne présente aucune anomalie sur les colonnes vérifiées "
+            "ci-dessous."
+        )
     contenu = _habiller_reponse(
         contenu,
-        intro=f"J'ai passé **{nom_table}** au contrôle de cohérence, voici le résultat.",
+        intro=intro,
         explication=(
-            "j'ai vérifié les doublons sur les colonnes d'identifiant détectées et la cohérence des "
-            "colonnes de date reconnues (dates hors plage, dates dans le désordre) — voir le détail "
-            "des colonnes vérifiées ci-dessus."
+            "j'ai cherché les doublons sur les colonnes d'identifiant détectées automatiquement, et "
+            "vérifié les colonnes de date reconnues (dates hors d'une plage plausible, ou dans un "
+            "ordre incohérent entre deux dates liées) — uniquement sur les colonnes listées ci-dessus, "
+            "jamais sur une colonne non reconnue avec certitude."
         ),
-        suggestions=[f"l'audit de cohérence avancé (catalogue de contrôles spécifiques à l'observatoire)"],
+        suggestions=[
+            "l'audit de cohérence avancé (catalogue de contrôles spécifiques à l'observatoire, au-delà des doublons/dates génériques)",
+        ],
     )
     return {"content": contenu}
 
@@ -1130,14 +1200,31 @@ def reponse_tableau_croise(df, nom_table: str, colonne1: str, colonne2: str) -> 
         f"Tableau croisé (analyse bivariée) de `{colonne1}` et `{colonne2}` dans **{nom_table}** :\n\n"
         f"{tab.to_markdown()}\n\n{dt.syntaxe_tableau_croise(nom_table, colonne1, colonne2)}"
     )
+    # Cellule la plus peuplee HORS marges "Total" - la combinaison la plus
+    # frequente entre les deux colonnes, plus parlant qu'un simple "voici le
+    # tableau" pour quelqu'un qui doit d'abord reperer ou regarder.
+    sous_tableau = tab.drop(index="Total", errors="ignore").drop(columns="Total", errors="ignore")
+    effectifs_empiles = sous_tableau.stack() if not sous_tableau.empty else None
+    cellule_max = effectifs_empiles.idxmax() if effectifs_empiles is not None and not effectifs_empiles.empty else None
     contenu = _habiller_reponse(
         contenu,
-        intro=f"Voici le croisement entre `{colonne1}` et `{colonne2}` dans **{nom_table}**.",
-        explication=(
-            f"j'ai compté, pour chaque combinaison de valeurs de `{colonne1}` et `{colonne2}`, le "
-            f"nombre de lignes de **{nom_table}** concernées (tableau de contingence)."
+        intro=(
+            (
+                f"La combinaison la plus fréquente est `{colonne1}`={cellule_max[0]} avec "
+                f"`{colonne2}`={cellule_max[1]} ({int(effectifs_empiles.max())} ligne(s)) dans "
+                f"**{nom_table}** — voir le détail complet ci-dessous."
+            ) if cellule_max is not None
+            else f"Voici le croisement entre `{colonne1}` et `{colonne2}` dans **{nom_table}**."
         ),
-        suggestions=[f"une matrice de corrélation sur **{nom_table}**"],
+        explication=(
+            f"j'ai construit un tableau de contingence : pour chaque combinaison de valeurs de "
+            f"`{colonne1}` (en ligne) et `{colonne2}` (en colonne), j'ai compté le nombre de lignes de "
+            f"**{nom_table}** concernées, avec les totaux en marge."
+        ),
+        suggestions=[
+            f"une matrice de corrélation si `{colonne1}` et `{colonne2}` sont numériques",
+            f"la répartition de `{colonne1}` seule, sans croisement",
+        ],
     )
     return {
         "content": contenu, "table": tab.reset_index(),
@@ -1153,14 +1240,36 @@ def reponse_correlation(df, nom_table: str, colonnes: list[str] | None) -> dict:
         f"sur : {', '.join(f'`{c}`' for c in cols_utilisees)} :\n\n"
         f"{mat.to_markdown()}\n\n{dt.syntaxe_correlation(nom_table, cols_utilisees)}"
     )
+    # Paire la plus fortement correlee (en valeur absolue), hors diagonale
+    # (toujours 1.0 avec elle-meme, pas d'interet) - ce qui interesse
+    # concretement, plutot que la matrice brute seule. `stack()` (sans
+    # `dropna=False`) ignore nativement les NaN qu'on vient de poser sur la
+    # diagonale, pas besoin de numpy pour la masquer.
+    sans_diagonale = mat.copy()
+    for c in cols_utilisees:
+        sans_diagonale.loc[c, c] = None
+    effectifs_abs = sans_diagonale.abs().stack()
+    paire_max = effectifs_abs.idxmax() if not effectifs_abs.empty else None
+    if paire_max is not None:
+        c1, c2 = paire_max
+        valeur = mat.loc[c1, c2]
+        sens = "dans le même sens" if valeur > 0 else "en sens opposé"
+        intro = (
+            f"Sur les {len(cols_utilisees)} colonnes numériques testées de **{nom_table}**, la paire "
+            f"la plus liée est `{c1}` / `{c2}` (corrélation de {valeur:.2f}, {sens})."
+        )
+    else:
+        intro = f"Voici la matrice de corrélation calculée sur **{nom_table}**."
     contenu = _habiller_reponse(
         contenu,
-        intro=f"Voici la matrice de corrélation calculée sur **{nom_table}**.",
+        intro=intro,
         explication=(
             "j'ai calculé le coefficient de corrélation de Pearson entre chaque paire de colonnes "
-            "numériques listées (variant de -1, liées en sens opposé, à +1, liées dans le même sens)."
+            "numériques listées : proche de +1, les deux colonnes augmentent ensemble ; proche de -1, "
+            "l'une augmente quand l'autre diminue ; proche de 0, pas de lien linéaire détecté (une "
+            "corrélation ne prouve jamais un lien de cause à effet)."
         ),
-        suggestions=[f"un tableau croisé entre deux colonnes précises de **{nom_table}**"],
+        suggestions=[f"un tableau croisé entre `{cols_utilisees[0]}` et une autre colonne de **{nom_table}**"] if cols_utilisees else None,
     )
     return {"content": contenu, "table": mat.reset_index(), "table_label": f"correlation_{nom_table}"}
 
@@ -1172,15 +1281,31 @@ def reponse_tableau_multivarie(df, nom_table: str, colonnes: list[str]) -> dict:
         f"dans **{nom_table}** ({len(tab)} combinaisons observées) :\n\n"
         f"{tab.head(30).to_markdown(index=False)}\n\n{dt.syntaxe_tableau_multivarie(nom_table, colonnes)}"
     )
+    # dt.tableau_multivarie trie deja par "effectif" decroissant : la
+    # premiere ligne EST la combinaison la plus frequente.
+    ligne_max = tab.iloc[0] if len(tab) else None
+    tronque = len(tab) > 30
+    if ligne_max is not None:
+        combinaison = ", ".join(f"`{c}`={ligne_max[c]}" for c in colonnes)
+        intro = (
+            f"J'ai trouvé **{len(tab)}** combinaison(s) observée(s) de {', '.join(f'`{c}`' for c in colonnes)} "
+            f"dans **{nom_table}** ; la plus fréquente est {combinaison} ({int(ligne_max['effectif'])} ligne(s))."
+        )
+    else:
+        intro = f"Voici les effectifs croisés sur les {len(colonnes)} colonnes demandées de **{nom_table}**."
     contenu = _habiller_reponse(
         contenu,
-        intro=f"Voici les effectifs croisés sur les {len(colonnes)} colonnes demandées de **{nom_table}**.",
+        intro=intro,
         explication=(
-            "j'ai groupé les lignes par combinaison de valeurs sur les colonnes demandées et compté "
-            "le nombre de lignes observées pour chaque combinaison (limité aux 30 premières ici, le "
-            "tableau complet reste disponible en téléchargement)."
+            "j'ai groupé les lignes de **" + nom_table + "** par combinaison de valeurs sur les "
+            "colonnes demandées et compté le nombre de lignes observées pour chacune"
+            + (
+                f" (le tableau affiché est limité aux 30 premières combinaisons sur {len(tab)}, "
+                "mais le tableau complet reste disponible via le bouton de téléchargement)"
+                if tronque else ""
+            ) + "."
         ),
-        suggestions=None,
+        suggestions=[f"une matrice de corrélation si ces colonnes sont numériques"] if len(colonnes) >= 2 else None,
     )
     return {"content": contenu, "table": tab, "table_label": f"multivarie_{nom_table}"}
 
@@ -1203,15 +1328,31 @@ def reponse_agents(df, nom_table: str) -> dict:
         "validation reste réservée aux personnes habilitées._\n\n"
         f"{dt.syntaxe_rapport_agents(nom_table, colonne_agent)}"
     )
+    total_doublons = int(rapport["doublons_id"].sum())
+    total_dates = int(rapport["dates_invraisemblables"].sum())
+    if total_doublons or total_dates:
+        pire_agent = rapport.loc[(rapport["doublons_id"] + rapport["dates_invraisemblables"]).idxmax()]
+        intro = (
+            f"Sur les **{len(rapport)}** agent(s) de **{nom_table}**, {total_doublons} doublon(s) "
+            f"d'identifiant et {total_dates} date(s) invraisemblable(s) ont été détectés au total — "
+            f"l'agent `{pire_agent['agent']}` en concentre le plus (à vérifier en priorité)."
+        )
+    else:
+        intro = (
+            f"Sur les **{len(rapport)}** agent(s) de **{nom_table}**, aucun doublon d'identifiant ni "
+            "date invraisemblable détecté."
+        )
     contenu = _habiller_reponse(
         contenu,
-        intro=f"Voici le rapport de qualité par agent enquêteur sur **{nom_table}**.",
+        intro=intro,
         explication=(
             f"j'ai regroupé les lignes de **{nom_table}** par `{colonne_agent}` et calculé, pour "
             "chaque agent, le nombre de fiches, les doublons d'identifiant, les dates invraisemblables "
             "et le taux moyen de valeurs manquantes (détail des colonnes ci-dessus)."
         ),
-        suggestions=["le rapport de performance de terrain (volume d'activité par agent)"],
+        suggestions=[
+            "le rapport de performance de terrain (volume d'activité par agent, distinct de ce contrôle qualité)",
+        ],
     )
     return {"content": contenu, "table": rapport, "table_label": f"agents_{nom_table}"}
 
@@ -1373,10 +1514,15 @@ def reponse_historique_actualisations() -> dict:
             f"- {entree['horodatage'].strftime('%d/%m/%Y %H:%M:%S')} — **{entree['table']}** "
             f"({entree['n_lignes']} ligne(s)), depuis `{entree['fichier']}` ({source}{suffixe_export})"
         )
+    derniere = historique[-1]
     contenu = _habiller_reponse(
         "\n".join(lignes),
-        intro="Voici l'historique des tables chargées durant cette session.",
-        explication="j'ai listé, dans l'ordre le plus récent d'abord, chaque table chargée avec l'heure, la source et le nombre de lignes.",
+        intro=(
+            f"**{len(historique)}** chargement(s) enregistré(s) cette session, le plus récent étant "
+            f"**{derniere['table']}** à {derniere['horodatage'].strftime('%H:%M:%S')}."
+        ),
+        explication="j'ai listé, du plus récent au plus ancien, chaque table chargée avec l'heure, la source et le nombre de lignes.",
+        suggestions=[f"un contrôle de cohérence sur **{derniere['table']}**, la dernière table chargée"],
     )
     return {"content": contenu}
 
@@ -1388,12 +1534,14 @@ def reponse_recherche_identifiant(identifiant: str, tables: dict) -> dict:
     morceaux = [f"**Recherche de l'identifiant `{identifiant}`** — trouvé dans {len(resultats)} table(s) :"]
     for nom, df in resultats.items():
         morceaux.append(f"\n**{nom}** ({len(df)} ligne(s)) :\n\n{df.head(10).to_markdown(index=False)}")
+    noms_tables = ", ".join(f"**{n}**" for n in resultats)
     contenu = _habiller_reponse(
         "\n".join(morceaux),
-        intro=f"Voici ce que j'ai retrouvé pour l'identifiant `{identifiant}`.",
+        intro=f"L'identifiant `{identifiant}` apparaît dans {len(resultats)} table(s) : {noms_tables}.",
         explication=(
-            f"j'ai recherché la valeur `{identifiant}` dans toutes les colonnes d'identifiant de "
-            "toutes les tables chargées, et affiché les 10 premières lignes de chaque table où elle apparaît."
+            f"j'ai recherché la valeur `{identifiant}` dans les colonnes d'identifiant de chaque table "
+            "chargée, et affiché (jusqu'à 10 lignes par table) toutes celles où elle apparaît — utile "
+            "pour reconstituer le parcours complet d'un individu ou d'un ménage à travers les fiches."
         ),
     )
     return {"content": contenu}

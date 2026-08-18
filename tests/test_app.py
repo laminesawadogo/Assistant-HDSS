@@ -219,7 +219,7 @@ def test_repartition_a_une_phrase_dintro_avant_le_tableau_et_une_explication(tab
     at = _app_avec_tables(tables_individual)
     at.chat_input[0].set_value("répartition de sex").run()
     reponse = at.session_state["messages"][-1]["content"]
-    assert reponse.index("Voici la répartition") < reponse.index("Répartition de `sex`")
+    assert reponse.index("valeur(s) distincte(s)") < reponse.index("Répartition de `sex`")
     assert "Comment ce résultat a été obtenu" in reponse
     assert "Tu peux aussi demander" in reponse
 
@@ -228,7 +228,7 @@ def test_doublons_a_une_phrase_dintro_et_une_explication(tables_individual):
     at = _app_avec_tables(tables_individual)
     at.chat_input[0].set_value("doublons dans FNewIndividual").run()
     reponse = at.session_state["messages"][-1]["content"]
-    assert "J'ai recherché les doublons" in reponse
+    assert "J'ai trouvé" in reponse and "répétée" in reponse
     assert "Comment ce résultat a été obtenu" in reponse
 
 
@@ -236,7 +236,9 @@ def test_coherence_a_une_phrase_dintro_et_une_explication(tables_individual):
     at = _app_avec_tables(tables_individual)
     at.chat_input[0].set_value("cohérence de FNewIndividual").run()
     reponse = at.session_state["messages"][-1]["content"]
-    assert reponse.index("passé **FNewIndividual** au contrôle") < reponse.index("Rapport de cohérence")
+    # La table de test a un doublon d'individid (4 apparaît deux fois) : au
+    # moins une anomalie doit être annoncée AVANT le détail du rapport.
+    assert reponse.index("anomalie") < reponse.index("Rapport de cohérence")
     assert "Comment ce résultat a été obtenu" in reponse
 
 
