@@ -212,6 +212,34 @@ def test_echantillon_inclut_la_syntaxe_r_et_stata(tables_individual):
     assert "sample 2, count" in reponse
 
 
+def test_repartition_a_une_phrase_dintro_avant_le_tableau_et_une_explication(tables_individual):
+    # Demande explicite de l'equipe OPO : jamais un tableau brut sans phrase
+    # qui l'introduit, ni sans dire comment il a ete obtenu, ni sans
+    # suggestion de question de suivi (voir app._habiller_reponse).
+    at = _app_avec_tables(tables_individual)
+    at.chat_input[0].set_value("répartition de sex").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert reponse.index("Voici la répartition") < reponse.index("Répartition de `sex`")
+    assert "Comment ce résultat a été obtenu" in reponse
+    assert "Tu peux aussi demander" in reponse
+
+
+def test_doublons_a_une_phrase_dintro_et_une_explication(tables_individual):
+    at = _app_avec_tables(tables_individual)
+    at.chat_input[0].set_value("doublons dans FNewIndividual").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert "J'ai recherché les doublons" in reponse
+    assert "Comment ce résultat a été obtenu" in reponse
+
+
+def test_coherence_a_une_phrase_dintro_et_une_explication(tables_individual):
+    at = _app_avec_tables(tables_individual)
+    at.chat_input[0].set_value("cohérence de FNewIndividual").run()
+    reponse = at.session_state["messages"][-1]["content"]
+    assert reponse.index("passé **FNewIndividual** au contrôle") < reponse.index("Rapport de cohérence")
+    assert "Comment ce résultat a été obtenu" in reponse
+
+
 def test_coherence_inclut_la_syntaxe_r_et_stata(tables_individual):
     at = _app_avec_tables(tables_individual)
     at.chat_input[0].set_value("cohérence de FNewIndividual").run()

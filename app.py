@@ -714,8 +714,18 @@ def formater_reponse_requete(resultat: dict, nom_table: str) -> dict:
     )
     operation = resultat["operation"]
 
+    explication_filtres = (
+        " en appliquant le(s) filtre(s) demandé(s) (" + ", ".join(resultat["filtres_appliques"]) + ")"
+        if resultat.get("filtres_appliques") else " sans filtre"
+    )
+
     if operation == "compter":
-        return {"content": f"**{resultat['resultat']}** ligne(s) dans **{nom_table}**{filtres_txt}."}
+        contenu = _habiller_reponse(
+            f"**{resultat['resultat']}** ligne(s) dans **{nom_table}**{filtres_txt}.",
+            intro=f"Voici le décompte demandé sur **{nom_table}**.",
+            explication=f"j'ai compté les lignes de **{nom_table}**{explication_filtres}.",
+        )
+        return {"content": contenu}
 
     if operation == "lister":
         table_resultat = resultat["resultat"]
@@ -723,6 +733,11 @@ def formater_reponse_requete(resultat: dict, nom_table: str) -> dict:
         contenu = (
             f"**{resultat['n_total']}** ligne(s) trouvée(s) dans **{nom_table}**{filtres_txt} ({apercu}) :\n\n"
             + table_resultat.to_markdown(index=False)
+        )
+        contenu = _habiller_reponse(
+            contenu,
+            intro=f"Voici la liste demandée dans **{nom_table}**.",
+            explication=f"j'ai sélectionné les lignes de **{nom_table}**{explication_filtres}.",
         )
         return {"content": contenu, "table": table_resultat, "table_label": f"requete_{nom_table}"}
 
@@ -737,6 +752,14 @@ def formater_reponse_requete(resultat: dict, nom_table: str) -> dict:
     contenu = (
         f"**{libelles[operation]}** de `{resultat['colonne_cible']}` dans **{nom_table}**{filtres_txt} : "
         f"**{resultat['resultat']:.2f}** (calculé sur {resultat['n_valeurs']} valeur(s))."
+    )
+    contenu = _habiller_reponse(
+        contenu,
+        intro=f"Voici le calcul demandé sur `{resultat['colonne_cible']}`.",
+        explication=(
+            f"j'ai calculé {libelles[operation].lower()} de `{resultat['colonne_cible']}` sur les "
+            f"{resultat['n_valeurs']} valeur(s) numériques exploitables de **{nom_table}**{explication_filtres}."
+        ),
     )
     return {"content": contenu}
 
@@ -943,8 +966,19 @@ def tenter_requete_sql(
             if tentative == 1:
                 return None
 
+    explication_sql = (
+        "j'ai écrit et exécuté (en lecture seule) une requête SQL qui croise directement les tables "
+        "nécessaires à partir de leur schéma réel, en te la montrant ci-dessous pour que tu puisses "
+        "la vérifier ou la réutiliser."
+    )
+
     if resultat.empty:
         contenu = f"Aucun résultat trouvé.\n\n_Requête utilisée (sur les données réellement chargées) :_ `{requete_sql}`"
+        contenu = _habiller_reponse(
+            contenu,
+            intro="J'ai interrogé les données pour répondre à ta question, mais aucun résultat ne correspond.",
+            explication=explication_sql,
+        )
         return {"content": contenu}
 
     contenu = (
@@ -958,6 +992,12 @@ def tenter_requete_sql(
             "vérifie la jointure avant de t'y fier (indice possible d'une jointure qui multiplie "
             "les lignes au lieu de les relier correctement)._"
         )
+    contenu = _habiller_reponse(
+        contenu,
+        intro="Voici le résultat obtenu en croisant les tables nécessaires à ta question.",
+        explication=explication_sql,
+        suggestions=["une autre question sur ces mêmes tables croisées", "un contrôle de cohérence sur l'une des tables utilisées"],
+    )
     return {"content": contenu, "table": resultat, "table_label": "requete_sql"}
 
 
@@ -968,11 +1008,53 @@ def tenter_requete_sql(
 # reponse complete - plutot que de dupliquer la logique a deux endroits et
 # risquer qu'elle diverge (l'un avec la syntaxe, l'autre sans).
 
+
+def _habiller_reponse(
+    contenu: str, explication: str | None = None,
+    suggestions: list[str] | None = None, intro: str | None = None,
+) -> str:
+    """Enrichit le contenu brut d'une reponse (label + tableau/chiffre, deja
+    construit par l'appelant) avec une phrase d'introduction AVANT le
+    resultat, une explication en langage clair de la methode utilisee, et des
+    suggestions de questions de suivi - demande explicite de l'equipe OPO :
+    ne jamais renvoyer un tableau ou un chiffre brut sans phrase qui
+    l'introduit ni sans dire comment il a ete obtenu (utile aux personnes qui
+    ne maitrisent pas les cles techniques), et proposer, comme le fait
+    Claude a la fin de ses reponses, une ou deux pistes de question
+    suivante plutot que de laisser la conversation s'arreter net.
+
+    `contenu` porte deja, le cas echeant, le tableau ET la syntaxe R/Stata
+    reproductible (dt.syntaxe_*) : cette fonction ne fait qu'ENCADRER ce
+    contenu, jamais le reconstruire ni le dupliquer."""
+    morceaux = []
+    if intro:
+        morceaux.append(intro)
+    morceaux.append(contenu)
+    if explication:
+        morceaux.append(f"**Comment ce résultat a été obtenu :** {explication}")
+    if suggestions:
+        puces = "\n".join(f"- {s}" for s in suggestions)
+        morceaux.append(f"**Tu peux aussi demander :**\n{puces}")
+    return "\n\n".join(morceaux)
+
+
 def reponse_repartition(df, nom_table: str, colonne: str) -> dict:
     rep = dt.repartition(df, colonne)
     contenu = (
         f"Répartition de `{colonne}` dans **{nom_table}** :\n\n{rep.to_markdown()}"
         f"\n\n{dt.syntaxe_repartition(nom_table, colonne)}"
+    )
+    contenu = _habiller_reponse(
+        contenu,
+        intro=f"Voici la répartition des valeurs de `{colonne}` que tu as demandée.",
+        explication=(
+            f"j'ai compté, pour chaque valeur distincte de `{colonne}`, le nombre de lignes de "
+            f"**{nom_table}** qui la portent (équivalent à un `value_counts()`/`tab` Stata)."
+        ),
+        suggestions=[
+            f"une répartition de `{colonne}` croisée avec une autre colonne",
+            f"un contrôle de cohérence sur **{nom_table}**",
+        ],
     )
     return {"content": contenu, "table": rep.reset_index(), "table_label": f"repartition_{colonne}_{nom_table}"}
 
@@ -982,6 +1064,15 @@ def reponse_echantillon(df, nom_table: str, n: int) -> dict:
     contenu = (
         f"Échantillon reproductible de {len(ech)} lignes (graine fixée) issu de **{nom_table}** :\n\n"
         f"{ech.to_markdown(index=False)}\n\n{dt.syntaxe_echantillon(nom_table, len(ech), seed=20260729)}"
+    )
+    contenu = _habiller_reponse(
+        contenu,
+        intro=f"Voici un échantillon aléatoire tiré de **{nom_table}**.",
+        explication=(
+            f"{len(ech)} ligne(s) tirée(s) au hasard dans **{nom_table}**, avec une graine fixe "
+            "(20260729) pour que le même tirage soit reproductible si tu relances la même demande."
+        ),
+        suggestions=[f"un échantillon d'une autre taille sur **{nom_table}**", f"un contrôle de cohérence sur **{nom_table}**"],
     )
     return {"content": contenu, "table": ech, "table_label": f"echantillon_{nom_table}"}
 
@@ -998,6 +1089,16 @@ def reponse_doublons(df, nom_table: str) -> dict:
         f"**{len(dups)} lignes en doublon** trouvées dans **{nom_table}** (colonne `{colonne}`) :\n\n"
         f"{dups.to_markdown(index=False)}\n\n{dt.syntaxe_doublons(nom_table, colonne)}"
     )
+    contenu = _habiller_reponse(
+        contenu,
+        intro=f"J'ai recherché les doublons d'identifiant dans **{nom_table}**, voici ce que j'ai trouvé.",
+        explication=(
+            f"j'ai comparé les valeurs de la colonne d'identifiant `{colonne}` (détectée "
+            f"automatiquement) et gardé les lignes où cette valeur apparaît plus d'une fois dans "
+            f"**{nom_table}**."
+        ),
+        suggestions=[f"un contrôle de cohérence complet sur **{nom_table}**"],
+    )
     return {"content": contenu, "table": dups, "table_label": f"doublons_{nom_table}"}
 
 
@@ -1010,6 +1111,16 @@ def reponse_coherence(df, nom_table: str) -> dict:
             nom_table, rapport.get("colonnes_id_verifiees", []), rapport.get("colonnes_date_verifiees", [])
         )
     )
+    contenu = _habiller_reponse(
+        contenu,
+        intro=f"J'ai passé **{nom_table}** au contrôle de cohérence, voici le résultat.",
+        explication=(
+            "j'ai vérifié les doublons sur les colonnes d'identifiant détectées et la cohérence des "
+            "colonnes de date reconnues (dates hors plage, dates dans le désordre) — voir le détail "
+            "des colonnes vérifiées ci-dessus."
+        ),
+        suggestions=[f"l'audit de cohérence avancé (catalogue de contrôles spécifiques à l'observatoire)"],
+    )
     return {"content": contenu}
 
 
@@ -1018,6 +1129,15 @@ def reponse_tableau_croise(df, nom_table: str, colonne1: str, colonne2: str) -> 
     contenu = (
         f"Tableau croisé (analyse bivariée) de `{colonne1}` et `{colonne2}` dans **{nom_table}** :\n\n"
         f"{tab.to_markdown()}\n\n{dt.syntaxe_tableau_croise(nom_table, colonne1, colonne2)}"
+    )
+    contenu = _habiller_reponse(
+        contenu,
+        intro=f"Voici le croisement entre `{colonne1}` et `{colonne2}` dans **{nom_table}**.",
+        explication=(
+            f"j'ai compté, pour chaque combinaison de valeurs de `{colonne1}` et `{colonne2}`, le "
+            f"nombre de lignes de **{nom_table}** concernées (tableau de contingence)."
+        ),
+        suggestions=[f"une matrice de corrélation sur **{nom_table}**"],
     )
     return {
         "content": contenu, "table": tab.reset_index(),
@@ -1033,6 +1153,15 @@ def reponse_correlation(df, nom_table: str, colonnes: list[str] | None) -> dict:
         f"sur : {', '.join(f'`{c}`' for c in cols_utilisees)} :\n\n"
         f"{mat.to_markdown()}\n\n{dt.syntaxe_correlation(nom_table, cols_utilisees)}"
     )
+    contenu = _habiller_reponse(
+        contenu,
+        intro=f"Voici la matrice de corrélation calculée sur **{nom_table}**.",
+        explication=(
+            "j'ai calculé le coefficient de corrélation de Pearson entre chaque paire de colonnes "
+            "numériques listées (variant de -1, liées en sens opposé, à +1, liées dans le même sens)."
+        ),
+        suggestions=[f"un tableau croisé entre deux colonnes précises de **{nom_table}**"],
+    )
     return {"content": contenu, "table": mat.reset_index(), "table_label": f"correlation_{nom_table}"}
 
 
@@ -1042,6 +1171,16 @@ def reponse_tableau_multivarie(df, nom_table: str, colonnes: list[str]) -> dict:
         f"Analyse multivariée (effectifs croisés) de {', '.join(f'`{c}`' for c in colonnes)} "
         f"dans **{nom_table}** ({len(tab)} combinaisons observées) :\n\n"
         f"{tab.head(30).to_markdown(index=False)}\n\n{dt.syntaxe_tableau_multivarie(nom_table, colonnes)}"
+    )
+    contenu = _habiller_reponse(
+        contenu,
+        intro=f"Voici les effectifs croisés sur les {len(colonnes)} colonnes demandées de **{nom_table}**.",
+        explication=(
+            "j'ai groupé les lignes par combinaison de valeurs sur les colonnes demandées et compté "
+            "le nombre de lignes observées pour chaque combinaison (limité aux 30 premières ici, le "
+            "tableau complet reste disponible en téléchargement)."
+        ),
+        suggestions=None,
     )
     return {"content": contenu, "table": tab, "table_label": f"multivarie_{nom_table}"}
 
@@ -1063,6 +1202,16 @@ def reponse_agents(df, nom_table: str) -> dict:
         "_Rappel : ceci est un signalement, pas une évaluation individuelle définitive — la "
         "validation reste réservée aux personnes habilitées._\n\n"
         f"{dt.syntaxe_rapport_agents(nom_table, colonne_agent)}"
+    )
+    contenu = _habiller_reponse(
+        contenu,
+        intro=f"Voici le rapport de qualité par agent enquêteur sur **{nom_table}**.",
+        explication=(
+            f"j'ai regroupé les lignes de **{nom_table}** par `{colonne_agent}` et calculé, pour "
+            "chaque agent, le nombre de fiches, les doublons d'identifiant, les dates invraisemblables "
+            "et le taux moyen de valeurs manquantes (détail des colonnes ci-dessus)."
+        ),
+        suggestions=["le rapport de performance de terrain (volume d'activité par agent)"],
     )
     return {"content": contenu, "table": rapport, "table_label": f"agents_{nom_table}"}
 
@@ -1194,8 +1343,18 @@ def reponse_performance_terrain(tables: dict, exclure: list[str] | None, objecti
         cumul = par_jour.groupby("date")["n_fiches"].sum().sort_index().cumsum()
         chart_data = cumul.rename("cumul_fiches").to_frame()
 
+    contenu_terrain = _habiller_reponse(
+        "\n\n".join(morceaux),
+        intro="Voici le rapport de performance de terrain (volume d'activité par agent).",
+        explication=(
+            "j'ai regroupé les fiches de toutes les tables chargées par agent enquêteur et compté, "
+            "pour chacun, les ménages/UCH visités, naissances, décès et grossesses enregistrés"
+            + (", puis comparé ce cumul à l'objectif fixé" if demande_projection else "") + "."
+        ),
+        suggestions=["l'historique des actualisations de cette session", "un rapport de qualité par agent (doublons, dates invraisemblables)"],
+    )
     return {
-        "content": "\n\n".join(morceaux), "table": rapport, "table_label": "performance_terrain",
+        "content": contenu_terrain, "table": rapport, "table_label": "performance_terrain",
         "docx_bytes": docx_bytes, "docx_label": "rapport_performance_terrain",
         "chart_data": chart_data,
     }
@@ -1214,7 +1373,12 @@ def reponse_historique_actualisations() -> dict:
             f"- {entree['horodatage'].strftime('%d/%m/%Y %H:%M:%S')} — **{entree['table']}** "
             f"({entree['n_lignes']} ligne(s)), depuis `{entree['fichier']}` ({source}{suffixe_export})"
         )
-    return {"content": "\n".join(lignes)}
+    contenu = _habiller_reponse(
+        "\n".join(lignes),
+        intro="Voici l'historique des tables chargées durant cette session.",
+        explication="j'ai listé, dans l'ordre le plus récent d'abord, chaque table chargée avec l'heure, la source et le nombre de lignes.",
+    )
+    return {"content": contenu}
 
 
 def reponse_recherche_identifiant(identifiant: str, tables: dict) -> dict:
@@ -1224,7 +1388,15 @@ def reponse_recherche_identifiant(identifiant: str, tables: dict) -> dict:
     morceaux = [f"**Recherche de l'identifiant `{identifiant}`** — trouvé dans {len(resultats)} table(s) :"]
     for nom, df in resultats.items():
         morceaux.append(f"\n**{nom}** ({len(df)} ligne(s)) :\n\n{df.head(10).to_markdown(index=False)}")
-    return {"content": "\n".join(morceaux)}
+    contenu = _habiller_reponse(
+        "\n".join(morceaux),
+        intro=f"Voici ce que j'ai retrouvé pour l'identifiant `{identifiant}`.",
+        explication=(
+            f"j'ai recherché la valeur `{identifiant}` dans toutes les colonnes d'identifiant de "
+            "toutes les tables chargées, et affiché les 10 premières lignes de chaque table où elle apparaît."
+        ),
+    )
+    return {"content": contenu}
 
 
 # Analyse bivariee (tableau croise entre deux colonnes d'UNE MEME table) -
@@ -1327,6 +1499,14 @@ def reponse_statut_croise_dans_table(q: str, nom_table_cible: str, tables: dict)
                 "marqué présent)."
                 if n > 0 else " Aucune incohérence détectée sur ce point."
             )
+        )
+        contenu = _habiller_reponse(
+            contenu,
+            intro=f"J'ai croisé **{nom_statut}** et **{nom_table_cible}** pour vérifier ce point.",
+            explication=(
+                f"j'ai joint **{nom_statut}** et **{nom_table_cible}** sur la clé `{cle}` et compté "
+                f"les individus présents dans les deux à la fois."
+            ),
         )
         return {"content": contenu}
     return None
@@ -1464,7 +1644,17 @@ def route_question(question: str) -> dict:
     if contient_mot_cle(q, MOTS_COHERENCE_AVANCEE):
         nom_cible = tables_mentionnees[0] if tables_mentionnees else None
         rapport_avance = dt.rapport_coherence_avancee(tables, nom_table=nom_cible)
-        return {"content": formater_rapport_coherence_avancee(rapport_avance)}
+        contenu = _habiller_reponse(
+            formater_rapport_coherence_avancee(rapport_avance),
+            intro="J'ai passé les données au catalogue de contrôles de cohérence spécifiques à l'observatoire.",
+            explication=(
+                "pour chaque table, j'ai appliqué les contrôles internes reconnus (colonnes détectées "
+                "automatiquement), puis les contrôles croisés entre tables sur les clés de jointure "
+                "documentées par le dictionnaire de données (ex : individid, socialgpid, peventid) — "
+                "jamais sur une colonne au nom seulement évocateur."
+            ),
+        )
+        return {"content": contenu}
 
     # Question de coherence croisee formulee naturellement ("il y a des
     # décédés dans presence ?"), sans la phrase figee "audit complet" -

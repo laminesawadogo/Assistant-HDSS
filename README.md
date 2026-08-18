@@ -824,6 +824,28 @@ recherche et plus comme une vraie conversation :
   retente la recherche. Ne se déclenche pas quand la recherche initiale
   fonctionne déjà bien (pas de coût supplémentaire dans le cas courant).
 
+**Format des réponses (demande explicite de l'équipe OPO)** : une réponse ne
+se limite jamais à un tableau ou un chiffre brut. Pour les réponses calculées
+directement sur les données (répartition, échantillon, doublons, cohérence,
+tableau croisé, corrélation, rapport agents/terrain, requête SQL générale,
+recherche d'identifiant...), `app.py:_habiller_reponse` encadre
+systématiquement le résultat avec :
+1. une **phrase d'introduction** avant le résultat (ex : "Voici la
+   répartition des valeurs de `sex` que tu as demandée.") ;
+2. une explication **"Comment ce résultat a été obtenu"** en langage clair
+   (quelles colonnes/tables ont été utilisées, quel calcul a été appliqué) —
+   utile pour les personnes qui ne maîtrisent pas les clés techniques du
+   schéma ;
+3. quand c'est pertinent, une ou deux **suggestions de question de suivi**
+   ("Tu peux aussi demander : ..."), sur le même principe que les
+   suggestions proposées en fin de réponse par Claude.
+
+Pour les réponses documentaires (recherche dans le dictionnaire de données,
+via `rag.answer`), c'est le prompt (`rag.build_prompt`) qui demande
+directement au LLM de terminer, quand c'est pertinent, par une courte
+suggestion de question liée au sujet — jamais après un refus ("je ne sais
+pas").
+
 **Important : rien de tout cela ne fonctionne sans clé LLM renseignée.** Sans
 clé Groq ou Anthropic dans la barre latérale, l'assistant se contente
 d'afficher le contexte brut retrouvé — ce qui explique l'impression de ne pas
